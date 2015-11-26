@@ -10,5 +10,6 @@ matrix:
           env: TOX_ENV=py35
 install:
     - pip install tox
+    - pip install -r dev-requirements.txt
 script:
     - tox -e $TOX_ENV
