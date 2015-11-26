@@ -1,0 +1,8 @@
+include README.rst
+include cffi_declarations.c cffi_source.c cffi_template.py
+
+recursive-include deps *
+recursive-include tests *
+
+recursive-include doc *
+recursive-exclude doc/build *

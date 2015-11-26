@@ -1,0 +1,15 @@
+# IDE
+.idea
+
+# Python
+*.pyc
+*.pyd
+*.so
+
+__pycache__
+
+build
+dist
+deps
+
+libs/uv/uvcffi/__init__.py
