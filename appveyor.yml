@@ -5,6 +5,9 @@ environment:
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
 
+  password:
+    secure: zPVrNoRsvYyia3AwKRyVuDHYpENDAZqur2XwSjqbYoM=
+
   matrix:
 
     # Python 2.7.10 is the latest version and is not pre-installed.
@@ -129,3 +132,9 @@ artifacts:
 #on_success:
 #  - TODO: upload the content of dist/*.whl to a public wheelhouse
 #
+
+deploy_script:
+  - "echo [pypi] > %USERPROFILE%\\.pypirc"
+  - "echo username: user >> %USERPROFILE%\\.pypirc"
+  - "echo password: %password% >> %USERPROFILE%\\.pypirc"
+  - "%CMD_IN_ENV% python setup.py bdist_wheel upload"
