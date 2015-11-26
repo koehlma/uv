@@ -66,7 +66,12 @@ with open(os.path.join(__dir__, 'cffi_source.c'), 'rb') as cffi_source:
 with open(os.path.join(__dir__, 'cffi_declarations.c'), 'rb') as cffi_declarations:
     declarations = cffi_declarations.read().decode('utf-8')
 
-with open(os.path.join(__dir__, 'cffi_template.py'), 'rb') as cffi_template:
+if os.environ.get('READTHEDOCS', None) == 'true':
+    cffi_module = 'cffi_mock.py'
+else:
+    cffi_module = 'cffi_template.py'
+
+with open(os.path.join(__dir__, cffi_module), 'rb') as cffi_template:
     cffi_code = cffi_template.read().decode('utf-8').format(**locals())
 
 with open(os.path.join(__dir__, 'uvcffi', '__init__.py'), 'wb') as uvcffi_module:
@@ -238,6 +243,14 @@ class SourceDistribution(sdist):
         shutil.rmtree(os.path.join(GYP_PATH, 'test'))
 
 
+if os.environ.get('READTHEDOCS', None) == 'true':
+    cmdclass = {}
+    ext_modules = []
+else:
+    cmdclass = {'build_ext': BuildExtensions, 'sdist': SourceDistribution}
+    ext_modules = [extension]
+
+
 setup(name='uv',
       version=version,
       description='Python LibUV CFFI Bindings',
@@ -246,8 +259,8 @@ setup(name='uv',
       author_email='mail@koehlma.de',
       url='https://www.koehlma.de/projects/uv/',
       packages=['uv', 'uvcffi'],
-      cmdclass={'build_ext': BuildExtensions, 'sdist': SourceDistribution},
-      ext_modules=[extension],
+      cmdclass=cmdclass,
+      ext_modules=ext_modules,
       requires=['cffi'] + (['enum34'] if sys.version_info[:2] < (3, 4) else []),
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',
