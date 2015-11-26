@@ -85,7 +85,6 @@ except AttributeError:
 
 
 def choose_path(paths):
-    print(paths)
     for path in paths:
         if os.path.exists(path):
             return path
@@ -93,9 +92,10 @@ def choose_path(paths):
 
 def win32_find_python27():
     assert sys.platform == 'win32'
+    python27 = None
     if 'PYTHON' in os.environ:
         python27 = os.environ['PYTHON']
-    else:
+    if python27 is None or not os.path.isfile(python27):
         python27 = choose_path(WIN32_PYTHON27_PATHS)
     if not python27 or not os.path.isfile(python27):
         raise RuntimeError('python 2.7 interpreter not found')
