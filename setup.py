@@ -48,8 +48,9 @@ GYP_REPO = 'https://chromium.googlesource.com/external/gyp.git'
 WIN32_LIBRARIES = ['libuv', 'advapi32', 'iphlpapi', 'psapi',
                    'shell32', 'userenv', 'ws2_32']
 
-WIN32_PYTHON27_PATHS = [r'C:\Program Files (x86)\Python 2.7\python.exe',
-                        r'C:\Python27\python.exe']
+_path_1 = os.path.expandvars(r'%SYSTEMDRIVE%\Program Files (x86)\Python 2.7\python.exe')
+_path_2 = os.path.expandvars(r'%SYSTEMDRIVE%\Python27\python.exe')
+WIN32_PYTHON27_PATHS = [_path_1, _path_2]
 
 with open(os.path.join(__dir__, 'uv', '__init__.py')) as init_py:
     init_source = init_py.read()
