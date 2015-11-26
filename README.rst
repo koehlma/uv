@@ -31,7 +31,10 @@ Status
     :target: https://pypi.python.org/pypi/uv
 
 .. |unix_build| image:: https://img.shields.io/travis/koehlma/uv/master.svg?style=flat-square&label=unix%20build
-    :target: http://travis-ci.org/koehlma/uv
+    :target: https://travis-ci.org/koehlma/uv
 
-.. |windows_build|  image:: https://img.shields.io/appveyor/ci/koehlma/uv.svg?style=flat-square&label=windows%20build
+.. |windows_build| image:: https://img.shields.io/appveyor/ci/koehlma/uv.svg?style=flat-square&label=windows%20build
     :target: https://ci.appveyor.com/project/koehlma/uv
+
+.. |docs| image:: https://readthedocs.org/projects/uv/badge/?version=latest&style=flat-square
+    :target: https://uv.readthedocs.org/en/latest/
