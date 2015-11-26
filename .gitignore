@@ -12,4 +12,7 @@ build
 dist
 deps
 
-libs/uv/uvcffi/__init__.py
+uvcffi/__init__.py
+
+MANIFEST
+.tox
