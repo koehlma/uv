@@ -63,7 +63,7 @@ from .udp import UDP, UDPFlags, Membership
 from .fs_event import FSEvent
 from .fs_poll import FSPoll
 
-from . import ssl
+#from . import ssl
 
 from . import dns
 from . import fs
