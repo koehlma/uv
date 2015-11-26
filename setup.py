@@ -85,6 +85,7 @@ except AttributeError:
 
 
 def choose_path(paths):
+    print(paths)
     for path in paths:
         if os.path.exists(path):
             return path
