@@ -9,6 +9,7 @@ matrix:
         - python: 3.5
           env: TOX_ENV=py35
 install:
+    - pip install cffi
     - pip install tox
 script:
     - tox -e $TOX_ENV
