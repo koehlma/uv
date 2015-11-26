@@ -51,23 +51,6 @@ class TestTimer(unittest.TestCase):
 
         self.assertEquals(self.timer_called, 3)
 
-    def test_timer_delta(self):
-        self.timer_called = 0
-        self.timer_times = []
-
-        def on_timeout(t):
-            self.timer_called += 1
-            self.timer_times.append(uv.misc.hrtime())
-            if self.timer_called == 2: t.stop()
-
-        timer = uv.Timer(self.loop, on_timeout)
-        timer.start(20, repeat=50)
-
-        self.loop.run()
-
-        delta = round((self.timer_times[1] - self.timer_times[0]) / 10 ** 6, 0)
-        self.assertEqual(delta, 50)
-
     def test_timer_close(self):
         self.timer_called = 0
 
