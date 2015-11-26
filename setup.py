@@ -102,7 +102,7 @@ def win32_find_python27():
     stderr = subprocess.STDOUT
     py_version = subprocess.check_output(cmd, stderr=stderr)[7:].decode().strip()
     if not py_version.startswith('2.7'):
-        raise RuntimeError('python 2.7 interpreter not found')
+        raise RuntimeError('invalid version of python interpreter (%s)' % py_version)
     return python27
 
 
