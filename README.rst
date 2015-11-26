@@ -23,7 +23,7 @@ Status
 
 -----
 
-|pypi| |unix_build| |windows_build| |coverage|
+|pypi| |unix_build| |windows_build|
 
 -----
 
