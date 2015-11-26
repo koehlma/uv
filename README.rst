@@ -1,5 +1,9 @@
 Python LibUV CFFI Bindings
 ==========================
+|pypi| |unix_build| |windows_build| |docs|
+
+-----
+
 This package aims to provide an object oriented wrapper around the LibUV
 asynchronous IO library.
 
@@ -17,15 +21,6 @@ Features
 - signal handling
 - PyPy and CPython support (but only Python Language version 3)
 
-Status
-------
-
-
------
-
-|pypi| |unix_build| |windows_build|
-
------
 
 .. |pypi| image:: https://img.shields.io/pypi/v/uv.svg?style=flat-square&label=latest%20version
     :target: https://pypi.python.org/pypi/uv
