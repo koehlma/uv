@@ -45,5 +45,6 @@ class Mock:
     def callback(*_):
         return Mock()
 
+
 lib = Mock()
 ffi = Mock()

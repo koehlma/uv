@@ -66,6 +66,8 @@ with open(os.path.join(__dir__, 'cffi_source.c'), 'rb') as cffi_source:
 with open(os.path.join(__dir__, 'cffi_declarations.c'), 'rb') as cffi_declarations:
     declarations = cffi_declarations.read().decode('utf-8')
 
+print(os.environ)
+
 if os.environ.get('READTHEDOCS', None) == 'true':
     cffi_module = 'cffi_mock.py'
 else:
