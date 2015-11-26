@@ -52,26 +52,25 @@ _path_1 = os.path.expandvars(r'%SYSTEMDRIVE%\Program Files (x86)\Python 2.7\pyth
 _path_2 = os.path.expandvars(r'%SYSTEMDRIVE%\Python27\python.exe')
 WIN32_PYTHON27_PATHS = [_path_1, _path_2]
 
-with open(os.path.join(__dir__, 'uv', '__init__.py')) as init_py:
-    print(init_py)
-    init_source = init_py.read()
+with open(os.path.join(__dir__, 'uv', '__init__.py'), 'rb') as init_py:
+    init_source = init_py.read().decode('utf-8')
 match = re.search(r'__version__ = \'(.+?)\'', init_source)
 version = match.group(1)
 
-with open(os.path.join(__dir__, 'README.rst')) as readme_file:
-    long_description = readme_file.read()
+with open(os.path.join(__dir__, 'README.rst'), 'rb') as readme_file:
+    long_description = readme_file.read().decode('utf-8')
 
-with open(os.path.join(__dir__, 'cffi_source.c')) as cffi_source:
-    source = cffi_source.read()
+with open(os.path.join(__dir__, 'cffi_source.c'), 'rb') as cffi_source:
+    source = cffi_source.read().decode('utf-8')
 
-with open(os.path.join(__dir__, 'cffi_declarations.c')) as cffi_declarations:
-    declarations = cffi_declarations.read()
+with open(os.path.join(__dir__, 'cffi_declarations.c'), 'rb') as cffi_declarations:
+    declarations = cffi_declarations.read().decode('utf-8')
 
-with open(os.path.join(__dir__, 'cffi_template.py')) as cffi_template:
-    cffi_code = cffi_template.read().format(**locals())
+with open(os.path.join(__dir__, 'cffi_template.py'), 'rb') as cffi_template:
+    cffi_code = cffi_template.read().decode('utf-8').format(**locals())
 
-with open(os.path.join(__dir__, 'uvcffi', '__init__.py'), 'w') as uvcffi_module:
-    uvcffi_module.write(cffi_code)
+with open(os.path.join(__dir__, 'uvcffi', '__init__.py'), 'wb') as uvcffi_module:
+    uvcffi_module.write(cffi_code.encode('utf-8'))
 
 ffi = cffi.FFI()
 ffi.cdef(declarations)
