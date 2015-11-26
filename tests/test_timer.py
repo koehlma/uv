@@ -27,7 +27,7 @@ class TestTimer(unittest.TestCase):
     def test_timer_simple(self):
         self.timer_called = 0
 
-        def on_timeout(t):
+        def on_timeout(_):
             self.timer_called += 1
 
         timer = uv.Timer(self.loop, on_timeout)
@@ -54,7 +54,7 @@ class TestTimer(unittest.TestCase):
     def test_timer_close(self):
         self.timer_called = 0
 
-        def on_timeout(t):
+        def on_timeout(_):
             self.timer_called += 1
 
         timer = uv.Timer(self.loop, on_timeout)
@@ -68,7 +68,7 @@ class TestTimer(unittest.TestCase):
     def test_timer_reference(self):
         self.timer_called = 0
 
-        def on_timeout(t):
+        def on_timeout(_):
             self.timer_called += 1
 
         timer = uv.Timer(self.loop, on_timeout)

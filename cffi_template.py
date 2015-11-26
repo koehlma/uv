@@ -20,6 +20,8 @@ __project__ = 'Python LibUV CFFI Bindings'
 __author__ = 'Maximilian Köhl'
 __email__ = 'mail@koehlma.de'
 
+import os.path
+
 import cffi
 
 declarations = '''
@@ -29,6 +31,9 @@ declarations = '''
 source = '''
 {source}
 '''
+
+
+tempdir = os.path.join('.', 'build')
 
 
 try:
@@ -41,4 +46,4 @@ except ImportError:
         ffi.compile()
         from _uvcffi import ffi, lib
     except AttributeError or ImportError:
-        lib = ffi.verify(source, libraries=['uv'], modulename='_uvcffi')
+        lib = ffi.verify(source, modulename='_uvcffi', libraries=['uv'])
