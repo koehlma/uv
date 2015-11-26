@@ -248,7 +248,7 @@ setup(name='uv',
       packages=['uv', 'uvcffi'],
       cmdclass={'build_ext': BuildExtensions, 'sdist': SourceDistribution},
       ext_modules=[extension],
-      requires=['cffi'],
+      requires=['cffi', 'enum34'],
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',
           'Intended Audience :: Developers',
