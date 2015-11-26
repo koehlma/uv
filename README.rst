@@ -26,3 +26,12 @@ Status
 |pypi| |unix_build| |windows_build| |coverage|
 
 -----
+
+.. |pypi| image:: https://img.shields.io/pypi/v/uv.svg?style=flat-square&label=latest%20version
+    :target: https://pypi.python.org/pypi/uv
+
+.. |unix_build| image:: https://img.shields.io/travis/koehlma/uv/master.svg?style=flat-square&label=unix%20build
+    :target: http://travis-ci.org/koehlma/uv
+
+.. |windows_build|  image:: https://img.shields.io/appveyor/ci/koehlma/uv.svg?style=flat-square&label=windows%20build
+    :target: https://ci.appveyor.com/project/koehlma/uv
