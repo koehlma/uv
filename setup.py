@@ -53,6 +53,7 @@ _path_2 = os.path.expandvars(r'%SYSTEMDRIVE%\Python27\python.exe')
 WIN32_PYTHON27_PATHS = [_path_1, _path_2]
 
 with open(os.path.join(__dir__, 'uv', '__init__.py')) as init_py:
+    print(init_py)
     init_source = init_py.read()
 match = re.search(r'__version__ = \'(.+?)\'', init_source)
 version = match.group(1)

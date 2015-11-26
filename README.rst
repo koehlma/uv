@@ -24,3 +24,6 @@ Status
 
 .. image:: https://ci.appveyor.com/api/projects/status/jpa8jt5o9m7ow8ep/branch/master?svg=true
     :target: https://ci.appveyor.com/project/koehlma/uv
+
+.. image:: https://readthedocs.org/projects/uv/badge/?version=latest
+    :target: http://uv.readthedocs.org/en/latest/?badge=latest
