@@ -2,9 +2,6 @@ environment:
   global:
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
 
-  password:
-    secure: zPVrNoRsvYyia3AwKRyVuDHYpENDAZqur2XwSjqbYoM=
-
   matrix:
     - PYTHON: "C:\\Python33"
       PYTHON_VERSION: "3.3.x"
@@ -53,15 +50,7 @@ test_script:
 
 after_test:
   - "%CMD_IN_ENV% python setup.py bdist_wheel"
-  - "%CMD_IN_ENV% python setup.py bdist_wininst"
-  - "%CMD_IN_ENV% python setup.py bdist_msi"
   - ps: "ls dist"
 
 artifacts:
   - path: dist\*
-
-deploy_script:
-  - "echo [pypi] > %USERPROFILE%\\.pypirc"
-  - "echo username: koehlma >> %USERPROFILE%\\.pypirc"
-  - "echo password: %password% >> %USERPROFILE%\\.pypirc"
-  - "%CMD_IN_ENV% python setup.py bdist_wheel upload"
