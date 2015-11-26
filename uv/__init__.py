@@ -34,7 +34,7 @@ longer and more expressive variable names without ugly line breaking
 stunts and overall makes the code more readable.
 """
 
-__version__ = '0.0.3.dev1'
+__version__ = '0.0.4'
 __project__ = 'Python LibUV CFFI Bindings'
 __author__ = 'Maximilian Köhl'
 __email__ = 'mail@koehlma.de'
