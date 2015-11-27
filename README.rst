@@ -1,5 +1,6 @@
 Python libuv CFFI Bindings
 ==========================
+
 |pypi| |unix_build| |windows_build| |docs| |implementations|
 
 This package aims to provide an object oriented CFFI based wrapper around the libuv
@@ -7,7 +8,7 @@ asynchronous IO library. It supports all handles of libuv as well as filesystem
 operations, dns utility functions and miscellaneous utilities.
 
 Features
---------
+========
 - full featured event loop backed by epoll, kqueue, IOCP and events ports
 - asynchronous TCP and UDP sockets
 - asynchronous SSL sockets (based on Python's SSL module)
@@ -18,7 +19,7 @@ Features
 - IPC with socket sharing, using UNIX domain sockets or named pipes (Windows)
 - child processes
 - signal handling
-- PyPy and CPython support (but only Python language version 3)
+- PyPy and CPython support (PyPy: 4.0, CPython: 3.2, 3.3, 3.4, 3.5)
 
 
 .. |pypi| image:: https://img.shields.io/pypi/v/uv.svg?style=flat-square&label=latest%20version
