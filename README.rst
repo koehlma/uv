@@ -33,8 +33,8 @@ Features
 .. |docs| image:: https://readthedocs.org/projects/uv/badge/?version=latest&style=flat-square
     :target: https://uv.readthedocs.org/en/latest/
 
-.. |python_implementations| image:: https://img.shields.io/pypi/implementation/uv.svg?style=flat-square&label=versions
+.. |python_implementations| image:: https://img.shields.io/pypi/implementation/uv.svg?style=flat-square
     :target: https://pypi.python.org/pypi/uv
 
-.. |python_versions| image:: https://img.shields.io/pypi/pyversions/uv.svg?style=flat-square&label=implementations
+.. |python_versions| image:: https://img.shields.io/pypi/pyversions/uv.svg?style=flat-square
     :target: https://pypi.python.org/pypi/uv

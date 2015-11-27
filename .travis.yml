@@ -2,6 +2,8 @@ language: python
 sudo: false
 matrix:
     include:
+        - python: 3.2
+          env: TOX_ENV=py32
         - python: 3.3
           env: TOX_ENV=py33
         - python: 3.4
