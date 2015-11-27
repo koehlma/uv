@@ -3,10 +3,6 @@ environment:
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
 
   matrix:
-    fast_finish: true
-    allow_failures:
-      - PYTHON: "C:\\PyPy3-240"
-
     #- PYTHON: "C:\\Python27"
     #  PYTHON_VERSION: "2.7.x"
     #  PYTHON_ARCH: "32"
