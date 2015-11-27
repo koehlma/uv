@@ -24,7 +24,16 @@ PYTHON_PYPY = os.environ.get('PYTHON_PYPY', None)
 
 python_exe = os.path.join(PYTHON, 'python.exe')
 
+__dir__ = os.path.dirname(__file__)
+
 print(python_exe)
+
+if PYTHON_PYPY:
+    import shutil
+    shutil.copy(os.path.join(__dir__, 'wheel_fix', 'bdist_wheel.py'),
+                os.path.join(PYTHON, 'site-packages', 'wheel'))
+    shutil.copy(os.path.join(__dir__, 'wheel_fix', 'metadata.py'),
+                os.path.join(PYTHON, 'site-packages', 'wheel'))
 
 subprocess.call(['%CMD_IN_ENV%', python_exe, 'setup.py', 'bdist_wheel'], shell=True)
 subprocess.call(['%CMD_IN_ENV%', python_exe, 'setup.py', 'bdist_wininst'], shell=True)
