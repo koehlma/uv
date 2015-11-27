@@ -124,6 +124,7 @@ def win32_find_python27():
 
 def build_environ():
     environ = dict(os.environ)
+
     if sys.platform == 'win32':
         if os.environ.get('APPVEYOR', None) == 'True':
             if os.environ.get('SET_SDK', None) == 'Y':

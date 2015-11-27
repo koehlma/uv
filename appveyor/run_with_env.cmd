@@ -24,7 +24,8 @@ IF %MAJOR_PYTHON_VERSION% == 2 (
 )
 
 IF "%PYTHON_PYPY:~0,4%" == "pypy" (
-    SET SET_SDK=N
+    SET SET_SDK=Y
+    SET WINDOWS_SDK_VERSION="v7.0"
 )
 
 IF %SET_SDK% == Y (
