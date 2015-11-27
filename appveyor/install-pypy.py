@@ -39,6 +39,8 @@ URL = 'https://bitbucket.org/pypy/pypy/downloads/{}-{}-win32.zip'
 
 url = URL.format(PYTHON_PYPY, PYTHON_VERSION)
 
+print(url)
+
 response = urllib.request.urlopen(url)
 with open('deps\\pypy.zip', 'wb') as pypy_zip:
     pypy_zip.write(response.read())
