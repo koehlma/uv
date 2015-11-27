@@ -269,6 +269,8 @@ else:
     cmdclass = {'build_ext': BuildExtensions, 'sdist': SourceDistribution}
     ext_modules = [extension]
 
+cmdclass['bdist_wininst'] = WindowsInstaller
+
 
 setup(name='uv',
       version=version,
