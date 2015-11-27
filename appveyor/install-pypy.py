@@ -22,6 +22,11 @@ import tarfile
 import urllib.request
 import zipfile
 
+try:
+    os.mkdir('deps')
+except OSError:
+    pass
+
 PYTHON = os.environ.get('PYTHON', None)
 PYTHON_PYPY = os.environ.get('PYTHON_PYPY', None)
 PYTHON_VERSION = os.environ.get('PYTHON_VERSION', None)
@@ -36,10 +41,10 @@ URL = 'https://bitbucket.org/pypy/pypy/downloads/{}-{}-win32.zip'
 url = URL.format(PYTHON_PYPY, PYTHON_VERSION)
 
 response = urllib.request.urlopen(url)
-with open('pypy.zip', 'wb') as pypy_zip:
+with open('deps\\pypy.zip', 'wb') as pypy_zip:
     pypy_zip.write(response.read())
 
-pypy_zip = zipfile.ZipFile('pypy.zip')
+pypy_zip = zipfile.ZipFile('deps\\pypy.zip')
 pypy_zip.extractall('C:\\')
 
 os.rename('C:\\{}-{}-win32'.format(PYTHON_PYPY, PYTHON_VERSION), PYTHON)
@@ -52,18 +57,19 @@ os.link(os.path.join(PYTHON, 'pypy.exe'), os.path.join(PYTHON, 'python.exe'))
 EZ_SETUP = 'https://bootstrap.pypa.io/ez_setup.py'
 
 response = urllib.request.urlopen(EZ_SETUP)
-with open(os.path.join(PYTHON, 'ez_setup.py'), 'wb') as get_pip:
+with open(os.path.join('deps', 'ez_setup.py'), 'wb') as get_pip:
     get_pip.write(response.read())
 
-subprocess.call([os.path.join(PYTHON, 'python.exe'), os.path.join(PYTHON, 'ez_setup.py')])
+ez_setup = os.path.join('deps', 'ez_setup.py')
+subprocess.call([os.path.join(PYTHON, 'python.exe'), ez_setup])
 
 PIP_URL = 'https://pypi.python.org/packages/source/p/pip/pip-7.1.2.tar.gz'
 
 response = urllib.request.urlopen(PIP_URL)
-with open(os.path.join('pip.tar.gz'), 'wb') as get_pip:
+with open(os.path.join('deps', 'pip.tar.gz'), 'wb') as get_pip:
     get_pip.write(response.read())
 
-pip_tar = tarfile.open('pip.tar.gz', 'r:gz')
+pip_tar = tarfile.open(os.path.join('deps', 'pip.tar.gz'), 'r:gz')
 pip_tar.extractall(PYTHON)
 
 pip_setup = os.path.join(PYTHON, 'pip-7.1.2', 'setup.py')
