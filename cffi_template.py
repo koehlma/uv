@@ -20,8 +20,6 @@ __project__ = 'Python libuv CFFI Bindings'
 __author__ = 'Maximilian Köhl'
 __email__ = 'mail@koehlma.de'
 
-import os.path
-
 import cffi
 
 declarations = '''
@@ -31,10 +29,6 @@ declarations = '''
 source = '''
 {source}
 '''
-
-
-tempdir = os.path.join('.', 'build')
-
 
 try:
     from _uvcffi import ffi, lib

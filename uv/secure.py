@@ -40,7 +40,7 @@ class Protocol(enum.IntEnum):
     TLSv1 = ssl.PROTOCOL_TLSv1
 
 
-class SSL:
+class Secure:
     def __init__(self, stream: Stream, keyfile=None, certfile=None, server_side=False,
                  cert_reqs=CertReqs.NONE, ssl_version=Protocol.SSLv23, ca_certs=None,
                  ciphers=None, server_hostname=None, context=None):
