@@ -52,6 +52,7 @@ _path_1 = os.path.expandvars(r'%SYSTEMDRIVE%\Program Files (x86)\Python 2.7\pyth
 _path_2 = os.path.expandvars(r'%SYSTEMDRIVE%\Python27\python.exe')
 WIN32_PYTHON27_PATHS = [_path_1, _path_2]
 
+
 with open(os.path.join(__dir__, 'uv', '__init__.py'), 'rb') as init_py:
     init_source = init_py.read().decode('utf-8')
 match = re.search(r'__version__ = \'(.+?)\'', init_source)
@@ -76,6 +77,7 @@ with open(os.path.join(__dir__, cffi_module), 'rb') as cffi_template:
 
 with open(os.path.join(__dir__, 'uvcffi', '__init__.py'), 'wb') as uvcffi_module:
     uvcffi_module.write(cffi_code.encode('utf-8'))
+
 
 ffi = cffi.FFI()
 ffi.cdef(declarations)
@@ -135,7 +137,7 @@ def clone_gyp():
 
 
 def build_libuv():
-    log.info('Building libuv...')
+    log.info('building libuv...')
     env = build_environ()
     if sys.platform == 'win32':
         architecture = {'32bit': 'x86', '64bit': 'x64'}[platform.architecture()[0]]
@@ -148,7 +150,7 @@ def build_libuv():
 
 
 def clean_libuv():
-    log.info('Cleaning libuv...')
+    log.info('cleaning libuv...')
     if sys.platform == 'win32':
         cmd = ['vcbuild.bat', 'clean']
         env = build_environ()
@@ -159,7 +161,7 @@ def clean_libuv():
 
 
 def clean_build():
-    log.info('Cleaning Build...')
+    log.info('cleaning Build...')
     shutil.rmtree(DEPS_PATH)
 
 
