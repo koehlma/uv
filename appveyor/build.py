@@ -24,8 +24,10 @@ PYTHON_PYPY = os.environ.get('PYTHON_PYPY', None)
 
 python_exe = os.path.join(PYTHON, 'python.exe')
 
-subprocess.call([python_exe, 'setup.py', 'bdist_wheel'])
-subprocess.call([python_exe, 'setup.py', 'bdist_wininst'])
+print(python_exe)
+
+subprocess.call(['%CMD_IN_ENV%', python_exe, 'setup.py', 'bdist_wheel'], shell=True)
+subprocess.call(['%CMD_IN_ENV%', python_exe, 'setup.py', 'bdist_wininst'], shell=True)
 
 if not PYTHON_PYPY:
-    subprocess.call([python_exe, 'setup.py', 'bdist_msi'])
+    subprocess.call(['%CMD_IN_ENV%', python_exe, 'setup.py', 'bdist_msi'], shell=True)
