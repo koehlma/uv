@@ -19,7 +19,7 @@ import enum
 from .dns import c_create_sockaddr
 from .error import UVError
 from .handle import HandleType, Handle
-from .library import ffi, lib, c_require
+from .library import ffi, lib
 from .loop import Loop
 
 

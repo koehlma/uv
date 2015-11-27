@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from .library import ffi, lib, detach, c_require, dummy_callback
+from .library import ffi, lib, detach, dummy_callback
 
 from .error import UVError
 from .handle import HandleType, Handle
@@ -25,8 +25,9 @@ from .request import RequestType, Request
 @ffi.callback('uv_shutdown_cb')
 def uv_shutdown_cb(uv_request, status):
     request = detach(uv_request)
-    request.handle.requests.remove(request)
-    if request.callback: request.callback(request, status)
+    request.finish()
+    with request.loop.callback_context:
+        request.callback(request, status)
 
 
 @ffi.callback('uv_connection_cb')
@@ -47,8 +48,9 @@ def uv_read_cb(uv_stream, length, buffer):
 @ffi.callback('uv_write_cb')
 def uv_write_cb(uv_request, status):
     request = detach(uv_request)
-    request.callback(request, status)
     request.finish()
+    with request.loop.callback_context:
+        request.callback(request, status)
 
 
 @ffi.callback('uv_connect_cb')
@@ -76,7 +78,7 @@ class ShutdownRequest(Request):
 class WriteRequest(Request):
     __slots__ = ['uv_write', 'uv_buffers', 'callback']
 
-    def __init__(self, uv_buffers, callback=None):
+    def __init__(self, uv_buffers, callback=None, loop=None):
         self.uv_write = ffi.new('uv_write_t*')
         self.uv_buffers = uv_buffers
         self.callback = callback or dummy_callback
@@ -115,7 +117,6 @@ class Stream(Handle):
         self.on_read = dummy_callback
         self.on_connection = dummy_callback
         self.ipc = ipc
-        self.requests = set()
 
     @property
     def readable(self):
@@ -131,16 +132,15 @@ class Stream(Handle):
 
     def shutdown(self, callback=None):
         request = ShutdownRequest(callback)
-        self.requests.add(request)
-        lib.uv_shutdown(request.uv_request, self.uv_stream, uv_shutdown_cb)
+        lib.uv_shutdown(request.uv_shutdown, self.uv_stream, uv_shutdown_cb)
         return request
 
     def listen(self, backlog=5, callback=None):
         self.on_connection = callback or self.on_connection
         lib.uv_listen(self.uv_stream, backlog, uv_connection_cb)
 
-    def accept(self, implementation=None):
-        connection = (implementation or type(self))()
+    def accept(self, cls=None):
+        connection = (cls or type(self))()
         code = lib.uv_accept(self.uv_stream, connection.uv_stream)
         if code < 0: raise UVError(code)
         return connection
@@ -154,18 +154,16 @@ class Stream(Handle):
         code = lib.uv_read_stop(self.uv_stream)
         if code < 0: raise UVError(code)
 
-    def write(self, data, callback=None, stream=None):
-        buffers = ffi.new('uv_buf_t[1]')
-        data = ffi.new('char[%d]' % len(data), data)
-        buffers[0].base = data
-        buffers[0].len = len(data)
-        c_require(buffers, data)
-        request = WriteRequest(buffers, callback)
-        self.requests.add(request)
+    def write(self, c_data, callback=None, stream=None):
+        c_buffers = ffi.new('uv_buf_t[1]')
+        c_data = ffi.new('char[%d]' % len(c_data), c_data)
+        c_buffers[0].base = c_data
+        c_buffers[0].len = len(c_data)
+        request = WriteRequest([(c_buffers, c_data)], callback, self.loop)
         if stream is None:
-            lib.uv_write(request.uv_write, self.uv_stream, buffers, 1, uv_write_cb)
+            lib.uv_write(request.uv_write, self.uv_stream, c_buffers, 1, uv_write_cb)
         else:
-            lib.uv_write2(request.uv_write, self.uv_stream, buffers, 1,
+            lib.uv_write2(request.uv_write, self.uv_stream, c_buffers, 1,
                           stream.stream, uv_write_cb)
         return request
 
