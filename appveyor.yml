@@ -53,7 +53,7 @@ install:
   - ECHO "Installed SDKs:"
   - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
 
-  - "C:\Python27\python.exe appveyor\install.py"
+  - "C:\Python35\python.exe appveyor\install.py"
 
   - ps: if (-not(Test-Path($env:PYTHON))) { & appveyor\install.ps1 }
 
