@@ -35,17 +35,18 @@ environment:
     #  PYTHON_VERSION: "3.5.x"
     #  PYTHON_ARCH: "64"
 
-    #- PYTHON: "C:\\PyPy3-240"
-    #  PYTHON_PYPY: "pypy3"
-    #  PYTHON_PYPY_VERSION: "2.4.0"
-    #  PYTHON_VERSION: "3.2.5"
-    #  PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\PyPy-401"
       PYTHON_PYPY: "pypy"
       PYTHON_PYPY_VERSION: "4.0.1"
       PYTHON_VERSION: "2.7.10"
       PYTHON_ARCH: "32"
+
+    # skipping – we are getting some strange errors here
+    #- PYTHON: "C:\\PyPy3-240"
+    #  PYTHON_PYPY: "pypy3"
+    #  PYTHON_PYPY_VERSION: "2.4.0"
+    #  PYTHON_VERSION: "3.2.5"
+    #  PYTHON_ARCH: "32"
 
 
 install:
