@@ -50,6 +50,7 @@ test_script:
 
 after_test:
   - "%CMD_IN_ENV% python setup.py bdist_wheel"
+  - "%CMD_IN_ENV% python setup.py bdist_wininst"
   - ps: "ls dist"
 
 artifacts:
@@ -61,7 +62,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: qAyW7QLxOZvUOxpkOoxen1w4acG6IMZDjTZI2dN5s6roJPv8nqPse08U/PiI72n9
-  artifact: dist\*
+  artifact: *
   draft: true
   prerelease: false
   on:
