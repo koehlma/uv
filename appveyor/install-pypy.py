@@ -32,7 +32,6 @@ PYTHON_PYPY = os.environ.get('PYTHON_PYPY', None)
 PYTHON_VERSION = os.environ.get('PYTHON_VERSION', None)
 PYTHON_ARCH = os.environ.get('PYTHON_ARCH', None)
 
-
 if not PYTHON_PYPY: sys.exit(0)
 if os.path.exists(os.path.join(PYTHON, 'python.exe')): sys.exit(0)
 
@@ -74,4 +73,5 @@ pip_tar.extractall(PYTHON)
 
 pip_setup = os.path.join(PYTHON, 'pip-7.1.2', 'setup.py')
 
-subprocess.call([os.path.join(PYTHON, 'python.exe'), pip_setup, 'install'])
+subprocess.call([os.path.join(PYTHON, 'python.exe'), pip_setup, 'install'],
+                cwd=os.path.join(PYTHON, 'pip-7.1.2'))
