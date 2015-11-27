@@ -76,8 +76,8 @@ class Loop:
             loop = cls.default_loop()
         return loop
 
-    def __init__(self, buffer_size: int=2**16, allocate: callable=None,
-                 release: callable=None, default: bool=False):
+    def __init__(self, buffer_size=2**16, allocate=None,
+                 release=None, default=False):
         if default:
             assert self._default_loop is None
             self.uv_loop = lib.uv_default_loop()
@@ -125,7 +125,7 @@ class Loop:
     def get_timeout(self):
         return lib.uv_backend_timeout(self.uv_loop)
 
-    def run(self, mode: RunMode=RunMode.DEFAULT):
+    def run(self, mode=RunMode.DEFAULT):
         Loop._current_loops.loop = self
         result = bool(lib.uv_run(self.uv_loop, mode))
         Loop._current_loops.loop = None

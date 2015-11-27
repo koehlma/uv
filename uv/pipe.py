@@ -21,7 +21,6 @@ from .library import ffi, lib, is_posix
 
 from .error import UVError
 from .handle import HandleType
-from .loop import Loop
 from .stream import Stream, ConnectRequest, uv_connect_cb
 
 __all__ = ['Pipe']
@@ -31,12 +30,12 @@ __all__ = ['Pipe']
 class Pipe(Stream):
     __slots__ = ['uv_pipe']
 
-    def __init__(self, loop: Loop=None, ipc=False):
+    def __init__(self, loop=None, ipc=False):
         self.uv_pipe = ffi.new('uv_pipe_t*')
-        super().__init__(self.uv_pipe, loop, ipc)
+        super(Pipe, self).__init__(self.uv_pipe, loop, ipc)
         lib.uv_pipe_init(self.loop.uv_loop, self.uv_pipe, int(ipc))
 
-    def open(self, fd: int):
+    def open(self, fd):
         code = lib.cross_uv_pipe_open(self.uv_pipe, fd)
         if code < 0: raise UVError(code)
 
@@ -56,7 +55,7 @@ class Pipe(Stream):
         code = lib.uv_pipe_bind(self.uv_pipe, path.encode())
         if code < 0: raise UVError(code)
 
-    def connect(self, path: str, callback: callable=None):
+    def connect(self, path, callback=None):
         request = ConnectRequest(callback)
         self.requests.add(request)
         c_path = path.encode()

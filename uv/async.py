@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals, division
+
 from .library import ffi, lib, detach, dummy_callback
 
 from .error import UVError
@@ -33,16 +35,27 @@ def uv_async_cb(uv_async):
 
 @HandleType.ASYNC
 class Async(Handle):
+    """
+    :param loop: event loop which should be used for the handle
+    :param callback: callback which should be called from within the event loop
+    :type loop: Loop
+    :type callback: (uv.Async) -> None
+    """
+
     __slots__ = ['uv_async', 'callback']
 
-    def __init__(self, loop: Loop=None, callback: callable=None):
+    def __init__(self, loop=None, callback=None):
         self.uv_async = ffi.new('uv_async_t*')
-        super().__init__(self.uv_async, loop)
+        super(Async, self).__init__(self.uv_async, loop)
         self.callback = callback or dummy_callback
         code = lib.uv_async_init(self.loop.uv_loop, self.uv_async, uv_async_cb)
         if code < 0: raise UVError(code)
 
-    def send(self, callback: callable=None):
+    def send(self, callback=None):
+        """
+        :param callback: callback which should be called from within the event loop
+        :type callback: (uv.Async) -> None
+        """
         self.callback = callback or self.callback
         code = lib.uv_async_send(self.uv_async)
         if code < 0: raise UVError(code)

@@ -103,14 +103,14 @@ class StatusCode(enum.IntEnum):
     EHOSTDOWN = lib.UV_EHOSTDOWN
 
 
-def get_status_code(code: int):
+def get_status_code(code):
     if not code: return StatusCode.SUCCESS
     try: return StatusCode(code)
     except ValueError: return code
 
 
 class UVError(OSError):
-    def __init__(self, code: int):
+    def __init__(self, code):
         try:
             self.code = StatusCode(code)
             self.name = ffi.string(lib.uv_err_name(code)).decode()
@@ -119,4 +119,4 @@ class UVError(OSError):
             self.code = code
             self.name = 'UNKNOWN'
             message = 'some unknown error occoured'
-        super().__init__(code, '[%s] %s' % (self.name, message))
+        super(UVError, self).__init__(code, '[%s] %s' % (self.name, message))

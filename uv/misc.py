@@ -52,12 +52,12 @@ def unpack_cpu_info(uv_cpu_info):
     return CpuInfo(model, uv_cpu_info.speed, unpack_cpu_times(uv_cpu_info.cpu_times))
 
 
-def guess_handle(fd: int):
+def guess_handle(fd):
     uv_handle = lib.cross_uv_guess_handle(fd)
     return HandleType(uv_handle).cls
 
 
-def kill(pid: int, signum: int):
+def kill(pid, signum):
     code = lib.uv_kill(pid, signum)
     if code < 0: raise UVError(code)
 

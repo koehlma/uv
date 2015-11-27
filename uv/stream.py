@@ -19,7 +19,6 @@ from .library import ffi, lib, detach, c_require, dummy_callback
 
 from .error import UVError
 from .handle import HandleType, Handle
-from .loop import Loop
 from .request import RequestType, Request
 
 
@@ -65,7 +64,7 @@ class ShutdownRequest(Request):
 
     def __init__(self, callback=None):
         self.uv_shutdown = ffi.new('uv_shutdown_t*')
-        super().__init__(self.uv_shutdown)
+        super(ShutdownRequest, self).__init__(self.uv_shutdown)
         self.callback = callback or dummy_callback
 
     @property
@@ -81,7 +80,7 @@ class WriteRequest(Request):
         self.uv_write = ffi.new('uv_write_t*')
         self.uv_buffers = uv_buffers
         self.callback = callback or dummy_callback
-        super().__init__(self.uv_write)
+        super(WriteRequest, self).__init__(self.uv_write)
 
     @property
     def handle(self):
@@ -99,7 +98,7 @@ class ConnectRequest(Request):
     def __init__(self, callback=None):
         self.uv_connect = ffi.new('uv_connect_t*')
         self.callback = callback or dummy_callback
-        super().__init__(self.uv_connect)
+        super(ConnectRequest, self).__init__(self.uv_connect)
 
     @property
     def handle(self):
@@ -110,8 +109,8 @@ class ConnectRequest(Request):
 class Stream(Handle):
     __slots__ = ['uv_stream', 'on_read', 'on_connection', 'ipc', 'requests']
 
-    def __init__(self, stream, loop: Loop=None, ipc=False):
-        super().__init__(stream, loop)
+    def __init__(self, stream, loop=None, ipc=False):
+        super(Stream, self).__init__(stream, loop)
         self.uv_stream = ffi.cast('uv_stream_t*', stream)
         self.on_read = dummy_callback
         self.on_connection = dummy_callback
@@ -136,7 +135,7 @@ class Stream(Handle):
         lib.uv_shutdown(request.uv_request, self.uv_stream, uv_shutdown_cb)
         return request
 
-    def listen(self, backlog: int=5, callback=None):
+    def listen(self, backlog=5, callback=None):
         self.on_connection = callback or self.on_connection
         lib.uv_listen(self.uv_stream, backlog, uv_connection_cb)
 

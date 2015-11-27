@@ -43,10 +43,10 @@ def uv_signal_cb(uv_signal, signum):
 class Signal(Handle):
     __slots__ = ['uv_signal', 'on_signal']
 
-    def __init__(self, loop: Loop=None, on_signal: callable=None):
+    def __init__(self, loop=None, on_signal=None):
         self.uv_signal = ffi.new('uv_signal_t*')
         self.on_signal = on_signal or dummy_callback
-        super().__init__(self.uv_signal, loop)
+        super(Signal, self).__init__(self.uv_signal, loop)
         code = lib.uv_signal_init(self.loop.uv_loop, self.uv_signal)
         if code < 0: raise UVError(code)
 
@@ -54,7 +54,7 @@ class Signal(Handle):
     def signum(self):
         return self.uv_signal.signum
 
-    def start(self, signum: int, callback: callable=None):
+    def start(self, signum, callback=None):
         self.on_signal = callback or self.on_signal
         code = lib.uv_signal_start(self.uv_signal, uv_signal_cb, signum)
         if code < 0: raise UVError(code)

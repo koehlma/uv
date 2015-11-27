@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from .library import ffi, lib, detach, dummy_callback
+
 from .error import UVError
 from .fs import unpack_stat
 from .handle import HandleType, Handle
-from .library import ffi, lib, detach, dummy_callback
-from .loop import Loop
 
 __all__ = ['FSPoll']
 
@@ -36,15 +36,15 @@ def uv_fs_poll_cb(uv_fs_poll, status, uv_previous_stat, uv_current_stat):
 class FSPoll(Handle):
     __slots__ = ['fs_poll', 'callback', 'path']
 
-    def __init__(self, path: str=None, loop: Loop=None, callback: callable=None):
+    def __init__(self, path=None, loop=None, callback=None):
         self.fs_poll = ffi.new('uv_fs_poll_t*')
         self.callback = callback or dummy_callback
         self.path = path
-        super().__init__(self.fs_poll, loop)
+        super(FSPoll, self).__init__(loop)
         code = lib.uv_fs_poll_init(self.loop.uv_loop, self.fs_poll)
         if code < 0: raise UVError(code)
 
-    def start(self, path: str=None, interval: int=5000, callback: callable=None):
+    def start(self, path=None, interval=5000, callback=None):
         self.path = path or self.path
         self.callback = callback or self.callback
         uv_path = self.path.encode()

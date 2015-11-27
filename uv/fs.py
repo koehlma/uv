@@ -23,7 +23,6 @@ from .library import ffi, lib, detach, detach_loop, dummy_callback
 
 from .error import UVError, StatusCode, get_status_code
 from .handle import HandleType
-from .loop import Loop
 from .request import Request, RequestType
 
 Timespec = namedtuple('Timespec', ['sec', 'nsec'])
@@ -104,9 +103,9 @@ class DirentType(enum.IntEnum):
 class FSRequest(Request):
     __slots__ = ['uv_fs', 'data', 'callback']
 
-    def __init__(self, data=None, callback: callable=None, loop: Loop=None):
+    def __init__(self, data=None, callback=None, loop=None):
         self.uv_fs = ffi.new('uv_fs_t*')
-        super().__init__(self.uv_fs, loop)
+        super(FSRequest, self).__init__(self.uv_fs, loop)
         self.data = data
         self.callback = callback or dummy_callback
         requests.add(self)
@@ -133,20 +132,20 @@ class FSRequest(Request):
 
 
 @FSType.CLOSE
-def post_close(request: FSRequest):
+def post_close(request):
     status = get_status_code(request.result)
     return [status]
 
 
 @FSType.OPEN
-def post_open(request: FSRequest):
+def post_open(request):
     if request.result < 0: status, fd = get_status_code(request.result), None
     else: status, fd = StatusCode.SUCCESS, request.result
     return [status, fd]
 
 
 @FSType.STAT
-def post_stat(request: FSRequest):
+def post_stat(request):
     status = get_status_code(request.result)
     return [status, request.stat]
 
@@ -160,15 +159,14 @@ def fs_callback(uv_request):
         request.callback(request, *request.fs_type.postprocessor(request))
 
 
-def close(fd: int, callback: callable=None, loop: Loop=None):
+def close(fd, callback=None, loop=None):
     request = FSRequest(None, callback, loop)
     code = lib.cross_uv_fs_close(request.loop.uv_loop, request.uv_fs, fd, fs_callback)
     if code < 0: raise UVError(code)
     return request
 
 
-def open(path: str, flags: int, mode: int=0o777, callback: callable=None,
-         loop: Loop=None):
+def open(path, flags, mode=0o777, callback=None, loop=None):
     request = FSRequest(None, callback, loop)
     uv_fs = request.uv_fs
     c_path = path.encode()
@@ -177,17 +175,11 @@ def open(path: str, flags: int, mode: int=0o777, callback: callable=None,
     return request
 
 
-
-def stat(path: str, callback: callable=None, loop: Loop=None):
+def stat(path, callback=None, loop=None):
     request = FSRequest(callback=callback, loop=loop)
     code = lib.uv_fs_stat(request.loop.uv_loop, request.uv_fs, path.encode(), fs_callback)
     if code < 0: raise UVError(code)
     return request
-
-
-
-
-
 
 
 @HandleType.FILE

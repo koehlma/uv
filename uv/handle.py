@@ -27,7 +27,7 @@ __all__ = ['close_all_handles', 'Handle']
 handles = set()
 
 
-def close_all_handles(callback: callable=None):
+def close_all_handles(callback=None):
     for handle in handles: handle.close(callback)
 
 
@@ -66,10 +66,10 @@ def uv_close_cb(uv_handle):
 
 @HandleType.UNKNOWN
 @HandleType.HANDLE
-class Handle:
+class Handle(object):
     __slots__ = ['uv_handle', 'c_attachment', 'loop', 'on_closed']
 
-    def __init__(self, uv_handle, loop: Loop=None):
+    def __init__(self, uv_handle, loop=None):
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
         self.c_attachment = attach(self.uv_handle, self)
         self.on_closed = dummy_callback
@@ -77,44 +77,44 @@ class Handle:
         handles.add(self)
 
     @property
-    def active(self) -> bool:
+    def active(self):
         return bool(lib.uv_is_active(self.uv_handle))
 
     @property
-    def closed(self) -> bool:
+    def closed(self):
         return bool(lib.uv_is_closing(self.uv_handle))
 
     @property
-    def referenced(self) -> bool:
+    def referenced(self):
         return bool(lib.uv_has_ref(self.uv_handle))
 
     @property
-    def send_buffer_size(self) -> int:
+    def send_buffer_size(self):
         c_buffer_size = ffi.new('int*')
         code = lib.uv_send_buffer_size(self.uv_handle, c_buffer_size)
         if code < 0: raise UVError(code)
         return c_buffer_size[0]
 
     @send_buffer_size.setter
-    def send_buffer_size(self, value: int):
+    def send_buffer_size(self, value):
         c_buffer_size = ffi.new('int*', int(value / 2) if is_linux else value)
         code = lib.uv_send_buffer_size(self.uv_handle, c_buffer_size)
         if code < 0: raise UVError(code)
 
     @property
-    def receive_buffer_size(self) -> int:
+    def receive_buffer_size(self):
         c_buffer_size = ffi.new('int*')
         code = lib.uv_recv_buffer_size(self.uv_handle, c_buffer_size)
         if code < 0: raise UVError(code)
         return c_buffer_size[0]
 
     @receive_buffer_size.setter
-    def receive_buffer_size(self, value: int):
+    def receive_buffer_size(self, value):
         c_buffer_size = ffi.new('int*', int(value / 2) if is_linux else value)
         code = lib.uv_recv_buffer_size(self.uv_handle, c_buffer_size)
         if code < 0: raise UVError(code)
 
-    def fileno(self) -> int:
+    def fileno(self):
         uv_fd = ffi.new('uv_os_fd_t*')
         lib.uv_fileno(self.uv_handle, uv_fd)
         return ffi.cast('int*', uv_fd)[0]
@@ -125,6 +125,6 @@ class Handle:
     def dereference(self):
         lib.uv_unref(self.uv_handle)
 
-    def close(self, callback: callable=None):
+    def close(self, callback=None):
         self.on_closed = callback or self.on_closed
         lib.uv_close(self.uv_handle, uv_close_cb)

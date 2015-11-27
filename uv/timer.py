@@ -19,7 +19,6 @@ from .library import ffi, lib, detach, dummy_callback
 
 from .error import UVError
 from .handle import HandleType, Handle
-from .loop import Loop
 
 
 @ffi.callback('uv_timer_cb')
@@ -32,21 +31,21 @@ def uv_timer_cb(uv_handle):
 class Timer(Handle):
     __slots__ = ['uv_timer', 'on_timeout']
 
-    def __init__(self, loop: Loop=None, on_timeout: callable=None):
+    def __init__(self, loop=None, on_timeout=None):
         self.uv_timer = ffi.new('uv_timer_t*')
         self.on_timeout = on_timeout or dummy_callback
-        super().__init__(self.uv_timer, loop)
+        super(Timer, self).__init__(self.uv_timer, loop)
         lib.uv_timer_init(self.loop.uv_loop, self.uv_timer)
 
     @property
-    def repeat(self) -> int:
+    def repeat(self):
         return lib.uv_timer_get_repeat(self.uv_timer)
 
     @repeat.setter
-    def repeat(self, repeat: int):
+    def repeat(self, repeat):
         lib.uv_timer_set_repeat(self.uv_timer, repeat)
 
-    def start(self, timeout: int, callback: callable=None, repeat: int=0):
+    def start(self, timeout, callback=None, repeat=0):
         if callback is not None: self.on_timeout = callback
         lib.uv_timer_start(self.uv_timer, uv_timer_cb, timeout, repeat)
 

@@ -23,7 +23,6 @@ from collections import namedtuple
 from .library import ffi, lib, detach, str_c2py, dummy_callback
 
 from .error import UVError, get_status_code
-from .loop import Loop
 from .request import RequestType, Request
 
 __all__ = ['AddrInfo', 'NameInfo', 'Address4', 'Address6', 'GetAddrInfo',
@@ -36,7 +35,7 @@ Address4 = namedtuple('Address4', ['host', 'port'])
 Address6 = namedtuple('Address6', ['host', 'port', 'flowinfo', 'scope_id'])
 
 
-def unpack_addrinfo(c_addrinfo) -> list:
+def unpack_addrinfo(c_addrinfo):
     items, c_next = [], c_addrinfo
 
     while c_next:
@@ -91,10 +90,10 @@ class GetAddrInfo(Request):
     __slots__ = ['uv_getaddrinfo', 'c_hints', 'callback', 'host',
                  'port', 'hints', 'flags', 'addrinfo']
 
-    def __init__(self, host: str, port: int, family: int=0, socktype: int=0,
-                 protocol: int=0, flags: int=0, callback: callable=None, loop: Loop=None):
+    def __init__(self, host, port, family=0, socktype=0, protocol=0,
+                 flags=0, callback=None, loop=None):
         self.uv_getaddrinfo = ffi.new('uv_getaddrinfo_t*')
-        super().__init__(self.uv_getaddrinfo, loop)
+        super(GetAddrInfo, self).__init__(self.uv_getaddrinfo, loop)
         self.c_hints = ffi.new('struct addrinfo*')
         self.c_hints = ffi.new('struct addrinfo*')
         self.c_hints.ai_family = family
@@ -123,8 +122,8 @@ class GetAddrInfo(Request):
         self.finish()
 
 
-def getaddrinfo(host: str, port: int, family: int=0, socktype: int=0, protocol: int=0,
-                flags: int=0, callback: callable=None, loop: Loop=None):
+def getaddrinfo(host, port, family=0, socktype=0, protocol=0,
+                flags=0, callback=None, loop=None):
     request = GetAddrInfo(host, port, family, socktype, protocol, flags, callback, loop)
     return request.addrinfo if callback is None else request
 
@@ -141,10 +140,9 @@ def uv_getnameinfo_cb(uv_getnameinfo, status, c_hostname, c_service):
 class GetNameInfo(Request):
     __slots__ = ['uv_getnameinfo', 'c_sockaddr', 'callback', 'ip', 'port', 'flags']
 
-    def __init__(self, ip: str, port: int, flags: int=0, callback: callable=None,
-                 loop: Loop=None):
+    def __init__(self, ip, port, flags=0, callback=None, loop=None):
         self.uv_getnameinfo = ffi.new('uv_getnameinfo_t*')
-        super().__init__(self.uv_getnameinfo, loop)
+        super(GetNameInfo, self).__init__(self.uv_getnameinfo, loop)
         self.c_sockaddr = c_create_sockaddr(ip, port)
 
         self.callback = callback
@@ -167,13 +165,12 @@ class GetNameInfo(Request):
         return ffi.string(self.uv_getnameinfo.service).decode()
 
 
-def getnameinfo(ip: str, port: int, flags: int=0, callback: callable=None,
-                loop: Loop=None):
+def getnameinfo(ip, port, flags=0, callback=None, loop=None):
     request = GetNameInfo(ip, port, flags, callback, loop)
     return NameInfo(request.host, request.service) if callback is None else request
 
 
-def c_create_sockaddr(ip: str, port: int, flowinfo: int=0, scope_id: int=0):
+def c_create_sockaddr(ip, port, flowinfo=0, scope_id=0):
     c_sockaddr = ffi.new('struct sockaddr *')
     c_ip = ip.encode()
     code = lib.uv_ip4_addr(c_ip, port, ffi.cast('struct sockaddr_in*', c_sockaddr))

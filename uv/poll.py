@@ -21,7 +21,6 @@ from .library import ffi, lib, detach, dummy_callback
 
 from .error import UVError
 from .handle import HandleType, Handle
-from .loop import Loop
 
 __all__ = ['Poll', 'PollEvent']
 
@@ -41,14 +40,14 @@ def poll_callback(uv_poll, status, events):
 class Poll(Handle):
     __slots__ = ['uv_poll', 'fd', 'on_event']
 
-    def __init__(self, fd: int, loop: Loop=None, on_event: callable=None):
+    def __init__(self, fd, loop=None, on_event=None):
         self.fd = fd
         self.uv_poll = ffi.new('uv_poll_t*')
         self.on_event = on_event or dummy_callback
-        super().__init__(self.uv_poll, loop)
+        super(Poll, self).__init__(self.uv_poll, loop)
         lib.cross_uv_poll_init_socket(self.loop.uv_loop, self.uv_poll, fd)
 
-    def start(self, events: int=PollEvent.READABLE, on_event: callable=None):
+    def start(self, events=PollEvent.READABLE, on_event=None):
         self.on_event = on_event or self.on_event
         code = lib.uv_poll_start(self.uv_poll, events, poll_callback)
         if code < 0: raise UVError(code)

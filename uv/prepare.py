@@ -19,7 +19,6 @@ from .library import ffi, lib, detach, dummy_callback
 
 from .error import UVError
 from .handle import HandleType, Handle
-from .loop import Loop
 
 __all__ = ['Prepare']
 
@@ -34,14 +33,14 @@ def uv_prepare_cb(uv_prepare):
 class Prepare(Handle):
     __slots__ = ['prepare', 'callback']
 
-    def __init__(self, loop: Loop=None, callback: callable=None):
+    def __init__(self, loop=None, callback=None):
         self.prepare = ffi.new('uv_prepare_t*')
         self.callback = callback or dummy_callback
-        super().__init__(self.prepare, loop)
+        super(Prepare, self).__init__(self.prepare, loop)
         code = lib.uv_prepare_init(self.loop.uv_loop, self.prepare)
         if code < 0: raise UVError(code)
 
-    def start(self, callback: callable=None):
+    def start(self, callback=None):
         self.callback = callback or self.callback
         code = lib.uv_prepare_start(self.prepare, uv_prepare_cb)
         if code < 0: raise UVError(code)

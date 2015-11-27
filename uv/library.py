@@ -82,11 +82,11 @@ def dummy_callback(*_):
     pass
 
 
-def str_py2c(string: str):
+def str_py2c(string):
     return ffi.new('char[]', str(string).encode())
 
 
-def str_c2py(cdata: ffi.CData):
+def str_c2py(cdata):
     return ffi.string(cdata).decode()
 
 

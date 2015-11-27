@@ -89,9 +89,9 @@ def populate_stdio_container(uv_stdio, fileobj=None):
 
 @HandleType.PROCESS
 class Process(Handle):
-    def __init__(self, arguments, uid: int=None, gid: int=None, cwd: str=None,
-                 env: dict=None, flags: int=0, loop: Loop=None, stdin=None,
-                 stdout=None, stderr=None, stdio: list=None, on_exit: callable=None):
+    def __init__(self, arguments, uid=None, gid=None, cwd=None,
+                 env=None, flags=0, loop=None, stdin=None,
+                 stdout=None, stderr=None, stdio=None, on_exit=None):
         self.uv_options = ffi.new('uv_process_options_t*')
 
         self.c_file = str_py2c(arguments[0])
@@ -137,14 +137,14 @@ class Process(Handle):
 
         self.process = ffi.new('uv_process_t*')
         self.on_exit = on_exit or dummy_callback
-        super().__init__(self.process, loop)
+        super(Process, self).__init__(self.process, loop)
         code = lib.uv_spawn(self.loop.uv_loop, self.process, self.uv_options)
         if code < 0: raise UVError(code)
 
     @property
-    def pid(self) -> int:
+    def pid(self):
         return self.process.pid
 
-    def kill(self, signum: int=Signals.SIGINT):
+    def kill(self, signum=Signals.SIGINT):
         code = lib.uv_process_kill(self.process, signum)
         if code < 0: raise UVError(code)

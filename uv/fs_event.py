@@ -21,7 +21,6 @@ from .library import ffi, lib, detach, dummy_callback
 
 from .error import UVError
 from .handle import HandleType, Handle
-from .loop import Loop
 
 __all__ = ['EventFlags', 'Event', 'FSEvent']
 
@@ -49,15 +48,15 @@ def uv_fs_event_cb(uv_fs_event, uv_filename, events, status):
 class FSEvent(Handle):
     __slots__ = ['fs_event', 'callback', 'path']
 
-    def __init__(self, loop: Loop=None, path: str=None, callback: callable=None):
+    def __init__(self, loop=None, path=None, callback=None):
         self.fs_event = ffi.new('uv_fs_event_t*')
+        super(FSEvent, self).__init__(self.fs_event, loop)
         self.callback = callback or dummy_callback
         self.path = path
-        super().__init__(self.fs_event, loop)
         code = lib.uv_fs_event_init(self.loop.uv_loop, self.fs_event)
         if code < 0: raise UVError(code)
 
-    def start(self, path: str=None, callback: callable=None, flags: int=0):
+    def start(self, path=None, callback=None, flags=0):
         self.path = path or self.path
         self.callback = callback or self.callback
         uv_path = self.path.encode()

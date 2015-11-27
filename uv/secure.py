@@ -41,7 +41,7 @@ class Protocol(enum.IntEnum):
 
 
 class Secure:
-    def __init__(self, stream: Stream, keyfile=None, certfile=None, server_side=False,
+    def __init__(self, stream, keyfile=None, certfile=None, server_side=False,
                  cert_reqs=CertReqs.NONE, ssl_version=Protocol.SSLv23, ca_certs=None,
                  ciphers=None, server_hostname=None, context=None):
         self.stream = stream
@@ -66,7 +66,7 @@ class Secure:
         self.writable = False
         self.readable = False
 
-    def handshake(self, callback: callable=None):
+    def handshake(self, callback=None):
         self.poll.start(PollEvent.READABLE | PollEvent.WRITABLE, self._do_handshake)
         self.on_handshake = callback or self.on_handshake
 
@@ -118,9 +118,7 @@ class Secure:
     def cipher(self):
         return self.ssl.cipher()
 
-
-
-    def read_start(self, callback: callable=None):
+    def read_start(self, callback=None):
         self.on_read = callback or self.on_read
         self.readable = True
         self._update_events()

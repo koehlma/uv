@@ -38,17 +38,17 @@ class Membership(enum.IntEnum):
 class UDP(Handle):
     __slots__ = ['uv_udp']
 
-    def __init__(self, flags: int=0, loop: Loop=None):
+    def __init__(self, flags=0, loop=None):
         self.uv_udp = ffi.new('uv_tcp_t*')
-        super().__init__(self.uv_udp, loop)
+        super(UDP, self).__init__(self.uv_udp, loop)
         code = lib.uv_udp_init_ex(self.loop.uv_loop, self.uv_udp, flags)
         if code < 0: raise UVError(code)
 
-    def open(self, fd: int):
+    def open(self, fd):
         code = lib.uv_udp_open(self.uv_udp, lib.sock_from_int(fd))
         if code < 0: raise UVError(code)
 
-    def bind(self, ip, port, flags: int=0):
+    def bind(self, ip, port, flags=0):
         code = lib.uv_tcp_bind(self.uv_udp, c_create_sockaddr(ip, port), flags)
         if code < 0: raise UVError(code)
 

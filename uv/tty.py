@@ -44,9 +44,9 @@ class TTYMode(enum.IntEnum):
 class TTY(Stream):
     __slots__ = ['uv_tty']
 
-    def __init__(self, fd: int, readable: bool=False, loop: Loop=None):
+    def __init__(self, fd, readable=False, loop=None):
         self.uv_tty = ffi.new('uv_tty_t*')
-        super().__init__(self.uv_tty, loop)
+        super(TTY, self).__init__(self.uv_tty, loop)
         code = lib.cross_uv_tty_init(self.loop.uv_loop, self.uv_tty, fd, int(readable))
         if code < 0: raise UVError(code)
 
@@ -57,6 +57,6 @@ class TTY(Stream):
         if code < 0: raise UVError(code)
         return WinSize(c_with[0], c_height[0])
 
-    def set_mode(self, mode: TTYMode):
+    def set_mode(self, mode=TTYMode.NORMAL):
         code = lib.uv_tty_set_mode(self.uv_tty, mode)
         if code < 0: raise UVError(code)

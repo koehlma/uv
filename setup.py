@@ -177,7 +177,7 @@ class BuildExtensions(build_ext):
     boolean_options.extend(['libuv-build-clean', 'libuv-force-fetch', 'use-system-libuv'])
 
     def __init__(self, dist):
-        super().__init__(dist)
+        build_ext.__init__(self, dist)
         self.libuv_build_clean = False
         self.libuv_force_fetch = False
         self.use_system_libuv = False
@@ -186,7 +186,7 @@ class BuildExtensions(build_ext):
         self.libuv_build_clean = False
         self.libuv_force_fetch = False
         self.use_system_libuv = False
-        super().initialize_options()
+        build_ext.initialize_options(self)
 
     def build_extensions(self):
         if not os.path.exists(DEPS_PATH): os.mkdir(DEPS_PATH)
@@ -209,7 +209,7 @@ class BuildExtensions(build_ext):
         else:
             self.use_bundled_libuv()
 
-        super().build_extensions()
+        build_ext.build_extensions(self)
 
     def use_bundled_libuv(self):
         if self.libuv_force_fetch:
@@ -235,7 +235,7 @@ class BuildExtensions(build_ext):
 
 class SourceDistribution(sdist):
     def initialize_options(self):
-        super().initialize_options()
+        sdist.initialize_options(self)
         if not os.path.exists(DEPS_PATH): os.mkdir(DEPS_PATH)
         clean_build()
         clone_libuv()
@@ -271,12 +271,13 @@ setup(name='uv',
           'Operating System :: POSIX :: Linux',
           'Operating System :: POSIX :: BSD :: FreeBSD',
           'Operating System :: Microsoft :: Windows',
+          'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3',
           'Programming Language :: Python :: 3.2',
           'Programming Language :: Python :: 3.3',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',
-          'Programming Language :: Python :: 3 :: Only',
           'Programming Language :: Python :: Implementation :: CPython',
           'Programming Language :: Python :: Implementation :: PyPy',
           'Topic :: Internet'

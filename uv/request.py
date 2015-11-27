@@ -44,10 +44,10 @@ class RequestType(enum.IntEnum):
 
 
 @RequestType.UNKNOWN
-class Request:
+class Request(object):
     __slots__ = ['uv_request', 'c_attachment', 'finished', 'loop']
 
-    def __init__(self, request, loop: Loop=None):
+    def __init__(self, request, loop=None):
         self.uv_request = ffi.cast('uv_req_t*', request)
         self.c_attachment = attach(self.uv_request, self)
         self.finished = False

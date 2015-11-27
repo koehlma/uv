@@ -22,7 +22,6 @@ from .dns import c_create_sockaddr
 from .error import UVError
 from .handle import HandleType
 from .library import ffi, lib, c_require
-from .loop import Loop
 from .stream import Stream, ConnectRequest, uv_connect_cb
 
 
@@ -34,9 +33,9 @@ class TCPFlags(enum.IntEnum):
 class TCP(Stream):
     __slots__ = ['tcp', 'sockaddr']
 
-    def __init__(self, loop: Loop=None, ipc=False):
+    def __init__(self, loop=None, ipc=False):
         self.tcp = ffi.new('uv_tcp_t*')
-        super().__init__(self.tcp, loop, ipc)
+        super(TCP, self).__init__(self.tcp, loop, ipc)
         lib.uv_tcp_init(self.loop.uv_loop, self.tcp)
         self.sockaddr = None
 
@@ -44,7 +43,7 @@ class TCP(Stream):
     def family(self):
         return socket.AF_INET
 
-    def bind(self, ip, port, flags: int=0):
+    def bind(self, ip, port, flags=0):
         self.sockaddr = c_create_sockaddr(ip, port)
         code = lib.uv_tcp_bind(self.tcp, self.sockaddr, flags)
         if code < 0: raise UVError(code)
