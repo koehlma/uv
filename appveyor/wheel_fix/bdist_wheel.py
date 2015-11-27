@@ -6,12 +6,11 @@ A wheel is a built archive format.
 
 import csv
 import hashlib
-import json
 import os
-import shutil
 import subprocess
 import warnings
-
+import shutil
+import json
 import wheel
 
 try:
@@ -38,10 +37,8 @@ from .pep425tags import get_abbr_impl, get_impl_ver
 from .util import native, open_for_csv
 from .archive import archive_wheelfile
 from .pkginfo import read_pkg_info, write_pkg_info
-from appveyor.wheel_fix.metadata import pkginfo_to_dict
-from appveyor import pep425tags
-from appveyor.wheel_fix import metadata
-
+from .metadata import pkginfo_to_dict
+from . import pep425tags, metadata
 
 def safer_name(name):
     return safe_name(name).replace('-', '_')
