@@ -1,5 +1,5 @@
-Welcome to Python LibUV's documentation!
-========================================
+Welcome to Python libuv CFFI Bindings's documentation!
+======================================================
 
 Contents:
 

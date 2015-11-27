@@ -123,19 +123,19 @@ def build_environ():
 
 
 def clone_libuv():
-    log.info('Cloning LibUV...')
+    log.info('cloning libuv...')
     cmd = ['git', 'clone', '-b', LIBUV_BRANCH, LIBUV_REPO, LIBUV_PATH]
     subprocess.check_call(cmd)
     subprocess.check_call(['git', 'checkout', LIBUV_TAG], cwd=LIBUV_PATH)
 
 
 def clone_gyp():
-    log.info('Cloning GYP...')
+    log.info('cloning gyp...')
     subprocess.call(['git', 'clone', GYP_REPO, GYP_PATH])
 
 
 def build_libuv():
-    log.info('Building LibUV...')
+    log.info('Building libuv...')
     env = build_environ()
     if sys.platform == 'win32':
         architecture = {'32bit': 'x86', '64bit': 'x64'}[platform.architecture()[0]]
@@ -148,7 +148,7 @@ def build_libuv():
 
 
 def clean_libuv():
-    log.info('Cleaning LibUV...')
+    log.info('Cleaning libuv...')
     if sys.platform == 'win32':
         cmd = ['vcbuild.bat', 'clean']
         env = build_environ()
@@ -166,9 +166,9 @@ def clean_build():
 class BuildExtensions(build_ext):
     user_options = build_ext.user_options[:]
     user_options.extend([
-        ('libuv-build-clean', None, 'Clean LibUV tree before compilation.'),
-        ('libuv-force-fetch', None, 'Remove LibUV (if present) and fetch it again.'),
-        ('use-system-libuv', None, 'Use the system provided version of LibUV.')
+        ('libuv-build-clean', None, 'Clean libuv tree before compilation.'),
+        ('libuv-force-fetch', None, 'Remove libuv (if present) and fetch it again.'),
+        ('use-system-libuv', None, 'Use the system provided version of libuv.')
     ])
 
     boolean_options = build_ext.boolean_options[:]
@@ -201,7 +201,7 @@ class BuildExtensions(build_ext):
 
         if self.use_system_libuv:
             if sys.platform == 'win32':
-                msg = 'using a system provided LibUV is not supported on Windows'
+                msg = 'using a system provided libuv is not supported on Windows'
                 raise DistutilsError(msg)
             extension.libraries.append('uv')
         else:
@@ -253,7 +253,7 @@ else:
 
 setup(name='uv',
       version=version,
-      description='Python LibUV CFFI Bindings',
+      description='Python libuv CFFI Bindings',
       long_description=long_description,
       author='Maximilian Köhl',
       author_email='mail@koehlma.de',

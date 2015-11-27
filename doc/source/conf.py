@@ -26,7 +26,7 @@ source_suffix = '.rst'
 
 master_doc = 'index'
 
-project = 'Python LibUV'
+project = 'Python libuv CFFI Bindings'
 copyright = '2015, Maximilian Köhl'
 author = 'Maximilian Köhl'
 

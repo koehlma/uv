@@ -17,7 +17,7 @@
 
 """
 This package aims to provide an object oriented CFFI based wrapper around
-the LibUV asynchronous IO library. It supports all handles as well as
+the libuv asynchronous IO library. It supports all handles as well as
 filesystem operations, dns utility functions and miscellaneous utilities.
 
 There are no plans to support the thread pool work scheduling or the
@@ -35,7 +35,7 @@ stunts and overall makes the code more readable.
 """
 
 __version__ = '0.0.4'
-__project__ = 'Python LibUV CFFI Bindings'
+__project__ = 'Python libuv CFFI Bindings'
 __author__ = 'Maximilian Köhl'
 __email__ = 'mail@koehlma.de'
 

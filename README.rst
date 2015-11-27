@@ -1,11 +1,10 @@
-Python LibUV CFFI Bindings
+Python libuv CFFI Bindings
 ==========================
 |pypi| |unix_build| |windows_build| |docs|
 
------
-
-This package aims to provide an object oriented wrapper around the LibUV
-asynchronous IO library.
+This package aims to provide an object oriented CFFI based wrapper around
+the libuv asynchronous IO library. It supports all handles as well as
+filesystem operations, dns utility functions and miscellaneous utilities.
 
 Features
 --------

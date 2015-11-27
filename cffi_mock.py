@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 __version__ = '{version}'
-__project__ = 'Python LibUV CFFI Bindings'
+__project__ = 'Python "libuv" CFFI Bindings'
 __author__ = 'Maximilian Köhl'
 __email__ = 'mail@koehlma.de'
 
