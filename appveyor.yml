@@ -37,12 +37,14 @@ environment:
 
     - PYTHON: "C:\\PyPy3-241"
       PYTHON_PYPY: "pypy3"
-      PYTHON_VERSION: "2.4.0"
+      PYTHON_PYPY_VERSION: "2.4.0"
+      PYTHON_VERSION: "3.2.5"
       PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\PyPy-401"
       PYTHON_PYPY: "pypy"
-      PYTHON_VERSION: "4.0.1"
+      PYTHON_PYPY_VERSION: "4.0.1"
+      PYTHON_VERSION: "2.7.10"
       PYTHON_ARCH: "32"
 
 

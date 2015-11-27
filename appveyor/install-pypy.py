@@ -29,7 +29,7 @@ except OSError:
 
 PYTHON = os.environ.get('PYTHON', None)
 PYTHON_PYPY = os.environ.get('PYTHON_PYPY', None)
-PYTHON_VERSION = os.environ.get('PYTHON_VERSION', None)
+PYTHON_PYPY_VERSION = os.environ.get('PYTHON_PYPY_VERSION', None)
 PYTHON_ARCH = os.environ.get('PYTHON_ARCH', None)
 
 if not PYTHON_PYPY: sys.exit(0)
@@ -37,7 +37,7 @@ if os.path.exists(os.path.join(PYTHON, 'python.exe')): sys.exit(0)
 
 URL = 'https://bitbucket.org/pypy/pypy/downloads/{}-{}-win32.zip'
 
-url = URL.format(PYTHON_PYPY, PYTHON_VERSION)
+url = URL.format(PYTHON_PYPY, PYTHON_PYPY_VERSION)
 
 print(url)
 
@@ -48,7 +48,7 @@ with open('deps\\pypy.zip', 'wb') as pypy_zip:
 pypy_zip = zipfile.ZipFile('deps\\pypy.zip')
 pypy_zip.extractall('C:\\')
 
-os.rename('C:\\{}-{}-win32'.format(PYTHON_PYPY, PYTHON_VERSION), PYTHON)
+os.rename('C:\\{}-{}-win32'.format(PYTHON_PYPY, PYTHON_PYPY_VERSION), PYTHON)
 try:
     os.unlink('C:\\pypy.zip')
 except OSError:

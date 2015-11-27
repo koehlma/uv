@@ -22,6 +22,11 @@ IF %MAJOR_PYTHON_VERSION% == 2 (
     ECHO Unsupported Python version: "%MAJOR_PYTHON_VERSION%"
     EXIT 1
 )
+
+IF "%PYTHON_PYPY:~0,4%" == "pypy" (
+    SET SET_SDK=N
+)
+
 IF %SET_SDK% == Y (
     IF "%PYTHON_ARCH%" == "64" (
         ECHO Configuring Windows SDK %WINDOWS_SDK_VERSION% for Python %MAJOR_PYTHON_VERSION% on a 64 bit architecture
