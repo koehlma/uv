@@ -55,16 +55,3 @@ after_test:
 
 artifacts:
   - path: dist\*
-
-deploy:
-  release: latest
-  description: ''
-  provider: GitHub
-  auth_token:
-    secure: qAyW7QLxOZvUOxpkOoxen1w4acG6IMZDjTZI2dN5s6roJPv8nqPse08U/PiI72n9
-  artifact: /.*/
-  draft: false
-  prerelease: true
-  on:
-    branch: master
-    appveyor_repo_tag: false
