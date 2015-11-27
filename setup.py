@@ -100,7 +100,9 @@ def choose_path(paths):
 def win32_find_python27():
     assert sys.platform == 'win32'
     python27 = None
-    if 'PYTHON' in os.environ:
+    if sys.version_info[:2] == (2, 7):
+        return sys.executable
+    if 'PYTHON' in os.environ and os.environ['PYTHON'].endswith('.exe'):
         python27 = os.environ['PYTHON']
     if python27 is None or not os.path.isfile(python27):
         python27 = choose_path(WIN32_PYTHON27_PATHS)
@@ -117,6 +119,14 @@ def win32_find_python27():
 def build_environ():
     environ = dict(os.environ)
     if sys.platform == 'win32':
+        environ.pop('VS140COMNTOOLS', None)
+        environ.pop('VS120COMNTOOLS', None)
+        environ.pop('VS110COMNTOOLS', None)
+        if sys.version_info < (3, 3):
+            environ.pop('VS100COMNTOOLS', None)
+            environ['GYP_MSVS_VERSION'] = '2008'
+        else:
+            environ['GYP_MSVS_VERSION'] = '2010'
         environ['PYTHON'] = win32_find_python27()
     else:
         if 'CFLAGS' not in environ: environ['CFLAGS'] = ''
