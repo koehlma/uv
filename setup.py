@@ -24,8 +24,9 @@ import subprocess
 import sys
 
 from distutils import log
-from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
+from distutils.command.build_ext import build_ext
+from distutils.command.bdist_wininst import bdist_wininst
 from distutils.errors import DistutilsError
 
 from setuptools import setup
@@ -253,6 +254,12 @@ class SourceDistribution(sdist):
         shutil.rmtree(os.path.join(LIBUV_PATH, '.git'))
         shutil.rmtree(os.path.join(GYP_PATH, '.git'))
         shutil.rmtree(os.path.join(GYP_PATH, 'test'))
+
+
+class WindowsInstaller(bdist_wininst):
+    def get_inidata(self):
+        self.distribution.metadata.author = 'Maximilian Koehl'
+        return bdist_wininst.get_inidata(self)
 
 
 if os.environ.get('READTHEDOCS', None) == 'True':
