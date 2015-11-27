@@ -37,7 +37,7 @@ function Download ($filename, $url) {
             break
         }
         Catch [Exception]{
-            Start-Sleep 1
+            Start-Sleepypyp 1
         }
     }
     if (Test-Path $filepath) {

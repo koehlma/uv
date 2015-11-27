@@ -26,6 +26,7 @@ import sys
 from distutils import log
 from distutils.command.sdist import sdist
 from distutils.command.build_ext import build_ext
+from distutils.command.bdist_msi import bdist_msi
 from distutils.command.bdist_wininst import bdist_wininst
 from distutils.errors import DistutilsError
 
@@ -120,14 +121,16 @@ def win32_find_python27():
 def build_environ():
     environ = dict(os.environ)
     if sys.platform == 'win32':
-        environ.pop('VS140COMNTOOLS', None)
-        environ.pop('VS120COMNTOOLS', None)
-        environ.pop('VS110COMNTOOLS', None)
-        if sys.version_info < (3, 3):
-            environ.pop('VS100COMNTOOLS', None)
-            environ['GYP_MSVS_VERSION'] = '2008'
-        else:
-            environ['GYP_MSVS_VERSION'] = '2010'
+        if os.environ.get('APPVEYOR', None) == 'True':
+            if os.environ.get('SET_SDK', None) == 'Y':
+                environ.pop('VS140COMNTOOLS', None)
+                environ.pop('VS120COMNTOOLS', None)
+                environ.pop('VS110COMNTOOLS', None)
+                if sys.version_info < (3, 3):
+                    environ.pop('VS100COMNTOOLS', None)
+                    environ['GYP_MSVS_VERSION'] = '2008'
+                else:
+                    environ['GYP_MSVS_VERSION'] = '2010'
         environ['PYTHON'] = win32_find_python27()
     else:
         if 'CFLAGS' not in environ: environ['CFLAGS'] = ''
@@ -262,6 +265,14 @@ class WindowsInstaller(bdist_wininst):
         return bdist_wininst.get_inidata(self)
 
 
+class WindowsMSI(bdist_msi):
+    def run(self):
+        import re
+        cleaned = re.search('[0-9]+\.[0-9]+\.[0-9]+', self.distribution.metadata.version)
+        self.distribution.metadata.version = cleaned.group(0)
+        bdist_msi.run(self)
+
+
 if os.environ.get('READTHEDOCS', None) == 'True':
     cmdclass = {}
     ext_modules = []
@@ -270,6 +281,7 @@ else:
     ext_modules = [extension]
 
 cmdclass['bdist_wininst'] = WindowsInstaller
+cmdclass['bdist_msi'] = WindowsMSI
 
 
 setup(name='uv',
