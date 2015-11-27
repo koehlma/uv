@@ -35,12 +35,25 @@ environment:
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
 
+    - PYTHON: "C:\\PyPy3-241"
+      PYTHON_PYPY: "pypy3"
+      PYTHON_VERSION: "2.4.1"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\PyPy-401"
+      PYTHON_PYPY: "pypy"
+      PYTHON_VERSION: "4.0.1"
+      PYTHON_ARCH: "32"
+
+
 install:
   - ECHO "Filesystem root:"
   - ps: "ls \"C:/\""
 
   - ECHO "Installed SDKs:"
   - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
+
+  - "C:\\Python27\\python.exe appveyor\install.py"
 
   - ps: if (-not(Test-Path($env:PYTHON))) { & appveyor\install.ps1 }
 

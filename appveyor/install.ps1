@@ -222,8 +222,10 @@ function InstallMinicondaPip ($python_home) {
 }
 
 function main () {
-    InstallPython $env:PYTHON_VERSION $env:PYTHON_ARCH $env:PYTHON
-    InstallPip $env:PYTHON
+    if ($env:PYTHON_PYPY -contains "pypy*") {
+        InstallPython $env:PYTHON_VERSION $env:PYTHON_ARCH $env:PYTHON
+        InstallPip $env:PYTHON
+    }
 }
 
 main
