@@ -16,5 +16,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 
-print(os.environ)
+PYTHON_PYPY = os.environ.get('PYTHON_PYPY', None)
+
+subprocess.call(['python', 'setup.py', 'bdist_wheel'])
+subprocess.call(['python', 'setup.py', 'bdist_wininst'])
+
+if not PYTHON_PYPY:
+    subprocess.call(['python', 'setup.py', 'bdist_msi'])

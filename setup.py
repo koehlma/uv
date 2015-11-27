@@ -26,9 +26,13 @@ import sys
 from distutils import log
 from distutils.command.sdist import sdist
 from distutils.command.build_ext import build_ext
-from distutils.command.bdist_msi import bdist_msi
 from distutils.command.bdist_wininst import bdist_wininst
 from distutils.errors import DistutilsError
+
+try:
+    from distutils.command.bdist_msi import bdist_msi
+except ImportError:
+    bdist_msi = None
 
 from setuptools import setup
 
@@ -259,20 +263,6 @@ class SourceDistribution(sdist):
         shutil.rmtree(os.path.join(GYP_PATH, 'test'))
 
 
-class WindowsInstaller(bdist_wininst):
-    def get_inidata(self):
-        self.distribution.metadata.author = 'Maximilian Koehl'
-        return bdist_wininst.get_inidata(self)
-
-
-class WindowsMSI(bdist_msi):
-    def run(self):
-        import re
-        cleaned = re.search('[0-9]+\.[0-9]+\.[0-9]+', self.distribution.metadata.version)
-        self.distribution.metadata.version = cleaned.group(0)
-        bdist_msi.run(self)
-
-
 if os.environ.get('READTHEDOCS', None) == 'True':
     cmdclass = {}
     ext_modules = []
@@ -280,9 +270,24 @@ else:
     cmdclass = {'build_ext': BuildExtensions, 'sdist': SourceDistribution}
     ext_modules = [extension]
 
-cmdclass['bdist_wininst'] = WindowsInstaller
-cmdclass['bdist_msi'] = WindowsMSI
 
+class WindowsInstaller(bdist_wininst):
+    def get_inidata(self):
+        self.distribution.metadata.author = 'Maximilian Koehl'
+        return bdist_wininst.get_inidata(self)
+
+
+if bdist_msi is not None:
+    class WindowsMSI(bdist_msi):
+        def run(self):
+            import re
+            cleaned = re.search('[0-9]+\.[0-9]+\.[0-9]+',
+                                self.distribution.metadata.version)
+            self.distribution.metadata.version = cleaned.group(0)
+            bdist_msi.run(self)
+    cmdclass['bdist_msi'] = WindowsMSI
+
+cmdclass['bdist_wininst'] = WindowsInstaller
 
 setup(name='uv',
       version=version,
