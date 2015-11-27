@@ -90,8 +90,9 @@ class Loop:
         self.attachment = attach_loop(self.uv_loop, self)
 
         if allocate is None or release is None:
+            self.c_data_buffer = ffi.new('char[%d]' % buffer_size)
             self.attachment.data.buffer.length = buffer_size
-            self.attachment.data.buffer.base = ffi.new('char[%d]' % buffer_size)
+            self.attachment.data.buffer.base = self.c_data_buffer
             self.allocate = lib.py_get_allocator()
             self.release = lib.py_release
         else:
