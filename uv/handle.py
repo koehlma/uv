@@ -61,7 +61,8 @@ class HandleType(enum.IntEnum):
 def uv_close_cb(uv_handle):
     handle = detach(uv_handle)
     handles.remove(handle)
-    handle.on_closed(handle)
+    with handle.loop.callback_context:
+        handle.on_closed(handle)
 
 
 @HandleType.UNKNOWN
