@@ -1,10 +1,10 @@
 Python libuv CFFI Bindings
 ==========================
-|pypi| |unix_build| |windows_build| |docs|
+|pypi| |unix_build| |windows_build| |docs| |python_implementations| |python_versions|
 
-This package aims to provide an object oriented CFFI based wrapper around
-the libuv asynchronous IO library. It supports all handles as well as
-filesystem operations, dns utility functions and miscellaneous utilities.
+This package aims to provide an object oriented CFFI based wrapper around the libuv
+asynchronous IO library. It supports all handles of libuv as well as filesystem
+operations, dns utility functions and miscellaneous utilities.
 
 Features
 --------
@@ -18,7 +18,7 @@ Features
 - IPC with socket sharing, using UNIX domain sockets or named pipes (Windows)
 - child processes
 - signal handling
-- PyPy and CPython support (but only Python Language version 3)
+- PyPy and CPython support (but only Python language version 3)
 
 
 .. |pypi| image:: https://img.shields.io/pypi/v/uv.svg?style=flat-square&label=latest%20version
@@ -32,3 +32,9 @@ Features
 
 .. |docs| image:: https://readthedocs.org/projects/uv/badge/?version=latest&style=flat-square
     :target: https://uv.readthedocs.org/en/latest/
+
+.. |python_implementations| image:: https://img.shields.io/pypi/implementation/uv.svg?style=flat-square&label=versions
+    :target: https://pypi.python.org/pypi/uv
+
+.. |python_versions| image:: https://img.shields.io/pypi/pyversions/uv.svg?style=flat-square&label=implementations
+    :target: https://pypi.python.org/pypi/uv
