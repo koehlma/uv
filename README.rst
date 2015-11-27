@@ -17,9 +17,13 @@ Features
 - asynchronous file system events
 - cross platform ANSI escape code controlled TTY
 - IPC with socket sharing, using UNIX domain sockets or named pipes (Windows)
-- child processes
-- signal handling
-- PyPy and CPython support (PyPy: 4.0, CPython: 3.2, 3.3, 3.4, 3.5)
+- child processes and signal handling
+- cross platform memory, CPU and network interface information
+- timer and high resolution clock
+- supported Python interpreters and versions:
+   - **CPython**: 3.2, 3.3, 3.4, 3.5
+   - **PyPy**: 4.0 (Windows and Linux)
+   - **PyPy3**: 2.4.0, 2.7.0-alpha0 (Linux Only)
 
 
 .. |pypi| image:: https://img.shields.io/pypi/v/uv.svg?style=flat-square&label=latest%20version
