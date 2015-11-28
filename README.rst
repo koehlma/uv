@@ -21,7 +21,7 @@ Features
 - cross platform memory, CPU and network interface information
 - timer and high resolution clock
 - supported Python interpreters and versions:
-   - **CPython**: 3.2, 3.3, 3.4, 3.5
+   - **CPython**: 3.3, 3.4, 3.5
    - **PyPy**: 4.0 (Windows and Linux)
    - **PyPy3**: 2.4.0, 2.7.0-alpha0 (Linux Only)
 
