@@ -19,7 +19,7 @@ import enum
 
 from .library import ffi, lib
 
-__all__ = ['StatusCode', 'UVError', 'ClosedStructure']
+__all__ = ['StatusCode', 'UVError', 'HandleClosedError']
 
 
 class StatusCode(enum.IntEnum):
@@ -122,7 +122,12 @@ class UVError(OSError):
         super(UVError, self).__init__(code, '[%s] %s' % (self.name, message))
 
 
-class ClosedStructure(UVError):
+class ClosedError(UVError):
     def __init__(self):
         message = 'invalid operation on closed structure'
-        super(ClosedStructure, self).__init__(StatusCode.EINVAL, message)
+        super(HandleClosedError, self).__init__(StatusCode.EINVAL, message)
+
+
+class HandleClosedError(ClosedError): pass
+
+class LoopClosedError(ClosedError): pass

@@ -19,7 +19,7 @@ import enum
 
 from .library import ffi, lib, attach
 
-from .error import UVError, ClosedStructure
+from .error import UVError, HandleClosedError
 from .loop import Loop
 
 __all__ = ['requests', 'Request']
@@ -52,7 +52,7 @@ class Request(object):
         self.c_attachment = attach(self.uv_request, self)
         self.finished = False
         self.loop = loop or Loop.current_loop()
-        if self.loop.closed: raise ClosedStructure()
+        if self.loop.closed: raise HandleClosedError()
         requests.add(self)
 
     @property

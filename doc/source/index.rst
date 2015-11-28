@@ -18,9 +18,13 @@ Some docs...
 .. autoclass:: uv.UVError
     :members:
 
+.. autoclass:: uv.ClosedStructure
+    :members:
+
 .. autoclass:: uv.Handle
     :members:
     :member-order: bysource
+
 
 
 

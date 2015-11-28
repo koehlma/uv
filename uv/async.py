@@ -19,7 +19,7 @@ from __future__ import unicode_literals, division
 
 from .library import ffi, lib, detach, dummy_callback
 
-from .error import UVError, ClosedStructure
+from .error import UVError, HandleClosedError
 from .handle import HandleType, Handle
 from .loop import Loop
 
@@ -56,7 +56,7 @@ class Async(Handle):
         :param callback: callback which should be called from within the event loop
         :type callback: (uv.Async) -> None
         """
-        if self.closed: raise ClosedStructure()
+        if self.closing: raise HandleClosedError()
         self.callback = callback or self.callback
         code = lib.uv_async_send(self.uv_async)
         if code < 0: raise UVError(code)
