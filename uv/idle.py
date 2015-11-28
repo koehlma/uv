@@ -34,7 +34,6 @@ class Idle(Handle):
     __slots__ = ['uv_idle', 'callback']
 
     def __init__(self, loop=None, callback=None):
-        if loop.closing: raise HandleClosedError()
         self.uv_idle = ffi.new('uv_idle_t*')
         super(Idle, self).__init__(self.uv_idle, loop)
         self.callback = callback or dummy_callback

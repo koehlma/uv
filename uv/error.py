@@ -125,9 +125,10 @@ class UVError(OSError):
 class ClosedError(UVError):
     def __init__(self):
         message = 'invalid operation on closed structure'
-        super(HandleClosedError, self).__init__(StatusCode.EINVAL, message)
+        super(ClosedError, self).__init__(StatusCode.EINVAL, message)
 
 
 class HandleClosedError(ClosedError): pass
+
 
 class LoopClosedError(ClosedError): pass
