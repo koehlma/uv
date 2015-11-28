@@ -16,3 +16,5 @@ uvcffi/__init__.py
 
 MANIFEST
 .tox
+
+.coverage
