@@ -28,9 +28,7 @@ class Mock(object):
         return Mock()
 
     def __call__(self, *args):
-        if len(args) == 1 and type(args[0]) == type:
-            return args[0]
-        return 0
+        return args[0] if len(args) == 1 and type(args[0]) == type else 0
 
     def __or__(self, _):
         return 0

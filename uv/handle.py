@@ -85,14 +85,14 @@ class Handle(object):
     :type uv_handle: ffi.CData
     """
 
-    __slots__ = ['uv_handle', 'attachment', 'loop', 'on_closed', 'destroyed', 'closing']
+    __slots__ = ['uv_handle', 'attachment', 'loop', 'on_closed', 'closed', 'closing']
 
     def __init__(self, uv_handle, loop=None):
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
         self.attachment = attach(self.uv_handle, self)
         self.loop = loop or Loop.current_loop()
         """
-        Loop where the handle is running ony.
+        Loop where the handle is running on.
 
         :readonly: True
         :type: Loop
@@ -105,7 +105,14 @@ class Handle(object):
         :readonly: False
         :type: (Handle) -> None
         """
-        self.destroyed = False
+        self.closed = False
+        """
+        Handle has been closed. This is `True` right after the
+        close callback has been called.
+
+        :readonly: True
+        :type: bool
+        """
         self.closing = False
         """
         Handle is already closed or is closing.
@@ -132,19 +139,8 @@ class Handle(object):
         :readonly: True
         :type: bool
         """
-        if self.destroyed: return False
+        if self.closed: return False
         return bool(lib.uv_is_active(self.uv_handle))
-
-    @property
-    def closed(self):
-        """
-        Handle has been closed. This is `True` right after the
-        close callback has been called.
-
-        :readonly: True
-        :type: bool
-        """
-        return self.destroyed and self.closing
 
     @property
     def referenced(self):
@@ -156,7 +152,7 @@ class Handle(object):
         :readonly: False
         :type: bool
         """
-        if self.destroyed: return False
+        if self.closed: return False
         return bool(lib.uv_has_ref(self.uv_handle))
 
     @referenced.setter
@@ -326,11 +322,11 @@ class Handle(object):
 
             This method is used internally to free all allocated C resources and
             make sure there are no references from Python anymore to those objects
-            after the handle has been closed. You should never call this directly!
+            after the handle has been closed. You should never call it directly!
         """
         self.uv_handle = None
         handles.remove(self)
-        self.destroyed = True
+        self.closed = True
 
     # pyuv compatibility
     ref = referenced
