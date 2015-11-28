@@ -19,7 +19,7 @@ import enum
 
 from .library import ffi, lib, attach
 
-from .error import UVError
+from .error import UVError, ClosedLoop
 from .loop import Loop
 
 __all__ = ['requests', 'Request']
@@ -52,6 +52,7 @@ class Request(object):
         self.c_attachment = attach(self.uv_request, self)
         self.finished = False
         self.loop = loop or Loop.current_loop()
+        if self.loop.closed: raise ClosedLoop()
         requests.add(self)
 
     @property
