@@ -18,6 +18,8 @@
 import os
 import sys
 
+from collections import namedtuple
+
 from uv import __version__
 
 
@@ -66,6 +68,14 @@ if uvcffi.__version__ != __version__:
 
 ffi = uvcffi.ffi
 lib = uvcffi.lib
+
+Version = namedtuple('Version', ['string', 'major', 'minor', 'patch'])
+version_string = ffi.string(lib.uv_version_string()).decode()
+version_hex = lib.uv_version()
+version_major = (version_hex >> 16) & 0xff
+version_minor = (version_hex >> 8) & 0xff
+version_patch = version_hex & 0xff
+version = Version(version_string, version_major, version_minor, version_patch)
 
 trace_calls = os.environ.get('PYTHON_UV_TRACER', None) == 'True'
 
@@ -146,13 +156,7 @@ if trace_calls:
     ffi = FFITracer()
 
 
-Version = namedtuple('Version', ['string', 'major', 'minor', 'patch'])
-version_string = ffi.string(lib.uv_version_string()).decode()
-version_hex = lib.uv_version()
-version_major = (version_hex >> 16) & 0xff
-version_minor = (version_hex >> 8) & 0xff
-version_patch = version_hex & 0xff
-version = Version(version_string, version_major, version_minor, version_patch)
+
 
 
 Attachment = namedtuple('Attachment', ['data', 'reference'])
