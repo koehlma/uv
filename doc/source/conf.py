@@ -9,6 +9,8 @@ __dir__ = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.join(__dir__, '..', '..'))
 
+os.environ['MOCK_UVCFFI'] = 'True'
+
 import uv
 
 extensions = [
@@ -43,4 +45,4 @@ todo_include_todos = False
 
 html_static_path = ['_static']
 
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/3.5', None)}

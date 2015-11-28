@@ -18,11 +18,47 @@
 import os
 import sys
 
-from collections import namedtuple
-
 from uv import __version__
 
-import uvcffi
+
+class Mock(object):
+    def __getattr__(self, _):
+        return Mock()
+
+    def __call__(self, *args):
+        if len(args) == 1 and type(args[0]) == type:
+            return args[0]
+        return 0
+
+    def __or__(self, _):
+        return 0
+
+    @staticmethod
+    def uv_version_string():
+        return '0.0.0'
+
+    @staticmethod
+    def string(string):
+        return string.encode()
+
+    @staticmethod
+    def callback(*_):
+        return Mock()
+
+
+if os.environ.get('MOCK_UVCFFI', None) == 'True':
+    mock = Mock()
+    from collections import namedtuple
+
+    class _Module(object):
+        __version__ = __version__
+        ffi = Mock()
+        lib = Mock()
+
+    uvcffi = _Module()
+else:
+    import uvcffi
+
 
 if uvcffi.__version__ != __version__:
     raise RuntimeError('incompatible CFFI base library (%s)' % uvcffi.__version__)

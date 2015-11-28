@@ -19,7 +19,7 @@ import enum
 
 from .library import ffi, lib, attach, detach, dummy_callback, is_linux
 
-from .error import UVError, ClosedLoop
+from .error import UVError, ClosedStructure
 from .loop import Loop
 
 __all__ = ['close_all_handles', 'Handle']
@@ -60,34 +60,38 @@ class HandleType(enum.IntEnum):
 @ffi.callback('uv_close_cb')
 def uv_close_cb(uv_handle):
     handle = detach(uv_handle)
-    handles.remove(handle)
     with handle.loop.callback_context:
         handle.on_closed(handle)
+    handle.destroy()
 
 
 @HandleType.UNKNOWN
 @HandleType.HANDLE
 class Handle(object):
-    __slots__ = ['uv_handle', 'c_attachment', 'loop', 'on_closed']
+    __slots__ = ['uv_handle', 'c_attachment', 'loop', 'destroyed', 'on_closed']
 
     def __init__(self, uv_handle, loop=None):
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
         self.c_attachment = attach(self.uv_handle, self)
         self.on_closed = dummy_callback
         self.loop = loop or Loop.current_loop()
-        if self.loop.closed: raise ClosedLoop()
+        if self.loop.closed: raise ClosedStructure()
+        self.destroyed = False
         handles.add(self)
 
     @property
     def active(self):
+        if self.destroyed: return False
         return bool(lib.uv_is_active(self.uv_handle))
 
     @property
     def closed(self):
+        if self.destroyed: return True
         return bool(lib.uv_is_closing(self.uv_handle))
 
     @property
     def referenced(self):
+        if self.destroyed: return False
         return bool(lib.uv_has_ref(self.uv_handle))
 
     @property
@@ -105,6 +109,19 @@ class Handle(object):
 
     @property
     def receive_buffer_size(self):
+        """
+        Gets the size of the receive buffer that the operating system uses for
+        the socket. The following handles are supported: TCP and UDP handles on
+        Unix and Windows, Pipe handles only on Unix.
+
+        .. note::
+
+            Unlike libuv this library abstracts the different behaviour on Linux
+            and other operating system.
+
+        :return: size of the receive buffer
+        :rtype: int
+        """
         c_buffer_size = ffi.new('int*')
         code = lib.uv_recv_buffer_size(self.uv_handle, c_buffer_size)
         if code < 0: raise UVError(code)
@@ -112,21 +129,72 @@ class Handle(object):
 
     @receive_buffer_size.setter
     def receive_buffer_size(self, value):
+        """
+        :param value:  size of the receive buffer
+        :type value: int
+        :return:
+        """
+        if self.destroyed: raise ClosedStructure()
         c_buffer_size = ffi.new('int*', int(value / 2) if is_linux else value)
         code = lib.uv_recv_buffer_size(self.uv_handle, c_buffer_size)
         if code < 0: raise UVError(code)
 
     def fileno(self):
+        """
+        Gets the platform dependent file descriptor equivalent. The following
+        handles are supported: TCP, UDP, TTY, Pipes and Poll. On all other
+        handles this will raise :class:`uv.UVError` with `StatusCode.EINVAL`.
+
+        :raises uv.UVError: error during receiving fileno
+        :return: platform dependent file descriptor equivalent
+        :rtype: int
+        """
+        if self.destroyed: raise ClosedStructure()
         uv_fd = ffi.new('uv_os_fd_t*')
-        lib.uv_fileno(self.uv_handle, uv_fd)
+        code = lib.uv_fileno(self.uv_handle, uv_fd)
+        if code < 0: raise UVError(code)
         return ffi.cast('int*', uv_fd)[0]
 
     def reference(self):
+        """
+        References the handle. If the event loop runs in default mode it will
+        exit when there are no more active and referenced handles left. This
+        has nothing to do with CPython's reference counting.
+        """
+        if self.destroyed: raise ClosedStructure()
         lib.uv_ref(self.uv_handle)
 
     def dereference(self):
+        """
+        Dereferences the handle. If the event loop runs in default mode it will
+        exit when there are no more active and referenced handles left. This has
+        nothing to do with CPython's reference counting.
+        """
+        if self.destroyed: raise ClosedStructure()
         lib.uv_unref(self.uv_handle)
 
-    def close(self, callback=None):
-        self.on_closed = callback or self.on_closed
+    def close(self, on_closed=None):
+        """
+        Closes the handle and frees all resources afterwards. Please make sure
+        to call this method on any handle you do not need anymore. Handles do
+        not close automatically and are also not garbage collected unless you
+        have closed them exlicitly (explicit is better than implicit).
+
+        :param on_closed: callback called after the handle has been closed
+        :type on_closed: (Handle) -> None
+        """
+        if self.destroyed: return
+        self.on_closed = on_closed or self.on_closed
         lib.uv_close(self.uv_handle, uv_close_cb)
+
+    def destroy(self):
+        """
+        .. warning::
+
+            This method is used internally to free all allocated C resources and
+            make sure there are no references from Python anymore to those objects
+            after the handle has been closed. You should never call this directly!
+        """
+        self.uv_handle = None
+        handles.remove(self)
+        self.destroyed = True
