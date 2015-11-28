@@ -27,10 +27,6 @@ __all__ = ['close_all_handles', 'Handle']
 handles = set()
 
 
-def close_all_handles(callback=None):
-    for handle in handles: handle.close(callback)
-
-
 class HandleType(enum.IntEnum):
     UNKNOWN = lib.UV_UNKNOWN_HANDLE
     HANDLE = lib.UV_HANDLE
@@ -65,6 +61,16 @@ def uv_close_cb(uv_handle):
     handle.destroy()
 
 
+def close_all_handles(on_closed=None):
+    """
+    Close all handles which have not yet been closed.
+
+    :param on_closed: callback called after a handle has been closed
+    :type on_closed: (Handle) -> None
+    """
+    for handle in handles: handle.close(on_closed)
+
+
 @HandleType.UNKNOWN
 @HandleType.HANDLE
 class Handle(object):
@@ -72,16 +78,18 @@ class Handle(object):
     Handles represent long-lived objects capable of performing certain
     operations while active. This is the base class of all handles.
 
+    :raises uv.LoopClosedError: loop has already been closed or is closing
     :param loop: loop where the handle should run on
     :param uv_handle: allocated c struct for this handle
     :type loop: Loop
     :type uv_handle: ffi.CData
     """
-    __slots__ = ['uv_handle', 'c_attachment', 'loop', 'destroyed', 'closing', 'on_closed']
+
+    __slots__ = ['uv_handle', 'attachment', 'loop', 'on_closed', 'destroyed', 'closing']
 
     def __init__(self, uv_handle, loop=None):
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
-        self.c_attachment = attach(self.uv_handle, self)
+        self.attachment = attach(self.uv_handle, self)
         self.loop = loop or Loop.current_loop()
         """
         Loop where the handle is running ony.

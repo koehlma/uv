@@ -41,7 +41,7 @@ __email__ = 'mail@koehlma.de'
 
 from .library import version as uv_version
 
-from .error import UVError, HandleClosedError, StatusCode
+from .error import UVError, HandleClosedError, LoopClosedError, StatusCode
 from .handle import Handle, handles, close_all_handles
 from .loop import RunMode, Loop, loops
 from .request import Request
