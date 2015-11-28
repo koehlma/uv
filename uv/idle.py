@@ -17,7 +17,7 @@
 
 from .library import ffi, lib, detach, dummy_callback
 
-from .error import UVError
+from .error import UVError, ClosedLoop
 from .handle import HandleType, Handle
 
 __all__ = ['Idle']
@@ -34,9 +34,10 @@ class Idle(Handle):
     __slots__ = ['uv_idle', 'callback']
 
     def __init__(self, loop=None, callback=None):
+        if loop.closed: raise ClosedLoop()
         self.uv_idle = ffi.new('uv_idle_t*')
-        self.callback = callback or dummy_callback
         super(Idle, self).__init__(self.uv_idle, loop)
+        self.callback = callback or dummy_callback
         code = lib.uv_idle_init(self.loop.uv_loop, self.uv_idle)
         if code < 0: raise UVError(code)
 

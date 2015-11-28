@@ -41,7 +41,7 @@ __email__ = 'mail@koehlma.de'
 
 from .library import version as uv_version
 
-from .error import UVError, StatusCode
+from .error import UVError, ClosedLoop, StatusCode
 from .handle import Handle, handles, close_all_handles
 from .loop import RunMode, Loop, loops
 from .request import Request
@@ -65,7 +65,4 @@ from .fs_poll import FSPoll
 
 from . import dns
 from . import fs
-from . import library
 from . import misc
-
-

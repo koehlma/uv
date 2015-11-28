@@ -28,19 +28,22 @@ class TestAsync(unittest.TestCase):
     def test_async(self):
         self.async_called = False
 
-        def on_async(a):
+        self.loop_thread = threading.current_thread
+
+        def on_async(async):
             self.async_called = True
-            a.close()
-            prepare.close()
+            async.close()
+            self.prepare.close()
+            self.assertEqual(self.loop_thread, threading.current_thread)
 
-        def on_prepare(p):
-            threading.Thread(target=async.send).start()
-            p.stop()
+        def on_prepare(prepare):
+            threading.Thread(target=self.async.send).start()
+            prepare.stop()
 
-        async = uv.Async(self.loop, on_async)
-        prepare = uv.Prepare(self.loop, on_prepare)
-        prepare.start()
+        self.async = uv.Async(self.loop, on_async)
+        self.prepare = uv.Prepare(self.loop, on_prepare)
 
+        self.prepare.start()
         self.loop.run()
 
         self.assertTrue(self.async_called)

@@ -41,7 +41,7 @@ def uv_walk_cb(uv_handle, handles):
     if handle: ffi.from_handle(handles).append(handle)
 
 
-class CallbackContext:
+class CallbackContext(object):
     def __enter__(self):
         pass
 
@@ -74,10 +74,10 @@ class Loop:
             loop = cls._current_loops.loop
         except AttributeError:
             loop = cls.default_loop()
+        if loop is None: loop = cls.default_loop()
         return loop
 
-    def __init__(self, buffer_size=2**16, allocate=None,
-                 release=None, default=False):
+    def __init__(self, buffer_size=2**16, allocate=None, release=None, default=False):
         if default:
             assert self._default_loop is None
             self.uv_loop = lib.uv_default_loop()
@@ -93,6 +93,8 @@ class Loop:
             self.c_data_buffer = ffi.new('char[%d]' % buffer_size)
             self.attachment.data.buffer.length = buffer_size
             self.attachment.data.buffer.base = self.c_data_buffer
+
+
             self.allocate = lib.py_get_allocator()
             self.release = lib.py_release
         else:
@@ -106,6 +108,10 @@ class Loop:
     @property
     def alive(self):
         return bool(lib.uv_loop_alive(self.uv_loop))
+
+    @property
+    def closed(self):
+        return self.uv_loop is None
 
     @property
     def now(self):
@@ -127,21 +133,20 @@ class Loop:
         return lib.uv_backend_timeout(self.uv_loop)
 
     def run(self, mode=RunMode.DEFAULT):
+        if self.closed: return
         Loop._current_loops.loop = self
         result = bool(lib.uv_run(self.uv_loop, mode))
         Loop._current_loops.loop = None
         return result
 
     def stop(self):
+        if self.closed: return
         lib.uv_stop(self.uv_loop)
 
     def close(self):
+        if self.closed: return
         code = lib.uv_loop_close(self.uv_loop)
         if code < 0: raise UVError(code)
+        self.uv_loop = None
         loops.remove(self)
-
-
-
-
-
 

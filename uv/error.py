@@ -19,7 +19,7 @@ import enum
 
 from .library import ffi, lib
 
-__all__ = ['StatusCode', 'UVError']
+__all__ = ['StatusCode', 'UVError', 'ClosedLoop']
 
 
 class StatusCode(enum.IntEnum):
@@ -110,13 +110,19 @@ def get_status_code(code):
 
 
 class UVError(OSError):
-    def __init__(self, code):
+    def __init__(self, code, message=None):
         try:
             self.code = StatusCode(code)
             self.name = ffi.string(lib.uv_err_name(code)).decode()
-            message = ffi.string(lib.uv_strerror(code)).decode()
+            message = message or ffi.string(lib.uv_strerror(code)).decode()
         except ValueError:
             self.code = code
             self.name = 'UNKNOWN'
             message = 'some unknown error occoured'
         super(UVError, self).__init__(code, '[%s] %s' % (self.name, message))
+
+
+class ClosedLoop(UVError):
+    def __init__(self):
+        message = 'invalid operation on closed loop'
+        super(ClosedLoop, self).__init__(StatusCode.EINVAL, message)

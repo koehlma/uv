@@ -19,7 +19,7 @@ import enum
 
 from .library import ffi, lib, attach, detach, dummy_callback, is_linux
 
-from .error import UVError
+from .error import UVError, ClosedLoop
 from .loop import Loop
 
 __all__ = ['close_all_handles', 'Handle']
@@ -75,6 +75,7 @@ class Handle(object):
         self.c_attachment = attach(self.uv_handle, self)
         self.on_closed = dummy_callback
         self.loop = loop or Loop.current_loop()
+        if self.loop.closed: raise ClosedLoop()
         handles.add(self)
 
     @property
