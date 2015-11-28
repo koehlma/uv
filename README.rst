@@ -1,7 +1,7 @@
 Python libuv CFFI Bindings
 ==========================
 
-|pypi| |unix_build| |windows_build| |docs| |implementations|
+|pypi| |unix_build| |windows_build| |coverage| |docs|
 
 This package aims to provide an object oriented CFFI based wrapper around the libuv
 asynchronous IO library. It supports all handles of libuv as well as filesystem
@@ -38,5 +38,5 @@ Features
 .. |docs| image:: https://readthedocs.org/projects/uv/badge/?version=latest&style=flat-square
     :target: https://uv.readthedocs.org/en/latest/
 
-.. |implementations| image:: https://img.shields.io/pypi/implementation/uv.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/uv
+.. |coverage| image:: https://img.shields.io/coveralls/koehlma/uv/master.svg?style=flat-square
+    :target: https://coveralls.io/github/koehlma/uv?branch=master
