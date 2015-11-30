@@ -73,10 +73,7 @@ with open(os.path.join(__dir__, 'cffi_source.c'), 'rb') as cffi_source:
 with open(os.path.join(__dir__, 'cffi_declarations.c'), 'rb') as cffi_declarations:
     declarations = cffi_declarations.read().decode('utf-8')
 
-if os.environ.get('READTHEDOCS', None) == 'True':
-    cffi_module = 'cffi_mock.py'
-else:
-    cffi_module = 'cffi_template.py'
+cffi_module = 'cffi_template.py'
 
 with open(os.path.join(__dir__, cffi_module), 'rb') as cffi_template:
     cffi_code = cffi_template.read().decode('utf-8').format(**locals())
