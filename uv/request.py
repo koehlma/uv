@@ -51,7 +51,7 @@ class Request(object):
         self.uv_request = ffi.cast('uv_req_t*', request)
         self.c_attachment = attach(self.uv_request, self)
         self.finished = False
-        self.loop = loop or Loop.current_loop()
+        self.loop = loop or Loop.get_current()
         if self.loop.closed: raise HandleClosedError()
         requests.add(self)
 

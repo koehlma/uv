@@ -146,6 +146,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(uv.LoopClosedError, uv.TTY, 0, loop=self.loop)
         self.assertRaises(uv.LoopClosedError, uv.UDP, loop=self.loop)
 
+    '''
     def test_current_loop(self):
         self.assertEqual(uv.Loop.default_loop(), uv.Loop.current_loop())
 
@@ -180,6 +181,7 @@ class TestLoop(unittest.TestCase):
         thread1.join()
 
         self.assertEqual(uv.Loop.default_loop(), uv.Loop.current_loop())
+    '''
 
     def test_update_time(self):
         def on_prepare(prepare):

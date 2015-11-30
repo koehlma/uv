@@ -22,9 +22,7 @@ from .library import ffi, lib, attach, detach, dummy_callback, is_linux
 from .error import UVError, HandleClosedError, LoopClosedError
 from .loop import Loop
 
-__all__ = ['close_all_handles', 'Handle']
-
-handles = set()
+__all__ = ['Handle']
 
 
 class HandleType(enum.IntEnum):
@@ -56,19 +54,8 @@ class HandleType(enum.IntEnum):
 @ffi.callback('uv_close_cb')
 def uv_close_cb(uv_handle):
     handle = detach(uv_handle)
-    with handle.loop.callback_context:
-        handle.on_closed(handle)
+    with handle.loop.callback_context: handle.on_closed(handle)
     handle.destroy()
-
-
-def close_all_handles(on_closed=None):
-    """
-    Close all handles which have not yet been closed.
-
-    :param on_closed: callback called after a handle has been closed
-    :type on_closed: (Handle) -> None
-    """
-    for handle in handles: handle.close(on_closed)
 
 
 @HandleType.UNKNOWN
@@ -78,9 +65,9 @@ class Handle(object):
     Handles represent long-lived objects capable of performing certain
     operations while active. This is the base class of all handles.
 
-    :raises uv.LoopClosedError: loop has already been closed or is closing
+    :raises uv.LoopClosedError: loop has already been closed
     :param loop: loop where the handle should run on
-    :param uv_handle: allocated c struct for this handle
+    :param uv_handle: allocated c struct for this handle (used internally)
     :type loop: Loop
     :type uv_handle: ffi.CData
     """
@@ -90,14 +77,13 @@ class Handle(object):
     def __init__(self, uv_handle, loop=None):
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
         self.attachment = attach(self.uv_handle, self)
-        self.loop = loop or Loop.current_loop()
+        self.loop = loop or Loop.get_current()
         """
         Loop where the handle is running on.
 
         :readonly: True
         :type: Loop
         """
-        if self.loop.closed: raise LoopClosedError()
         self.on_closed = dummy_callback
         """
         Callback which should be called after the handle has been closed.
@@ -107,20 +93,24 @@ class Handle(object):
         """
         self.closed = False
         """
-        Handle has been closed. This is `True` right after the
-        close callback has been called.
+        Handle has been closed. This is `True` right after the close callback
+        has been called. It means all internal resources are freed and this
+        handle is ready to be garbage collected.
 
         :readonly: True
         :type: bool
         """
         self.closing = False
         """
-        Handle is already closed or is closing.
+        Handle is already closed or is closing. This is `True` right after
+        close has been called. Operations on a closed or closing handle will
+        raise :class:`uv.HandleClosedError`.
 
         :readonly: True
         :type: bool
         """
-        handles.add(self)
+        if self.loop.closed: raise LoopClosedError()
+        self.loop.handles.add(self)
 
     @property
     def active(self):
@@ -134,7 +124,7 @@ class Handle(object):
           involves IO like reading, writing, connecting or listening
 
         - :class:`uv.Check`, :class:`uv.Idle`, :class:`uv.Timer`, ...: handle
-          is active when it has been started
+          is active when it has been started and not yet stopped
 
         :readonly: True
         :type: bool
@@ -146,8 +136,8 @@ class Handle(object):
     def referenced(self):
         """
         Handle is referenced or not. If the event loop runs in default mode it
-        will exit when there are no more active and referenced handles left.
-        This has nothing to do with CPython's reference counting.
+        will exit when there are no more active and referenced handles left. This
+        has nothing to do with CPython's reference counting.
 
         :readonly: False
         :type: bool
@@ -178,7 +168,7 @@ class Handle(object):
             and other operating systems. This means, the size set is divided by
             two on Linux because Linux internally multiplies it by two.
 
-        :raises uv.UVError: error while getting the send buffer size
+        :raises uv.UVError: error while getting/setting the send buffer size
         :raises uv.HandleClosedError: handle has already been closed or is closing
         :readonly: False
         :type: int
@@ -192,7 +182,7 @@ class Handle(object):
     @send_buffer_size.setter
     def send_buffer_size(self, size):
         """
-        :raises uv.UVError: error while setting the send buffer size
+        :raises uv.UVError: error while getting/setting the send buffer size
         :raises uv.HandleClosedError: handle has already been closed or is closing
         :param size: size of the send buffer
         :type size: int
@@ -216,7 +206,7 @@ class Handle(object):
             and other operating systems. This means, the size set is divided by
             two on Linux because Linux internally multiplies it by two.
 
-        :raises uv.UVError: error while getting the receive buffer size
+        :raises uv.UVError: error while getting/setting the receive buffer size
         :raises uv.HandleClosedError: handle has already been closed or is closing
         :readonly: False
         :type: int
@@ -230,7 +220,7 @@ class Handle(object):
     @receive_buffer_size.setter
     def receive_buffer_size(self, size):
         """
-        :raises uv.UVError: error while setting the receive buffer size
+        :raises uv.UVError: error while getting/setting the receive buffer size
         :raises uv.HandleClosedError: handle has already been closed or is closing
         :param size: size of the receive buffer
         :type size: int
@@ -247,7 +237,7 @@ class Handle(object):
         handles this will raise :class:`uv.UVError` with `StatusCode.EINVAL`.
 
         If a handle does not have an attached file descriptor yet this method
-        wil raise :class:`uv.UVError` with `StatusCode.EBADF`.
+        will raise :class:`uv.UVError` with `StatusCode.EBADF`.
 
         .. warning::
 
@@ -305,8 +295,8 @@ class Handle(object):
         :class:`uv.WriteRequest`, are cancelled and have their callbacks
         called asynchronously with :class:`StatusCode.ECANCELED`
 
-        After a handle has been closed no other operations can be performed
-        on it, they will raise :class:`uv.HandleClosedError`.
+        After this method has been called on a handle no other operations can be
+        performed on it, they will raise :class:`uv.HandleClosedError`.
 
         :param on_closed: callback called after the handle has been closed
         :type on_closed: (Handle) -> None
@@ -325,11 +315,5 @@ class Handle(object):
             after the handle has been closed. You should never call it directly!
         """
         self.uv_handle = None
-        handles.remove(self)
         self.closed = True
-
-    # pyuv compatibility
-    ref = referenced
-    """
-    Same as `referenced` for pyuv compatibility.
-    """
+        self.loop.handles.remove(self)

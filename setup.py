@@ -61,6 +61,7 @@ WIN32_PYTHON27_PATHS = [_path_1, _path_2]
 
 with open(os.path.join(__dir__, 'uv', '__init__.py'), 'rb') as init_py:
     init_source = init_py.read().decode('utf-8')
+
 match = re.search(r'__version__ = \'(.+?)\'', init_source)
 version = match.group(1)
 
@@ -73,13 +74,11 @@ with open(os.path.join(__dir__, 'cffi_source.c'), 'rb') as cffi_source:
 with open(os.path.join(__dir__, 'cffi_declarations.c'), 'rb') as cffi_declarations:
     declarations = cffi_declarations.read().decode('utf-8')
 
-cffi_module = 'cffi_template.py'
-
-with open(os.path.join(__dir__, cffi_module), 'rb') as cffi_template:
-    cffi_code = cffi_template.read().decode('utf-8').format(**locals())
+with open(os.path.join(__dir__, 'cffi_template.py'), 'rb') as cffi_template:
+    uvcffi_code = cffi_template.read().decode('utf-8').format(**locals())
 
 with open(os.path.join(__dir__, 'uvcffi', '__init__.py'), 'wb') as uvcffi_module:
-    uvcffi_module.write(cffi_code.encode('utf-8'))
+    uvcffi_module.write(uvcffi_code.encode('utf-8'))
 
 
 ffi = cffi.FFI()
@@ -123,20 +122,20 @@ def build_environ():
     environ = dict(os.environ)
 
     if sys.platform == 'win32':
-        if os.environ.get('APPVEYOR', None) == 'True':
-            if os.environ.get('SET_SDK', None) == 'Y':
-                environ.pop('VS140COMNTOOLS', None)
-                environ.pop('VS120COMNTOOLS', None)
-                environ.pop('VS110COMNTOOLS', None)
-                if sys.version_info < (3, 3):
-                    environ.pop('VS100COMNTOOLS', None)
-                    environ['GYP_MSVS_VERSION'] = '2008'
-                else:
-                    environ['GYP_MSVS_VERSION'] = '2010'
+        if os.environ.get('SET_SDK', None) == 'Y':
+            environ.pop('VS140COMNTOOLS', None)
+            environ.pop('VS120COMNTOOLS', None)
+            environ.pop('VS110COMNTOOLS', None)
+            if sys.version_info < (3, 3):
+                environ.pop('VS100COMNTOOLS', None)
+                environ['GYP_MSVS_VERSION'] = '2008'
+            else:
+                environ['GYP_MSVS_VERSION'] = '2010'
         environ['PYTHON'] = win32_find_python27()
     else:
         if 'CFLAGS' not in environ: environ['CFLAGS'] = ''
         environ['CFLAGS'] += ' -fPIC'
+
     return environ
 
 
@@ -177,7 +176,7 @@ def clean_libuv():
 
 
 def clean_build():
-    log.info('cleaning Build...')
+    log.info('cleaning build...')
     shutil.rmtree(DEPS_PATH)
 
 
@@ -275,6 +274,9 @@ class WindowsInstaller(bdist_wininst):
         return bdist_wininst.get_inidata(self)
 
 
+cmdclass['bdist_wininst'] = WindowsInstaller
+
+
 if bdist_msi is not None:
     class WindowsMSI(bdist_msi):
         def run(self):
@@ -283,9 +285,9 @@ if bdist_msi is not None:
                                 self.distribution.metadata.version)
             self.distribution.metadata.version = cleaned.group(0)
             bdist_msi.run(self)
+
     cmdclass['bdist_msi'] = WindowsMSI
 
-cmdclass['bdist_wininst'] = WindowsInstaller
 
 setup(name='uv',
       version=version,
