@@ -11,7 +11,13 @@ Contents:
     :titlesonly:
 
     error
-    handle
+
+    handles/handle
+
+    handles/async
+    handles/check
+    handles/idle
+    handles/poll
 
 
 Indices and tables

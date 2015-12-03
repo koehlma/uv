@@ -28,17 +28,27 @@ __all__ = ['Prepare']
 @ffi.callback('uv_prepare_cb')
 def uv_prepare_cb(uv_prepare):
     prepare = detach(uv_prepare)
-    prepare.callback(prepare)
+    with prepare.loop.callback_context:
+        prepare.callback(prepare)
 
 
 @HandleType.PREPARE
 class Prepare(Handle):
+    """
+    Prepare handles will run the given callback once per loop
+    iteration, right before polling for IO.
+    """
+
     __slots__ = ['prepare', 'callback']
 
     def __init__(self, loop=None, callback=None):
+        """
+        :param callback: callback which should be called right before polling for IO
+        :type callback: (Prepare) -> None
+        """
         self.prepare = ffi.new('uv_prepare_t*')
-        self.callback = callback or dummy_callback
         super(Prepare, self).__init__(self.prepare, loop)
+        self.callback = callback or dummy_callback
         code = lib.uv_prepare_init(self.loop.uv_loop, self.prepare)
         if code < 0: raise UVError(code)
 

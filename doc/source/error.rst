@@ -5,6 +5,10 @@
 Errors -- exceptions and error handling
 =======================================
 
+.. autoclass:: uv.StatusCode
+    :members:
+
+
 .. autoclass:: uv.UVError
     :members:
 

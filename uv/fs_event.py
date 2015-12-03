@@ -24,7 +24,7 @@ from .library import ffi, lib, detach, dummy_callback
 from .error import UVError
 from .handle import HandleType, Handle
 
-__all__ = ['EventFlags', 'Event', 'FSEvent']
+__all__ = ['FSEvent', 'EventFlags', 'Event']
 
 
 class EventFlags(enum.IntEnum):

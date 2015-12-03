@@ -94,6 +94,9 @@ class Process(Handle):
     def __init__(self, arguments, uid=None, gid=None, cwd=None,
                  env=None, flags=0, loop=None, stdin=None,
                  stdout=None, stderr=None, stdio=None, on_exit=None):
+        self.process = ffi.new('uv_process_t*')
+        super(Process, self).__init__(self.process, loop)
+
         self.uv_options = ffi.new('uv_process_options_t*')
 
         self.c_file = str_py2c(arguments[0])
@@ -137,9 +140,8 @@ class Process(Handle):
         self.uv_options.flags = flags
         self.uv_options.exit_cb = uv_exit_cb
 
-        self.process = ffi.new('uv_process_t*')
         self.on_exit = on_exit or dummy_callback
-        super(Process, self).__init__(self.process, loop)
+
         code = lib.uv_spawn(self.loop.uv_loop, self.process, self.uv_options)
         if code < 0: raise UVError(code)
 

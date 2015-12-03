@@ -65,11 +65,14 @@ def uv_close_cb(uv_handle):
 class Handle(object):
     """
     Handles represent long-lived objects capable of performing certain
-    operations while active. This is the base class of all handles.
+    operations while active. This is the base class of all handles except
+    the file and SSL handle, which are pure Python.
 
     :raises uv.LoopClosedError: loop has already been closed
+
     :param loop: loop where the handle should run on
-    :param uv_handle: allocated c struct for this handle (used internally)
+    :param uv_handle: allocated c struct for this handle
+
     :type loop: Loop
     :type uv_handle: ffi.CData
     """

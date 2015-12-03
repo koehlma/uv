@@ -35,15 +35,31 @@ class TCPFlags(enum.IntEnum):
 class TCP(Stream):
     __slots__ = ['tcp', 'sockaddr']
 
-    def __init__(self, loop=None, ipc=False):
+    def __init__(self, flags=0, ipc=False, loop=None):
         self.tcp = ffi.new('uv_tcp_t*')
         super(TCP, self).__init__(self.tcp, loop, ipc)
-        lib.uv_tcp_init(self.loop.uv_loop, self.tcp)
-        self.sockaddr = None
+        lib.uv_tcp_init_ex(self.loop.uv_loop, self.tcp, flags)
+        self._simultaneous_accepts = False
+        self.sockadd = None
 
     @property
     def family(self):
         return socket.AF_INET
+
+    @property
+    def address(self):
+        pass
+
+    @property
+    def peer_address(self):
+        pass
+
+    def keepalive(self):
+        pass
+
+    def nodelay(self):
+        pass
+
 
     def bind(self, ip, port, flags=0):
         self.sockaddr = c_create_sockaddr(ip, port)

@@ -22,18 +22,18 @@ This package aims to provide an object oriented CFFI based wrapper around
 the libuv asynchronous IO library. It supports all handles as well as
 filesystem operations, dns utility functions and miscellaneous utilities.
 
-There are no plans to support the thread pool work scheduling or the
+There are no plans to support the thread pool work scheduling and the
 threading and synchronization utilities because Python already provides
 nice solutions for those things in the standard library.
 
 Based on Python's standard library's SSL module this package also provides
 support for asynchronous SSL sockets.
 
-As you may have noticed this package is not totally PEP-8 conform when
-it comes to the maximum line length of 79 characters – instead we are
-using a maximum line length of 90 characters. This allows us to use
-longer and more expressive variable names without ugly line breaking
-stunts and overall makes the code more readable.
+As you may have noticed this package is not totally PEP-8 conform when it
+comes to the maximum line length of 79 characters – instead we are using
+a maximum line length of 90 characters. This allows us to use longer and
+more expressive variable names without ugly line breaking stunts and
+overall makes the code more readable.
 """
 
 __version__ = '0.0.4.dev0'

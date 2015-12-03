@@ -26,6 +26,9 @@ __all__ = ['StatusCode', 'UVError', 'HandleClosedError']
 
 class StatusCode(enum.IntEnum):
     SUCCESS = 0
+    """
+    Success.
+    """
 
     E2BIG = lib.UV_E2BIG
     EACCES = lib.UV_EACCES

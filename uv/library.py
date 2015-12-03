@@ -25,9 +25,18 @@ from collections import namedtuple
 from uv import __version__
 
 
+MOCK_CONSTANTS = {
+    'UV_READABLE': 1,
+    'UV_WRITABLE': 2
+}
+
+
 class Mock(object):
-    def __getattr__(self, _):
-        return Mock()
+    def __getattr__(self, name):
+        try:
+            return MOCK_CONSTANTS[name]
+        except KeyError:
+            return Mock()
 
     def __call__(self, *args):
         return args[0] if len(args) == 1 and type(args[0]) == type else 0

@@ -24,9 +24,10 @@ from .handle import HandleType, Handle
 
 
 @ffi.callback('uv_timer_cb')
-def uv_timer_cb(uv_handle):
-    handle = detach(uv_handle)
-    handle.on_timeout(handle)
+def uv_timer_cb(uv_timer):
+    timer = detach(uv_timer)
+    with timer.loop.callback_context:
+        timer.on_timeout(timer)
 
 
 @HandleType.TIMER
@@ -37,7 +38,8 @@ class Timer(Handle):
         self.uv_timer = ffi.new('uv_timer_t*')
         self.on_timeout = on_timeout or dummy_callback
         super(Timer, self).__init__(self.uv_timer, loop)
-        lib.uv_timer_init(self.loop.uv_loop, self.uv_timer)
+        code = lib.uv_timer_init(self.loop.uv_loop, self.uv_timer)
+        if code < 0: raise UVError(code)
 
     @property
     def repeat(self):

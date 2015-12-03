@@ -19,7 +19,7 @@ from __future__ import print_function, unicode_literals, division
 
 from .library import ffi, lib, detach, dummy_callback
 
-from .error import UVError
+from .error import UVError, HandleClosedError
 from .handle import HandleType, Handle
 
 __all__ = ['Check']
@@ -34,22 +34,63 @@ def uv_check_cb(uv_check):
 
 @HandleType.CHECK
 class Check(Handle):
+    """
+    Check handles will run the given callback once per loop iteration,
+    right after polling for IO.
+
+    :raises uv.UVError: error during the initialization of the handle
+
+    :param loop: event loop which should be used for the handle
+    :param callback: callback which should be called right after polling for IO
+
+    :type loop: Loop
+    :type callback: (uv.Async) -> None
+    """
+
     __slots__ = ['uv_check', 'callback']
 
     def __init__(self, loop=None, callback=None):
         self.uv_check = ffi.new('uv_check_t*')
         super(Check, self).__init__(self.uv_check, loop)
         self.callback = callback or dummy_callback
+        """
+        Callback which should be called after polling for IO.
+
+        .. function:: callback(Check-Handle)
+
+        :readonly: False
+        :type: (uv.Check) -> None
+        """
         code = lib.uv_check_init(self.loop.uv_loop, self.uv_check)
         if code < 0: raise UVError(code)
 
     def start(self, callback=None):
+        """
+        Starts the handle.
+
+        :raises uv.UVError: error while starting the handle
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param callback: callback which should be called after polling for IO
+        :type callback: (uv.Check) -> None
+        """
+        if self.closing: raise HandleClosedError()
         self.callback = callback or self.callback
         code = lib.uv_check_start(self.uv_check, uv_check_cb)
         if code < 0: raise UVError(code)
 
     def stop(self):
+        """
+        Stops the handle, the callback will no longer be called.
+
+        :raises uv.UVError: error while stopping the handle
+        """
+        if self.closing: return
         code = lib.uv_check_stop(self.uv_check)
         if code < 0: raise UVError(code)
+
+    def destroy(self):
+        self.uv_check = None
+        super(Check, self).destroy()
 
     __call__ = start

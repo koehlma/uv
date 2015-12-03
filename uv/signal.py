@@ -47,8 +47,8 @@ class Signal(Handle):
 
     def __init__(self, loop=None, on_signal=None):
         self.uv_signal = ffi.new('uv_signal_t*')
-        self.on_signal = on_signal or dummy_callback
         super(Signal, self).__init__(self.uv_signal, loop)
+        self.on_signal = on_signal or dummy_callback
         code = lib.uv_signal_init(self.loop.uv_loop, self.uv_signal)
         if code < 0: raise UVError(code)
 

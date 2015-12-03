@@ -28,26 +28,73 @@ __all__ = ['Idle']
 @ffi.callback('uv_idle_cb')
 def uv_idle_cb(uv_idle):
     idle = detach(uv_idle)
-    idle.callback(idle)
+    with idle.loop.callback_context:
+        idle.callback(idle)
 
 
 @HandleType.IDLE
 class Idle(Handle):
+    """
+    Idle handles will run the given callback once per loop
+    iteration, right before the :class:`uv.Prepare` handles.
+
+    The notable difference with prepare handles is, that when
+    there are active idle handles, the loop will perform a zero
+    timeout poll instead of blocking for IO.
+
+    .. warning:
+
+        Despite the name, idle handles will get their callback called on
+        every loop iteration, not when the loop is actually "idle".
+
+    :raises uv.UVError: error during the initialization of the handle
+
+    :param loop: event loop which should be used for the handle
+    :param callback: callback which should be called before prepare handles
+
+    :type loop: uv.Loop
+    :type callback: (uv.Idle) -> None
+    """
+
     __slots__ = ['uv_idle', 'callback']
 
     def __init__(self, loop=None, callback=None):
         self.uv_idle = ffi.new('uv_idle_t*')
         super(Idle, self).__init__(self.uv_idle, loop)
         self.callback = callback or dummy_callback
+        """
+        Callback which should be called before prepare handles.
+
+        .. function:: callback(Idle-Handle)
+
+        :readonly: False
+        :type: (uv.Idle) -> None
+        """
         code = lib.uv_idle_init(self.loop.uv_loop, self.uv_idle)
         if code < 0: raise UVError(code)
 
     def start(self, callback=None):
+        """
+        Starts the handle.
+
+        :raises uv.UVError: error while starting the handle
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param callback: callback which should be called before prepare handles
+        :type callback: (uv.Idle) -> None
+        """
+        if self.closing: raise HandleClosedError()
         self.callback = callback or self.callback
         code = lib.uv_idle_start(self.uv_idle, uv_idle_cb)
         if code < 0: raise UVError(code)
 
     def stop(self):
+        """
+        Stops the handle, the callback will no longer be called.
+
+        :raises uv.UVError: error while stopping the handle
+        """
+        if self.closing: return
         code = lib.uv_idle_stop(self.uv_idle)
         if code < 0: raise UVError(code)
 

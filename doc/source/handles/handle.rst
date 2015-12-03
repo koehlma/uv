@@ -9,4 +9,3 @@ Handle -- handle base class
     :members:
     :member-order: bysource
 
-.. autofunction:: uv.close_all_handles

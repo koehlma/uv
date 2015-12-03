@@ -21,7 +21,7 @@ import enum
 
 from collections import namedtuple
 
-from .library import ffi, lib, detach, detach_loop, dummy_callback
+from .library import ffi, lib, detach, dummy_callback
 
 from .error import UVError, StatusCode, get_status_code
 from .handle import HandleType
@@ -139,11 +139,7 @@ def post_close(request):
     return [status]
 
 
-@FSType.OPEN
-def post_open(request):
-    if request.result < 0: status, fd = get_status_code(request.result), None
-    else: status, fd = StatusCode.SUCCESS, request.result
-    return [status, fd]
+
 
 
 @FSType.STAT
@@ -168,7 +164,29 @@ def close(fd, callback=None, loop=None):
     return request
 
 
+@FSType.OPEN
+def post_open(request):
+    if request.result < 0: status, fd = get_status_code(request.result), None
+    else: status, fd = StatusCode.SUCCESS, request.result
+    return [status, fd]
+
+
 def open(path, flags, mode=0o777, callback=None, loop=None):
+    """
+
+    :param path:
+    :param flags:
+    :param mode:
+    :param callback: callback signature: `(request, status, fd)`
+    :param loop:
+
+    :type path: str
+    :type flags: int
+    :type mode: int
+    :type callback: (FSRequest, int, int) -> None
+
+    :return:
+    """
     request = FSRequest(None, callback, loop)
     uv_fs = request.uv_fs
     c_path = path.encode()
@@ -185,5 +203,5 @@ def stat(path, callback=None, loop=None):
 
 
 @HandleType.FILE
-class File:
+class File(object):
     pass
