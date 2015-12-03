@@ -278,11 +278,12 @@ cmdclass['bdist_wininst'] = WindowsInstaller
 
 
 if bdist_msi is not None:
+    msi_clean_regex = r'[0-9]+\.[0-9]+\.[0-9]+'
+
     class WindowsMSI(bdist_msi):
         def run(self):
             import re
-            cleaned = re.search('[0-9]+\.[0-9]+\.[0-9]+',
-                                self.distribution.metadata.version)
+            cleaned = re.search(msi_clean_regex, self.distribution.metadata.version)
             self.distribution.metadata.version = cleaned.group(0)
             bdist_msi.run(self)
 
