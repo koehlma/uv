@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function, unicode_literals, division
+
 import os
 import sys
 
@@ -48,7 +50,6 @@ class Mock(object):
 
 if os.environ.get('MOCK_UVCFFI', None) == 'True':
     mock = Mock()
-    from collections import namedtuple
 
     class _Module(object):
         __version__ = __version__

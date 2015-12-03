@@ -170,7 +170,7 @@ class Loop:
 
     def run(self, mode=RunMode.DEFAULT):
         if self.closed: raise LoopClosedError()
-        Loop._thread_locals.loop = self
+        self.make_current()
         result = bool(lib.uv_run(self.uv_loop, mode))
         return result
 
@@ -186,3 +186,6 @@ class Loop:
         self.uv_loop = None
         self.closed = True
         with Loop._global_lock: Loop._loops.remove(self)
+
+    def close_all_handles(self, callback=None):
+        for handle in self.handles: handle.close(callback)

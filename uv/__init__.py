@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function, unicode_literals, division
+
 """
 This package aims to provide an object oriented CFFI based wrapper around
 the libuv asynchronous IO library. It supports all handles as well as

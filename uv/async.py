@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import unicode_literals, division
+from __future__ import print_function, unicode_literals, division
 
 from .library import ffi, lib, detach, dummy_callback
 
