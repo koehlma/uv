@@ -17,22 +17,14 @@
 
 import uv
 
-RESPONSE = (b'HTTP/1.1 200 OK\r\n'
-            b'Content-Type: text/plain\r\n'
-            b'Content-Length: 13\r\n\r\n'
-            b'Hello World!\n')
-
 
 def on_shutdown(request, _):
     request.handle.close()
 
 
 def on_read(stream, length, data):
-    if not data or length < 0: stream.close()
-    data = data.strip()
-    if not data: return
-    stream.write(RESPONSE)
-    stream.shutdown(on_shutdown)
+    if length < 0: stream.close()
+    if data: stream.write(data)
 
 
 def on_connection(server, _):
@@ -49,7 +41,7 @@ def main():
 
     server = uv.TCP()
     server.bind('0.0.0.0', 4444)
-    server.listen(1000, callback=on_connection)
+    server.listen(20, callback=on_connection)
 
     sigint = uv.Signal()
     sigint.start(uv.Signals.SIGINT, callback=on_quit)
