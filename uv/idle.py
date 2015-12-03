@@ -71,7 +71,9 @@ class Idle(Handle):
         :type: (uv.Idle) -> None
         """
         code = lib.uv_idle_init(self.loop.uv_loop, self.uv_idle)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     def start(self, callback=None):
         """
@@ -97,5 +99,9 @@ class Idle(Handle):
         if self.closing: return
         code = lib.uv_idle_stop(self.uv_idle)
         if code < 0: raise UVError(code)
+
+    def destroy(self):
+        self.uv_idle = None
+        super(Idle, self).destroy()
 
     __call__ = start

@@ -44,7 +44,9 @@ class UDP(Handle):
         self.uv_udp = ffi.new('uv_tcp_t*')
         super(UDP, self).__init__(self.uv_udp, loop)
         code = lib.uv_udp_init_ex(self.loop.uv_loop, self.uv_udp, flags)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     def open(self, fd):
         code = lib.uv_udp_open(self.uv_udp, lib.sock_from_int(fd))

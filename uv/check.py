@@ -62,7 +62,9 @@ class Check(Handle):
         :type: (uv.Check) -> None
         """
         code = lib.uv_check_init(self.loop.uv_loop, self.uv_check)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     def start(self, callback=None):
         """

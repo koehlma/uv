@@ -44,7 +44,9 @@ class FSPoll(Handle):
         self.path = path
         super(FSPoll, self).__init__(loop)
         code = lib.uv_fs_poll_init(self.loop.uv_loop, self.fs_poll)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     def start(self, path=None, interval=5000, callback=None):
         self.path = path or self.path

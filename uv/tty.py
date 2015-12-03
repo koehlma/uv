@@ -50,7 +50,9 @@ class TTY(Stream):
         self.uv_tty = ffi.new('uv_tty_t*')
         super(TTY, self).__init__(self.uv_tty, loop)
         code = lib.cross_uv_tty_init(self.loop.uv_loop, self.uv_tty, fd, int(readable))
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     @property
     def winsize(self):

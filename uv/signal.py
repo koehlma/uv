@@ -50,7 +50,9 @@ class Signal(Handle):
         super(Signal, self).__init__(self.uv_signal, loop)
         self.on_signal = on_signal or dummy_callback
         code = lib.uv_signal_init(self.loop.uv_loop, self.uv_signal)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     @property
     def signum(self):

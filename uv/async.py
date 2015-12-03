@@ -63,7 +63,9 @@ class Async(Handle):
         :type: (uv.Async) -> None
         """
         code = lib.uv_async_init(self.loop.uv_loop, self.uv_async, uv_async_cb)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     def send(self, callback=None):
         """

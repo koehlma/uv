@@ -39,7 +39,9 @@ class Timer(Handle):
         self.on_timeout = on_timeout or dummy_callback
         super(Timer, self).__init__(self.uv_timer, loop)
         code = lib.uv_timer_init(self.loop.uv_loop, self.uv_timer)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     @property
     def repeat(self):

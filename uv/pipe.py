@@ -35,7 +35,10 @@ class Pipe(Stream):
     def __init__(self, loop=None, ipc=False):
         self.uv_pipe = ffi.new('uv_pipe_t*')
         super(Pipe, self).__init__(self.uv_pipe, loop, ipc)
-        lib.uv_pipe_init(self.loop.uv_loop, self.uv_pipe, int(ipc))
+        code = lib.uv_pipe_init(self.loop.uv_loop, self.uv_pipe, int(ipc))
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     def open(self, fd):
         code = lib.cross_uv_pipe_open(self.uv_pipe, fd)

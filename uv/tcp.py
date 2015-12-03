@@ -38,7 +38,10 @@ class TCP(Stream):
     def __init__(self, flags=0, ipc=False, loop=None):
         self.tcp = ffi.new('uv_tcp_t*')
         super(TCP, self).__init__(self.tcp, loop, ipc)
-        lib.uv_tcp_init_ex(self.loop.uv_loop, self.tcp, flags)
+        code = lib.uv_tcp_init_ex(self.loop.uv_loop, self.tcp, flags)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
         self._simultaneous_accepts = False
         self.sockadd = None
 

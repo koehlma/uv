@@ -29,7 +29,7 @@ __all__ = ['Poll', 'PollEvent']
 
 class PollEvent(enum.IntEnum):
     """
-    Poll event types.
+    Poll event types enumeration.
     """
     READABLE = lib.UV_READABLE
     """
@@ -114,7 +114,9 @@ class Poll(Handle):
         :type: (uv.Poll, uv.StatusCode, int) -> None
         """
         code = lib.cross_uv_poll_init_socket(self.loop.uv_loop, self.uv_poll, fd)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     def start(self, events=PollEvent.READABLE, callback=None):
         """

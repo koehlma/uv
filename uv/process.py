@@ -143,7 +143,9 @@ class Process(Handle):
         self.on_exit = on_exit or dummy_callback
 
         code = lib.uv_spawn(self.loop.uv_loop, self.process, self.uv_options)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     @property
     def pid(self):

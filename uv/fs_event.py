@@ -56,7 +56,9 @@ class FSEvent(Handle):
         self.callback = callback or dummy_callback
         self.path = path
         code = lib.uv_fs_event_init(self.loop.uv_loop, self.fs_event)
-        if code < 0: raise UVError(code)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
     def start(self, path=None, callback=None, flags=0):
         self.path = path or self.path
