@@ -142,6 +142,16 @@ class Loop:
         :readonly: True
         :type: set[Handle]
         """
+        self.requests = set()
+        """
+        Contains all requests running on this loop which are not already
+        finished. We have to keep references to every single request in
+        this set because otherwise they are garbage collected before they
+        are finished which leads to segmentation faults.
+
+        :readonly: True
+        :type: set[Handle]
+        """
         self.closed = False
         """
         Loop has been closed. This is `True` right after close has been

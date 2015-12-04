@@ -20,12 +20,10 @@ from __future__ import print_function, unicode_literals, division
 from .library import ffi, lib, attach
 
 from .common import Enumeration
-from .error import UVError, HandleClosedError
+from .error import UVError, LoopClosedError
 from .loop import Loop
 
-__all__ = ['requests', 'Request']
-
-requests = set()
+__all__ = ['Request']
 
 
 class RequestType(Enumeration):
@@ -46,27 +44,71 @@ class RequestType(Enumeration):
 
 @RequestType.UNKNOWN
 class Request(object):
-    __slots__ = ['uv_request', 'c_attachment', 'finished', 'loop']
+    """
+    Requests represent (typically) short-lived operations. These operations
+    can be performed over a handle: write requests are used to write data
+    on a handle; or standalone: getaddrinfo requests don’t need a handle
+    they run directly on the loop. This is the base class of all requests.
 
-    def __init__(self, request, loop=None):
-        self.uv_request = ffi.cast('uv_req_t*', request)
-        self.c_attachment = attach(self.uv_request, self)
-        self.finished = False
+    :raises uv.LoopClosedError: loop has already been closed
+
+    :param uv_request: allocated c struct for this request
+    :param loop: loop where the request should run on
+
+    :type uv_request: ffi.CData
+    :type loop: Loop
+    """
+
+    __slots__ = ['uv_request', 'attachment', 'finished', 'loop']
+
+    def __init__(self, uv_request, loop=None):
+        self.uv_request = ffi.cast('uv_req_t*', uv_request)
+        self.attachment = attach(self.uv_request, self)
         self.loop = loop or Loop.get_current()
-        if self.loop.closed: raise HandleClosedError()
-        requests.add(self)
+        """
+        Loop where the handle is running on.
+
+        :readonly: True
+        :type: Loop
+        """
+        self.finished = False
+        """
+        Request has been finished.
+
+        :readonly: True
+        :type: bool
+        """
+        if self.loop.closed: raise LoopClosedError()
+        self.loop.requests.add(self)
 
     @property
     def type(self):
+        """
+        Type of the request. Returns a subclass of :class:`uv.Request`.
+        
+        :type: type
+        """
         return RequestType(self.uv_request.type).cls
 
     def cancel(self):
+        """
+        Cancel a pending request. Fails if the request is executing
+        or has finished executing.
+
+        :raises uv.UVError: error while canceling request
+        """
         code = lib.uv_cancel(self.uv_request)
         if code < 0: raise UVError(code)
 
-    def finish(self):
+    def destroy(self):
+        """
+        .. warning::
+
+            This method is used internally to free all allocated C
+            resources. You should never call it directly!
+        """
         if not self.finished:
-            requests.remove(self)
+            self.loop.requests.remove(self)
             self.finished = True
 
 

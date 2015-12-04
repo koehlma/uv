@@ -150,7 +150,7 @@ def post_stat(request):
 @ffi.callback('uv_fs_cb')
 def fs_callback(uv_request):
     request = detach(uv_request)
-    request.finish()
+    request.destroy()
     lib.uv_fs_req_cleanup(uv_request)
     with request.loop.callback_context:
         request.callback(request, *request.fs_type.postprocessor(request))

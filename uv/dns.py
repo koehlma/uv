@@ -82,7 +82,7 @@ def unpack_sockaddr(c_sockaddr):
 @ffi.callback('uv_getaddrinfo_cb')
 def uv_getaddrinfo_cb(uv_getaddrinfo, status, _):
     request = detach(uv_getaddrinfo)
-    request.finish()
+    request.destroy()
     if status == 0: request.populate()
     with request.loop.callback_context:
         request.callback(request, get_status_code(status), request.addrinfo)
@@ -122,7 +122,7 @@ class GetAddrInfo(Request):
         if self.uv_getaddrinfo.addrinfo:
             self.addrinfo = unpack_addrinfo(self.uv_getaddrinfo.addrinfo)
             self.uv_getaddrinfo.addrinfo = ffi.NULL
-        self.finish()
+        self.destroy()
 
 
 def getaddrinfo(host, port, family=0, socktype=0, protocol=0,
@@ -134,7 +134,7 @@ def getaddrinfo(host, port, family=0, socktype=0, protocol=0,
 @ffi.callback('uv_getnameinfo_cb')
 def uv_getnameinfo_cb(uv_getnameinfo, status, c_hostname, c_service):
     request = detach(uv_getnameinfo)
-    request.finish()
+    request.destroy()
     with request.loop.callback_context:
         request.callback(request, status, str_c2py(c_hostname), str_c2py(c_service))
 

@@ -28,7 +28,7 @@ from ..request import RequestType, Request
 @ffi.callback('uv_shutdown_cb')
 def uv_shutdown_cb(uv_request, status):
     request = detach(uv_request)
-    request.finish()
+    request.destroy()
     with request.loop.callback_context:
         request.callback(request, status)
 
@@ -51,7 +51,7 @@ def uv_read_cb(uv_stream, length, buffer):
 @ffi.callback('uv_write_cb')
 def uv_write_cb(uv_request, status):
     request = detach(uv_request)
-    request.finish()
+    request.destroy()
     with request.loop.callback_context:
         request.callback(request, status)
 

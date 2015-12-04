@@ -69,11 +69,11 @@ class Handle(object):
 
     :raises uv.LoopClosedError: loop has already been closed
 
-    :param loop: loop where the handle should run on
     :param uv_handle: allocated c struct for this handle
+    :param loop: loop where the handle should run on
 
-    :type loop: Loop
     :type uv_handle: ffi.CData
+    :type loop: Loop
     """
 
     __slots__ = ['uv_handle', 'attachment', 'loop', 'on_closed',
@@ -329,3 +329,6 @@ class Handle(object):
         self.closing = True
         self.closed = True
         self.loop.handles.remove(self)
+
+
+HandleType.cls = Handle
