@@ -23,6 +23,7 @@ Contents:
     handles/timer
 
     handles/fs_event
+    handles/fs_poll
 
 
 Indices and tables

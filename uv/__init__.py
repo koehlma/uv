@@ -63,6 +63,7 @@ from .handles.tty import TTY
 from .handles.udp import UDP
 
 from .handles.fs_event import FSEvent, Event, EventFlags
+from .handles.fs_poll import FSPoll
 
 from . import dns
 from . import fs

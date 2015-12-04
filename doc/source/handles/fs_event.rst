@@ -3,7 +3,7 @@
 .. currentmodule:: uv
 
 :class:`FSEvent` -- fs event handle
-==============================
+===================================
 
 .. autoclass:: uv.FSEvent
     :members:
