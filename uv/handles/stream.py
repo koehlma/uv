@@ -17,12 +17,12 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from .library import ffi, lib, detach
+from ..library import ffi, lib, detach
 
-from .common import dummy_callback
-from .error import UVError
-from .handle import HandleType, Handle
-from .request import RequestType, Request
+from ..common import dummy_callback
+from ..error import UVError
+from ..handle import HandleType, Handle
+from ..request import RequestType, Request
 
 
 @ffi.callback('uv_shutdown_cb')

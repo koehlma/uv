@@ -19,10 +19,11 @@ from __future__ import print_function, unicode_literals, division
 
 import warnings
 
-from .error import UVError
-from .handle import HandleType, Handle
-from .library import ffi, lib, detach, str_py2c
-from uv.common import dummy_callback, Enumeration
+from ..error import UVError
+from ..handle import HandleType, Handle
+from ..library import ffi, lib, detach, str_py2c
+from ..common import dummy_callback, Enumeration
+
 from .pipe import Pipe
 from .signal import Signals
 from .stream import Stream

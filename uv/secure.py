@@ -17,15 +17,12 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import ssl
 import socket
-
+import ssl
 from collections import deque
 
+from uv.handles.poll import Poll, PollEvent
 from .common import dummy_callback, Enumeration
-
-from .poll import Poll, PollEvent
-from .stream import Stream
 
 
 class CertReqs(Enumeration):

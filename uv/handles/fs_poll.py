@@ -17,12 +17,12 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from .library import ffi, lib, detach
+from ..library import ffi, lib, detach
 
-from .common import dummy_callback
-from .error import UVError
-from .fs import unpack_stat
-from .handle import HandleType, Handle
+from ..common import dummy_callback
+from ..error import UVError
+from ..fs import unpack_stat
+from ..handle import HandleType, Handle
 
 __all__ = ['FSPoll']
 

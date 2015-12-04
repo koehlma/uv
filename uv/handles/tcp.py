@@ -19,11 +19,11 @@ from __future__ import print_function, unicode_literals, division
 
 import socket
 
-from .dns import c_create_sockaddr
-from .error import UVError
-from .handle import HandleType
-from .library import ffi, lib
-from .common import Enumeration
+from ..dns import c_create_sockaddr
+from ..error import UVError
+from ..handle import HandleType
+from ..library import ffi, lib
+from ..common import Enumeration
 from .stream import Stream, ConnectRequest, uv_connect_cb
 
 

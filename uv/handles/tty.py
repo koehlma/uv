@@ -19,12 +19,11 @@ from __future__ import print_function, unicode_literals, division
 
 from collections import namedtuple
 
-from .library import ffi, lib
+from uv.library import ffi, lib
 
-from .common import Enumeration
-from .error import UVError
-from .handle import HandleType
-from .loop import Loop
+from ..common import Enumeration
+from ..error import UVError
+from ..handle import HandleType
 from .stream import Stream
 
 WinSize = namedtuple('WinSize', ['width', 'height'])

@@ -47,23 +47,20 @@ from .error import UVError, HandleClosedError, LoopClosedError, StatusCode
 from .handle import Handle
 from .loop import RunMode, Loop
 from .request import Request
-from .stream import Stream, ShutdownRequest, ConnectRequest, WriteRequest
 
-from .async import Async
-from .check import Check
-from .idle import Idle
-from .pipe import Pipe
-from .poll import Poll, PollEvent
-from .prepare import Prepare
-from .process import Process, ProcessFlags, PIPE, disable_stdio_inheritance
-from .signal import Signal, Signals
-from .tcp import TCP, TCPFlags
-from .timer import Timer
-from .tty import TTY, TTYMode
-from .udp import UDP, UDPFlags, Membership
-
-from .fs_event import FSEvent
-from .fs_poll import FSPoll
+from .handles.async import Async
+from .handles.check import Check
+from .handles.idle import Idle
+from .handles.pipe import Pipe
+from .handles.poll import Poll, PollEvent
+from .handles.prepare import Prepare
+from .handles.process import Process
+from .handles.signal import Signal, Signals
+from .handles.stream import Stream
+from .handles.tcp import TCP
+from .handles.timer import Timer
+from .handles.tty import TTY
+from .handles.udp import UDP
 
 from . import dns
 from . import fs

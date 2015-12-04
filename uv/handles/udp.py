@@ -17,11 +17,11 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from .dns import c_create_sockaddr
-from .error import UVError
-from .handle import HandleType, Handle
-from .library import ffi, lib
-from .common import Enumeration
+from ..dns import c_create_sockaddr
+from ..error import UVError
+from ..handle import HandleType, Handle
+from ..library import ffi, lib
+from ..common import Enumeration
 
 
 class UDPFlags(Enumeration):

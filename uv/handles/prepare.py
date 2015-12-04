@@ -17,61 +17,51 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from .library import ffi, lib, detach
+from ..library import ffi, lib, detach
 
-from .common import dummy_callback
-from .error import UVError, HandleClosedError
-from .handle import HandleType, Handle
+from ..common import dummy_callback
+from ..error import UVError, HandleClosedError
+from ..handle import HandleType, Handle
 
-__all__ = ['Idle']
-
-
-@ffi.callback('uv_idle_cb')
-def uv_idle_cb(uv_idle):
-    idle = detach(uv_idle)
-    with idle.loop.callback_context:
-        idle.callback(idle)
+__all__ = ['Prepare']
 
 
-@HandleType.IDLE
-class Idle(Handle):
+@ffi.callback('uv_prepare_cb')
+def uv_prepare_cb(uv_prepare):
+    prepare = detach(uv_prepare)
+    with prepare.loop.callback_context:
+        prepare.callback(prepare)
+
+
+@HandleType.PREPARE
+class Prepare(Handle):
     """
-    Idle handles will run the given callback once per loop
-    iteration, right before the :class:`uv.Prepare` handles.
-
-    The notable difference with prepare handles is, that when
-    there are active idle handles, the loop will perform a zero
-    timeout poll instead of blocking for IO.
-
-    .. warning:
-
-        Despite the name, idle handles will get their callback called on
-        every loop iteration, not when the loop is actually "idle".
+    Prepare handles will run the given callback once per loop iteration,
+    right before polling for IO.
 
     :raises uv.UVError: error during the initialization of the handle
 
     :param loop: event loop which should be used for the handle
-    :param callback: callback which should be called before prepare handles
+    :param callback: callback which should be called right before polling for IO
 
-    :type loop: uv.Loop
-    :type callback: (uv.Idle) -> None
+    :type loop: Loop
+    :type callback: (uv.Prepare) -> None
     """
-
-    __slots__ = ['uv_idle', 'callback']
+    __slots__ = ['uv_prepare', 'callback']
 
     def __init__(self, loop=None, callback=None):
-        self.uv_idle = ffi.new('uv_idle_t*')
-        super(Idle, self).__init__(self.uv_idle, loop)
+        self.uv_prepare = ffi.new('uv_prepare_t*')
+        super(Prepare, self).__init__(self.uv_prepare, loop)
         self.callback = callback or dummy_callback
         """
-        Callback which should be called before prepare handles.
+        Callback which should be called before polling for IO.
 
-        .. function:: callback(Idle-Handle)
+        .. function:: callback(Prepare-Handle)
 
         :readonly: False
-        :type: (uv.Idle) -> None
+        :type: (uv.Prepare) -> None
         """
-        code = lib.uv_idle_init(self.loop.uv_loop, self.uv_idle)
+        code = lib.uv_prepare_init(self.loop.uv_loop, self.uv_prepare)
         if code < 0:
             self.destroy()
             raise UVError(code)
@@ -83,12 +73,12 @@ class Idle(Handle):
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param callback: callback which should be called before prepare handles
-        :type callback: (uv.Idle) -> None
+        :param callback: callback which should be called before polling for IO
+        :type callback: (uv.Prepare) -> None
         """
         if self.closing: raise HandleClosedError()
         self.callback = callback or self.callback
-        code = lib.uv_idle_start(self.uv_idle, uv_idle_cb)
+        code = lib.uv_prepare_start(self.uv_prepare, uv_prepare_cb)
         if code < 0: raise UVError(code)
 
     def stop(self):
@@ -98,11 +88,11 @@ class Idle(Handle):
         :raises uv.UVError: error while stopping the handle
         """
         if self.closing: return
-        code = lib.uv_idle_stop(self.uv_idle)
+        code = lib.uv_prepare_stop(self.uv_prepare)
         if code < 0: raise UVError(code)
 
     def destroy(self):
-        self.uv_idle = None
-        super(Idle, self).destroy()
+        self.uv_prepare = None
+        super(Prepare, self).destroy()
 
     __call__ = start

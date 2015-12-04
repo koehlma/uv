@@ -17,51 +17,52 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from .library import ffi, lib, detach
+from ..library import ffi, lib, detach
 
-from .common import dummy_callback
-from .error import UVError, HandleClosedError
-from .handle import HandleType, Handle
+from ..common import dummy_callback
+from ..error import UVError, HandleClosedError
+from ..handle import HandleType, Handle
 
-__all__ = ['Prepare']
-
-
-@ffi.callback('uv_prepare_cb')
-def uv_prepare_cb(uv_prepare):
-    prepare = detach(uv_prepare)
-    with prepare.loop.callback_context:
-        prepare.callback(prepare)
+__all__ = ['Check']
 
 
-@HandleType.PREPARE
-class Prepare(Handle):
+@ffi.callback('uv_check_cb')
+def uv_check_cb(uv_check):
+    check = detach(uv_check)
+    with check.loop.callback_context:
+        check.callback(check)
+
+
+@HandleType.CHECK
+class Check(Handle):
     """
-    Prepare handles will run the given callback once per loop iteration,
-    right before polling for IO.
+    Check handles will run the given callback once per loop iteration,
+    right after polling for IO.
 
     :raises uv.UVError: error during the initialization of the handle
 
     :param loop: event loop which should be used for the handle
-    :param callback: callback which should be called right before polling for IO
+    :param callback: callback which should be called right after polling for IO
 
     :type loop: Loop
-    :type callback: (uv.Prepare) -> None
+    :type callback: (uv.Check) -> None
     """
-    __slots__ = ['uv_prepare', 'callback']
+
+    __slots__ = ['uv_check', 'callback']
 
     def __init__(self, loop=None, callback=None):
-        self.uv_prepare = ffi.new('uv_prepare_t*')
-        super(Prepare, self).__init__(self.uv_prepare, loop)
+        self.uv_check = ffi.new('uv_check_t*')
+        super(Check, self).__init__(self.uv_check, loop)
         self.callback = callback or dummy_callback
         """
-        Callback which should be called before polling for IO.
+        Callback which should be called after polling for IO.
 
-        .. function:: callback(Prepare-Handle)
+        .. function:: callback(Check-Handle)
 
         :readonly: False
-        :type: (uv.Prepare) -> None
+        :type: (uv.Check) -> None
         """
-        code = lib.uv_prepare_init(self.loop.uv_loop, self.uv_prepare)
+        code = lib.uv_check_init(self.loop.uv_loop, self.uv_check)
         if code < 0:
             self.destroy()
             raise UVError(code)
@@ -73,12 +74,12 @@ class Prepare(Handle):
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param callback: callback which should be called before polling for IO
-        :type callback: (uv.Prepare) -> None
+        :param callback: callback which should be called after polling for IO
+        :type callback: (uv.Check) -> None
         """
         if self.closing: raise HandleClosedError()
         self.callback = callback or self.callback
-        code = lib.uv_prepare_start(self.uv_prepare, uv_prepare_cb)
+        code = lib.uv_check_start(self.uv_check, uv_check_cb)
         if code < 0: raise UVError(code)
 
     def stop(self):
@@ -88,11 +89,11 @@ class Prepare(Handle):
         :raises uv.UVError: error while stopping the handle
         """
         if self.closing: return
-        code = lib.uv_prepare_stop(self.uv_prepare)
+        code = lib.uv_check_stop(self.uv_check)
         if code < 0: raise UVError(code)
 
     def destroy(self):
-        self.uv_prepare = None
-        super(Prepare, self).destroy()
+        self.uv_check = None
+        super(Check, self).destroy()
 
     __call__ = start
