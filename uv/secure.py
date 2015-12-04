@@ -22,7 +22,7 @@ import socket
 
 from collections import deque
 
-from .library import dummy_callback, Enumeration
+from .common import dummy_callback, Enumeration
 
 from .poll import Poll, PollEvent
 from .stream import Stream

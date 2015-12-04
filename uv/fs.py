@@ -19,8 +19,9 @@ from __future__ import print_function, unicode_literals, division
 
 from collections import namedtuple
 
-from .library import ffi, lib, detach, dummy_callback, Enumeration
+from .library import ffi, lib, detach
 
+from .common import dummy_callback, Enumeration
 from .error import UVError, StatusCode, get_status_code
 from .handle import HandleType
 from .request import Request, RequestType

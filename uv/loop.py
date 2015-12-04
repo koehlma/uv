@@ -21,8 +21,9 @@ import sys
 import threading
 import traceback
 
-from .library import ffi, lib, attach_loop, Enumeration
+from .library import ffi, lib, attach_loop
 
+from .common import Enumeration
 from .error import UVError, LoopClosedError
 
 

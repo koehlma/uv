@@ -19,8 +19,9 @@ from __future__ import print_function, unicode_literals, division
 
 import socket
 
-from .library import ffi, lib, is_posix
+from .library import ffi, lib
 
+from .common import is_posix
 from .error import UVError
 from .handle import HandleType
 from .stream import Stream, ConnectRequest, uv_connect_cb

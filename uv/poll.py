@@ -17,8 +17,9 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from .library import ffi, lib, detach, dummy_callback, Enumeration
+from .library import ffi, lib, detach
 
+from .common import dummy_callback, Enumeration
 from .error import UVError, HandleClosedError
 from .handle import HandleType, Handle
 

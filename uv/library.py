@@ -18,57 +18,9 @@
 from __future__ import print_function, unicode_literals, division
 
 import os
-import sys
-
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 
 from uv import __version__
-
-
-is_py2 = sys.version_info[0] == 2
-is_py3 = sys.version_info[0] == 3
-
-
-def with_metaclass(meta, *bases):
-    class Metaclass(meta):
-        def __new__(cls, name, _, attributes):
-            return meta(name, bases, attributes)
-    return type.__new__(Metaclass, str('Metaclass'), (), {})
-
-
-class _EnumerationMeta(type):
-    _members = []
-    _value_member_map = {}
-
-    def __prepare__(mcs, *args, **kwargs):
-        return OrderedDict()
-
-    def __new__(mcs, name, bases, attributes):
-        members = [(name, value) for name, value in attributes.items()
-                   if not (hasattr(value, '__get__') or hasattr(value, '__set__') or
-                           hasattr(value, '__delete__') or name.startswith('_'))]
-        for name, value in members: del attributes[name]
-        attributes['_members'] = members
-        attributes['_value_member_map'] = {}
-        cls = type.__new__(mcs, name, bases, attributes)
-        for name, value in members:
-            cls._value_member_map[name] = cls(value)
-            setattr(cls, name, cls._value_member_map[name])
-        return cls
-
-    def __call__(cls, value):
-        try: return cls._value_member_map[value]
-        except KeyError: return cls.__new__(cls, value)
-
-    def __iter__(cls):
-        return cls._members
-
-
-try:
-    from enum import IntEnum as Enumeration
-except ImportError:
-    class Enumeration(with_metaclass(_EnumerationMeta, int)): pass
-
 
 MOCK_CONSTANTS = {
     'UV_READABLE': 1,
@@ -287,10 +239,6 @@ if trace_calls:
     lib = LIBTracer()
     ffi = FFITracer()
 
-
-
-
-
 Attachment = namedtuple('Attachment', ['data', 'reference'])
 
 
@@ -318,10 +266,6 @@ def detach_loop(structure):
     if data: return ffi.from_handle(data.object)
 
 
-def dummy_callback(*_):
-    pass
-
-
 def str_py2c(string):
     return ffi.new('char[]', str(string).encode())
 
@@ -330,7 +274,3 @@ def str_c2py(cdata):
     return ffi.string(cdata).decode()
 
 
-is_posix = os.name == 'posix'
-is_nt = os.name == 'nt'
-is_linux = sys.platform.startswith('linux')
-is_win32 = sys.platform == 'win32'

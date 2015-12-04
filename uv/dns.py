@@ -22,8 +22,9 @@ import warnings
 
 from collections import namedtuple
 
-from .library import ffi, lib, detach, str_c2py, dummy_callback
+from .library import ffi, lib, detach, str_c2py
 
+from .common import dummy_callback
 from .error import UVError, get_status_code
 from .request import RequestType, Request
 

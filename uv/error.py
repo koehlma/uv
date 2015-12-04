@@ -17,7 +17,9 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from .library import ffi, lib, Enumeration
+from .library import ffi, lib
+
+from .common import Enumeration
 
 __all__ = ['StatusCode', 'UVError', 'HandleClosedError']
 
