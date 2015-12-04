@@ -745,21 +745,6 @@ typedef struct {
 void* py_attach(py_data* data, void* object);
 py_data* py_detach(void* pointer);
 
-typedef struct {
-    void* magic;
-    void* object;
-    struct {
-        char* base;
-        size_t length;
-        int in_use;
-    } buffer;
-} py_loop_data;
-
-void* py_loop_attach(py_loop_data* data, void* object);
-py_loop_data* py_loop_detach(void* pointer);
-void py_allocate(uv_handle_t*, size_t, uv_buf_t*);
-void py_release(uv_handle_t*);
-uv_alloc_cb py_get_allocator();
 
 
 /* Cross-Platform */
