@@ -19,6 +19,13 @@ MOCK_CONSTANTS = {
     'UV_READABLE': 1,
     'UV_WRITABLE': 2,
 
+    'UV_RENAME': 1,
+    'UV_CHANGE': 2,
+
+    'UV_FS_EVENT_WATCH_ENTRY': 1,
+    'UV_FS_EVENT_STAT': 2,
+    'UV_FS_EVENT_RECURSIVE': 4,
+
     'UV_E2BIG': -7,
     'UV_EACCES': -13,
     'UV_EADDRINUSE': -98,

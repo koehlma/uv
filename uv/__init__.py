@@ -62,6 +62,8 @@ from .handles.timer import Timer
 from .handles.tty import TTY
 from .handles.udp import UDP
 
+from .handles.fs_event import FSEvent, Event, EventFlags
+
 from . import dns
 from . import fs
 from . import misc

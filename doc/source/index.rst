@@ -22,6 +22,8 @@ Contents:
     handles/signal
     handles/timer
 
+    handles/fs_event
+
 
 Indices and tables
 ==================

@@ -20,54 +20,166 @@ from __future__ import print_function, unicode_literals, division
 from ..library import ffi, lib, detach
 
 from ..common import dummy_callback, Enumeration
-from ..error import UVError
+from ..error import UVError, HandleClosedError
 from ..handle import HandleType, Handle
 
 __all__ = ['FSEvent', 'EventFlags', 'Event']
 
 
 class EventFlags(Enumeration):
+    """
+    FS event flags enumeration.
+    """
     WATCH_ENTRY = lib.UV_FS_EVENT_WATCH_ENTRY
+    """
+    By default, if the fs event watcher is given a directory name,
+    we will watch for all events in that directory. This flags
+    overrides this behavior and makes :class:`uv.FSEvent` report
+    only changes to the directory entry itself. This flag does not
+    affect individual files watched.
+
+    .. note::
+
+        This flag is currently not implemented yet on any backend.
+    """
     STAT = lib.UV_FS_EVENT_STAT
+    """
+    By default :class:`uv.FSEvent` will try to use a kernel interface such
+    as inotify or kqueue to detect events. This may not work on remote
+    filesystems such as NFS mounts. This flag makes :class:`uv.FSEvent` fall
+    back to calling stat() on a regular interval.
+
+    .. note::
+
+        This flag is currently not implemented yet on any backend.
+    """
     RECURSIVE = lib.UV_FS_EVENT_RECURSIVE
+    """
+    By default, event watcher, when watching directory, is not registering
+    (is ignoring) changes in it's subdirectories. This flag will override
+    this behaviour on platforms that support it.
+
+    .. note::
+
+        Currently the only supported platforms are OSX and Windows.
+    """
 
 
 class Event(Enumeration):
+    """
+    FS event types enumeration.
+    """
     RENAME = lib.UV_RENAME
+    """
+    File has been renamed or deleted.
+    """
     CHANGE = lib.UV_CHANGE
+    """
+    File has changed.
+    """
 
 
 @ffi.callback('uv_fs_event_cb')
-def uv_fs_event_cb(uv_fs_event, uv_filename, events, status):
+def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
     fs_event = detach(uv_fs_event)
-    uv_filename = ffi.string(uv_filename).decode()
+    filename = ffi.string(c_filename).decode()
     with fs_event.loop.callback_context:
-        fs_event.callback(fs_event, uv_filename, events, status)
+        fs_event.on_event(fs_event, status, filename, events)
 
 
 @HandleType.FS_EVENT
 class FSEvent(Handle):
-    __slots__ = ['fs_event', 'callback', 'path']
+    """
+    FS handles monitor a given path for changes, for example, if the
+    file was renamed or there was a generic change in it. This handle
+    uses the best backend for the job on each platform.
 
-    def __init__(self, loop=None, path=None, callback=None):
-        self.fs_event = ffi.new('uv_fs_event_t*')
-        super(FSEvent, self).__init__(self.fs_event, loop)
-        self.callback = callback or dummy_callback
+    :raises uv.UVError: error during the initialization of the handle
+
+    :param path: path which should be monitored
+    :param flags: flags which should be used
+    :param loop: event loop which should be used for the handle
+    :param on_event: callback which should be called on FS event
+
+    :type path: str
+    :type flags: int
+    :type loop: Loop
+    :type on_event: (uv.FSEvent, uv.StatusCode, str, int) -> None
+    """
+    __slots__ = ['uv_fs_event', 'on_event', 'flags', 'path']
+
+    def __init__(self, path=None, flags=0, loop=None, on_event=None):
+        self.uv_fs_event = ffi.new('uv_fs_event_t*')
+        super(FSEvent, self).__init__(self.uv_fs_event, loop)
         self.path = path
-        code = lib.uv_fs_event_init(self.loop.uv_loop, self.fs_event)
+        """
+        Path which should be monitored.
+
+        .. warning::
+
+            This property is writable, however you need to restart the
+            handle if you change it during the handle is active.
+
+        :readonly: False
+        :type: str
+        """
+        self.flags = flags
+        """
+        Flags which should be used for monitoring.
+
+        .. warning::
+
+            This property is writable, however you need to restart the
+            handle if you change it during the handle is active.
+
+        :readonly: False
+        :type: int
+        """
+        self.on_event = on_event or dummy_callback
+        """
+        Callback which should be called on FS events.
+
+        .. function:: on_event(FSEvent-Handle, Status-Code, Filename, Event-Mask)
+
+        :readonly: False
+        :type: (uv.FSEvent, uv.StatusCode, str, int) -> None
+        """
+        code = lib.uv_fs_event_init(self.loop.uv_loop, self.uv_fs_event)
         if code < 0:
             self.destroy()
             raise UVError(code)
 
-    def start(self, path=None, callback=None, flags=0):
+    def start(self, path=None, flags=None, on_event=None):
+        """
+        Starts monitoring for FS events.
+
+        :raises uv.UVError: error while starting the handle
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param path: path which should be monitored
+        :param flags: flags which should be used for monitoring
+        :param on_event: callback which should be called on FS events
+
+        :type path: str
+        :type flags: int
+        :type on_event: (uv.FSEvent, uv.StatusCode, str, int) -> None
+        """
+        if self.closing: raise HandleClosedError()
         self.path = path or self.path
-        self.callback = callback or self.callback
-        uv_path = self.path.encode()
-        code = lib.uv_fs_event_start(self.fs_event, uv_fs_event_cb, uv_path, flags)
+        self.flags = flags or self.flags
+        self.on_event = on_event or self.on_event
+        c_path = self.path.encode()
+        code = lib.uv_fs_event_start(self.uv_fs_event, uv_fs_event_cb, c_path, self.flags)
         if code < 0: raise UVError(code)
 
     def stop(self):
-        code = lib.uv_fs_event_stop(self.fs_event)
+        """
+        Stops the handle, the callback will no longer be called.
+
+        :raises uv.UVError: error while stopping the handle
+        """
+        if self.closing: return
+        code = lib.uv_fs_event_stop(self.uv_fs_event)
         if code < 0: raise UVError(code)
 
     __call__ = start
