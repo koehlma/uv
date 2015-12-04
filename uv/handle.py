@@ -77,7 +77,8 @@ class Handle(object):
     :type uv_handle: ffi.CData
     """
 
-    __slots__ = ['uv_handle', 'attachment', 'loop', 'on_closed', 'closed', 'closing']
+    __slots__ = ['uv_handle', 'attachment', 'loop', 'on_closed',
+                 'closed', 'closing', 'data']
 
     def __init__(self, uv_handle, loop=None):
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
@@ -113,6 +114,12 @@ class Handle(object):
 
         :readonly: True
         :type: bool
+        """
+        self.data = None
+        """
+        User-specific data of any type (necessary because we are using slots).
+
+        :readonly: False
         """
         if self.loop.closed: raise LoopClosedError()
         self.loop.handles.add(self)
