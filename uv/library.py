@@ -37,7 +37,8 @@ def with_metaclass(meta, *bases):
 
 
 class _EnumerationMeta(type):
-    value2member = {}
+    _members = []
+    _value_member_map = {}
 
     def __prepare__(mcs, *args, **kwargs):
         return OrderedDict()
@@ -47,16 +48,20 @@ class _EnumerationMeta(type):
                    if not (hasattr(value, '__get__') or hasattr(value, '__set__') or
                            hasattr(value, '__delete__') or name.startswith('_'))]
         for name, value in members: del attributes[name]
-        attributes['value2member'] = {}
+        attributes['_members'] = members
+        attributes['_value_member_map'] = {}
         cls = type.__new__(mcs, name, bases, attributes)
         for name, value in members:
-            cls.value2member[name] = cls(value)
-            setattr(cls, name, cls.value2member[name])
+            cls._value_member_map[name] = cls(value)
+            setattr(cls, name, cls._value_member_map[name])
         return cls
 
     def __call__(cls, value):
-        try: return cls.value2member[value]
+        try: return cls._value_member_map[value]
         except KeyError: return cls.__new__(cls, value)
+
+    def __iter__(cls):
+        return cls._members
 
 
 try:
