@@ -300,7 +300,7 @@ setup(name='uv',
       packages=['uv', 'uvcffi'],
       cmdclass=cmdclass,
       ext_modules=ext_modules,
-      requires=['cffi'] + (['enum34'] if sys.version_info[:2] < (3, 4) else []),
+      requires=['cffi'],
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',
           'Intended Audience :: Developers',

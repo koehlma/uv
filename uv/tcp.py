@@ -17,17 +17,16 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
 import socket
 
 from .dns import c_create_sockaddr
 from .error import UVError
 from .handle import HandleType
-from .library import ffi, lib
+from .library import ffi, lib, Enumeration
 from .stream import Stream, ConnectRequest, uv_connect_cb
 
 
-class TCPFlags(enum.IntEnum):
+class TCPFlags(Enumeration):
     IPV6ONLY = lib.UV_TCP_IPV6ONLY
 
 

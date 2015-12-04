@@ -17,9 +17,7 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
-
-from .library import ffi, lib, detach, dummy_callback
+from .library import ffi, lib, detach, dummy_callback, Enumeration
 
 from .error import UVError, HandleClosedError
 from .handle import HandleType, Handle
@@ -27,7 +25,7 @@ from .handle import HandleType, Handle
 __all__ = ['Poll', 'PollEvent']
 
 
-class PollEvent(enum.IntEnum):
+class PollEvent(Enumeration):
     """
     Poll event types enumeration.
     """

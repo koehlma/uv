@@ -17,14 +17,12 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
-
-from .library import ffi, lib
+from .library import ffi, lib, Enumeration
 
 __all__ = ['StatusCode', 'UVError', 'HandleClosedError']
 
 
-class StatusCode(enum.IntEnum):
+class StatusCode(Enumeration):
     """
     Status code enumeration. Codes (other than SUCCESS) are varying across platforms.
     """

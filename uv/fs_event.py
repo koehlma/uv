@@ -17,9 +17,7 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
-
-from .library import ffi, lib, detach, dummy_callback
+from .library import ffi, lib, detach, dummy_callback, Enumeration
 
 from .error import UVError
 from .handle import HandleType, Handle
@@ -27,13 +25,13 @@ from .handle import HandleType, Handle
 __all__ = ['FSEvent', 'EventFlags', 'Event']
 
 
-class EventFlags(enum.IntEnum):
+class EventFlags(Enumeration):
     WATCH_ENTRY = lib.UV_FS_EVENT_WATCH_ENTRY
     STAT = lib.UV_FS_EVENT_STAT
     RECURSIVE = lib.UV_FS_EVENT_RECURSIVE
 
 
-class Event(enum.IntEnum):
+class Event(Enumeration):
     RENAME = lib.UV_RENAME
     CHANGE = lib.UV_CHANGE
 

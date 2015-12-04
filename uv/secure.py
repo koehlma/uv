@@ -17,25 +17,24 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
 import ssl
 import socket
 
 from collections import deque
 
-from .library import dummy_callback
+from .library import dummy_callback, Enumeration
 
 from .poll import Poll, PollEvent
 from .stream import Stream
 
 
-class CertReqs(enum.IntEnum):
+class CertReqs(Enumeration):
     NONE = ssl.CERT_NONE
     OPTIONAL = ssl.CERT_OPTIONAL
     REQUIRED = ssl.CERT_REQUIRED
 
 
-class Protocol(enum.IntEnum):
+class Protocol(Enumeration):
     SSLv2 = ssl.PROTOCOL_SSLv2
     SSLv3 = ssl.PROTOCOL_SSLv3
     SSLv23 = ssl.PROTOCOL_SSLv23

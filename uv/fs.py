@@ -17,11 +17,9 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
-
 from collections import namedtuple
 
-from .library import ffi, lib, detach, dummy_callback
+from .library import ffi, lib, detach, dummy_callback, Enumeration
 
 from .error import UVError, StatusCode, get_status_code
 from .handle import HandleType
@@ -54,7 +52,7 @@ def unpack_dirent(uv_dirent):
     return Dirent(ffi.string(uv_dirent.name).decode(), DirentType(uv_dirent.type))
 
 
-class FSType(enum.IntEnum):
+class FSType(Enumeration):
     UNKNOWN = lib.UV_FS_UNKNOWN
     CUSTOM = lib.UV_FS_CUSTOM
     OPEN = lib.UV_FS_OPEN
@@ -90,7 +88,7 @@ class FSType(enum.IntEnum):
         return postprocessor
 
 
-class DirentType(enum.IntEnum):
+class DirentType(Enumeration):
     UNKNOWN = lib.UV_DIRENT_UNKNOWN
     FILE = lib.UV_DIRENT_FILE
     DIR = lib.UV_DIRENT_DIR

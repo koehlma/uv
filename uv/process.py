@@ -17,13 +17,11 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
 import warnings
 
 from .error import UVError
 from .handle import HandleType, Handle
-from .library import ffi, lib, detach, str_py2c, dummy_callback
-from .loop import Loop
+from .library import ffi, lib, detach, str_py2c, dummy_callback, Enumeration
 from .pipe import Pipe
 from .signal import Signals
 from .stream import Stream
@@ -35,7 +33,7 @@ def disable_stdio_inheritance():
     lib.uv_disable_stdio_inheritance()
 
 
-class StandardIOFlags(enum.IntEnum):
+class StandardIOFlags(Enumeration):
     IGNORE = lib.UV_IGNORE
 
     INHERIT_FD = lib.UV_INHERIT_FD
@@ -51,7 +49,7 @@ class StandardIOFlags(enum.IntEnum):
 PIPE = StandardIOFlags.CREATE_PIPE
 
 
-class ProcessFlags(enum.IntEnum):
+class ProcessFlags(Enumeration):
     SETUID = lib.UV_PROCESS_SETUID
     SETGID = lib.UV_PROCESS_SETGID
     DETACHED = lib.UV_PROCESS_DETACHED

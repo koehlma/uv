@@ -20,9 +20,49 @@ from __future__ import print_function, unicode_literals, division
 import os
 import sys
 
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 
 from uv import __version__
+
+
+is_py2 = sys.version_info[0] == 2
+is_py3 = sys.version_info[0] == 3
+
+
+def with_metaclass(meta, *bases):
+    class Metaclass(meta):
+        def __new__(cls, name, _, attributes):
+            return meta(name, bases, attributes)
+    return type.__new__(Metaclass, str('Metaclass'), (), {})
+
+
+class _EnumerationMeta(type):
+    value2member = {}
+
+    def __prepare__(mcs, cls, bases):
+        return OrderedDict()
+
+    def __new__(mcs, name, bases, attributes):
+        members = [(name, value) for name, value in attributes.items()
+                   if not (hasattr(value, '__get__') or hasattr(value, '__set__') or
+                           hasattr(value, '__delete__') or name.startswith('_'))]
+        for name, value in members: del attributes[name]
+        attributes['value2member'] = {}
+        cls = type.__new__(mcs, name, bases, attributes)
+        for name, value in members:
+            cls.value2member[name] = cls(value)
+            setattr(cls, name, cls.value2member[name])
+        return cls
+
+    def __call__(cls, value):
+        try: return cls.value2member[value]
+        except KeyError: return cls.__new__(cls, value)
+
+
+try:
+    from enum import IntEnum as Enumeration
+except ImportError:
+    class Enumeration(with_metaclass(_EnumerationMeta, int)): pass
 
 
 MOCK_CONSTANTS = {

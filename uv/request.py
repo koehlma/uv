@@ -17,9 +17,7 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
-
-from .library import ffi, lib, attach
+from .library import ffi, lib, attach, Enumeration
 
 from .error import UVError, HandleClosedError
 from .loop import Loop
@@ -29,7 +27,7 @@ __all__ = ['requests', 'Request']
 requests = set()
 
 
-class RequestType(enum.IntEnum):
+class RequestType(Enumeration):
     UNKNOWN = lib.UV_UNKNOWN_REQ
     CONNECT = lib.UV_CONNECT
     WRITE = lib.UV_WRITE

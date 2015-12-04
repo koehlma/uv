@@ -17,21 +17,19 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
-
 from .dns import c_create_sockaddr
 from .error import UVError
 from .handle import HandleType, Handle
-from .library import ffi, lib
+from .library import ffi, lib, Enumeration
 
 
-class UDPFlags(enum.IntEnum):
+class UDPFlags(Enumeration):
     IPV6ONLY = lib.UV_UDP_IPV6ONLY
     PARTIAL = lib.UV_UDP_PARTIAL
     REUSEADDR = lib.UV_UDP_REUSEADDR
 
 
-class Membership(enum.IntEnum):
+class Membership(Enumeration):
     LEAVE_GROUP = lib.UV_LEAVE_GROUP
     JOIN_GROUP = lib.UV_JOIN_GROUP
 

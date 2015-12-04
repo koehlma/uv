@@ -17,9 +17,7 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
-
-from .library import ffi, lib, attach, detach, dummy_callback, is_linux
+from .library import ffi, lib, attach, detach, dummy_callback, is_linux, Enumeration
 
 from .error import UVError, HandleClosedError, LoopClosedError
 from .loop import Loop
@@ -27,7 +25,7 @@ from .loop import Loop
 __all__ = ['Handle']
 
 
-class HandleType(enum.IntEnum):
+class HandleType(Enumeration):
     UNKNOWN = lib.UV_UNKNOWN_HANDLE
     HANDLE = lib.UV_HANDLE
     ASYNC = lib.UV_ASYNC

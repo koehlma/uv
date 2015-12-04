@@ -17,11 +17,9 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import enum
-
 from collections import namedtuple
 
-from .library import ffi, lib
+from .library import ffi, lib, Enumeration
 
 from .error import UVError
 from .handle import HandleType
@@ -36,7 +34,7 @@ def reset_mode():
     if code < 0: raise UVError(code)
 
 
-class TTYMode(enum.IntEnum):
+class TTYMode(Enumeration):
     NORMAL = lib.UV_TTY_MODE_NORMAL
     RAW = lib.UV_TTY_MODE_RAW
     IO = lib.UV_TTY_MODE_IO

@@ -17,12 +17,11 @@
 
 from __future__ import print_function, division
 
-import enum
 import sys
 import threading
 import traceback
 
-from .library import ffi, lib, attach_loop
+from .library import ffi, lib, attach_loop, Enumeration
 
 from .error import UVError, LoopClosedError
 
@@ -30,7 +29,7 @@ from .error import UVError, LoopClosedError
 __all__ = ['RunMode', 'Loop']
 
 
-class RunMode(enum.IntEnum):
+class RunMode(Enumeration):
     DEFAULT = lib.UV_RUN_DEFAULT
     ONCE = lib.UV_RUN_ONCE
     NOWAIT = lib.UV_RUN_NOWAIT
