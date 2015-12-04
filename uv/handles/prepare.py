@@ -30,7 +30,7 @@ __all__ = ['Prepare']
 def uv_prepare_cb(uv_prepare):
     prepare = detach(uv_prepare)
     with prepare.loop.callback_context:
-        prepare.callback(prepare)
+        prepare.on_prepare(prepare)
 
 
 @HandleType.PREPARE
@@ -42,21 +42,21 @@ class Prepare(Handle):
     :raises uv.UVError: error during the initialization of the handle
 
     :param loop: event loop which should be used for the handle
-    :param callback: callback which should be called right before polling for IO
+    :param on_prepare: callback which should be called right before polling for IO
 
     :type loop: Loop
-    :type callback: (uv.Prepare) -> None
+    :type on_prepare: (uv.Prepare) -> None
     """
-    __slots__ = ['uv_prepare', 'callback']
+    __slots__ = ['uv_prepare', 'on_prepare']
 
-    def __init__(self, loop=None, callback=None):
+    def __init__(self, loop=None, on_prepare=None):
         self.uv_prepare = ffi.new('uv_prepare_t*')
         super(Prepare, self).__init__(self.uv_prepare, loop)
-        self.callback = callback or dummy_callback
+        self.on_prepare = on_prepare or dummy_callback
         """
         Callback which should be called before polling for IO.
 
-        .. function:: callback(Prepare-Handle)
+        .. function:: on_prepare(Prepare-Handle)
 
         :readonly: False
         :type: (uv.Prepare) -> None
@@ -66,18 +66,18 @@ class Prepare(Handle):
             self.destroy()
             raise UVError(code)
 
-    def start(self, callback=None):
+    def start(self, on_prepare=None):
         """
         Starts the handle.
 
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param callback: callback which should be called before polling for IO
-        :type callback: (uv.Prepare) -> None
+        :param on_prepare: callback which should be called before polling for IO
+        :type on_prepare: (uv.Prepare) -> None
         """
         if self.closing: raise HandleClosedError()
-        self.callback = callback or self.callback
+        self.on_prepare = on_prepare or self.on_prepare
         code = lib.uv_prepare_start(self.uv_prepare, uv_prepare_cb)
         if code < 0: raise UVError(code)
 

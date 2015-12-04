@@ -30,7 +30,7 @@ __all__ = ['Check']
 def uv_check_cb(uv_check):
     check = detach(uv_check)
     with check.loop.callback_context:
-        check.callback(check)
+        check.on_check(check)
 
 
 @HandleType.CHECK
@@ -42,22 +42,22 @@ class Check(Handle):
     :raises uv.UVError: error during the initialization of the handle
 
     :param loop: event loop which should be used for the handle
-    :param callback: callback which should be called right after polling for IO
+    :param on_check: callback which should be called right after polling for IO
 
     :type loop: Loop
-    :type callback: (uv.Check) -> None
+    :type on_check: (uv.Check) -> None
     """
 
-    __slots__ = ['uv_check', 'callback']
+    __slots__ = ['uv_check', 'on_check']
 
-    def __init__(self, loop=None, callback=None):
+    def __init__(self, loop=None, on_check=None):
         self.uv_check = ffi.new('uv_check_t*')
         super(Check, self).__init__(self.uv_check, loop)
-        self.callback = callback or dummy_callback
+        self.on_check = on_check or dummy_callback
         """
         Callback which should be called after polling for IO.
 
-        .. function:: callback(Check-Handle)
+        .. function:: on_check(Check-Handle)
 
         :readonly: False
         :type: (uv.Check) -> None
@@ -67,18 +67,18 @@ class Check(Handle):
             self.destroy()
             raise UVError(code)
 
-    def start(self, callback=None):
+    def start(self, on_check=None):
         """
         Starts the handle.
 
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param callback: callback which should be called after polling for IO
-        :type callback: (uv.Check) -> None
+        :param on_check: callback which should be called after polling for IO
+        :type on_check: (uv.Check) -> None
         """
         if self.closing: raise HandleClosedError()
-        self.callback = callback or self.callback
+        self.on_check = on_check or self.on_check
         code = lib.uv_check_start(self.uv_check, uv_check_cb)
         if code < 0: raise UVError(code)
 

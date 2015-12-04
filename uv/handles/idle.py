@@ -30,7 +30,7 @@ __all__ = ['Idle']
 def uv_idle_cb(uv_idle):
     idle = detach(uv_idle)
     with idle.loop.callback_context:
-        idle.callback(idle)
+        idle.on_idle(idle)
 
 
 @HandleType.IDLE
@@ -51,22 +51,22 @@ class Idle(Handle):
     :raises uv.UVError: error during the initialization of the handle
 
     :param loop: event loop which should be used for the handle
-    :param callback: callback which should be called before prepare handles
+    :param on_idle: callback which should be called before prepare handles
 
     :type loop: uv.Loop
-    :type callback: (uv.Idle) -> None
+    :type on_idle: (uv.Idle) -> None
     """
 
-    __slots__ = ['uv_idle', 'callback']
+    __slots__ = ['uv_idle', 'on_idle']
 
-    def __init__(self, loop=None, callback=None):
+    def __init__(self, loop=None, on_idle=None):
         self.uv_idle = ffi.new('uv_idle_t*')
         super(Idle, self).__init__(self.uv_idle, loop)
-        self.callback = callback or dummy_callback
+        self.on_idle = on_idle or dummy_callback
         """
         Callback which should be called before prepare handles.
 
-        .. function:: callback(Idle-Handle)
+        .. function:: on_idle(Idle-Handle)
 
         :readonly: False
         :type: (uv.Idle) -> None
@@ -76,18 +76,18 @@ class Idle(Handle):
             self.destroy()
             raise UVError(code)
 
-    def start(self, callback=None):
+    def start(self, on_idle=None):
         """
         Starts the handle.
 
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param callback: callback which should be called before prepare handles
-        :type callback: (uv.Idle) -> None
+        :param on_idle: callback which should be called before prepare handles
+        :type on_idle: (uv.Idle) -> None
         """
         if self.closing: raise HandleClosedError()
-        self.callback = callback or self.callback
+        self.on_idle = on_idle or self.on_idle
         code = lib.uv_idle_start(self.uv_idle, uv_idle_cb)
         if code < 0: raise UVError(code)
 

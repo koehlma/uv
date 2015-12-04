@@ -48,7 +48,7 @@ class PollEvent(Enumeration):
 def poll_callback(uv_poll, status, events):
     poll = detach(uv_poll)
     with poll.loop.callback_context:
-        poll.callback(poll, status, events)
+        poll.on_event(poll, status, events)
 
 
 @HandleType.POLL
@@ -86,15 +86,15 @@ class Poll(Handle):
 
     :param fd: file descriptor which should be polled (is set to non-blocking mode)
     :param loop: event loop which should be used for the handle
-    :param callback: callback which should be called on IO events
+    :param on_event: callback which should be called on IO events
 
     :type fd: int
     :type loop: Loop
-    :type callback: (uv.Poll, uv.StatusCode, int) -> None
+    :type on_event: (uv.Poll, uv.StatusCode, int) -> None
     """
-    __slots__ = ['uv_poll', 'fd', 'callback']
+    __slots__ = ['uv_poll', 'fd', 'on_event']
 
-    def __init__(self, fd, loop=None, callback=None):
+    def __init__(self, fd, loop=None, on_event=None):
         self.uv_poll = ffi.new('uv_poll_t*')
         super(Poll, self).__init__(self.uv_poll, loop)
         self.fd = fd
@@ -104,11 +104,11 @@ class Poll(Handle):
         :readonly: True
         :type: int
         """
-        self.callback = callback or dummy_callback
+        self.on_event = on_event or dummy_callback
         """
         Callback which should be called on IO events.
 
-        .. function:: callback(Poll-Handle, Status-Code, Event-Mask)
+        .. function:: on_event(Poll-Handle, Status-Code, Event-Mask)
 
         :readonly: False
         :type: (uv.Poll, uv.StatusCode, int) -> None
@@ -118,7 +118,7 @@ class Poll(Handle):
             self.destroy()
             raise UVError(code)
 
-    def start(self, events=PollEvent.READABLE, callback=None):
+    def start(self, events=PollEvent.READABLE, on_event=None):
         """
         Starts polling the file descriptor for the given events. As soon as
         an event is detected the callback will be called with status code
@@ -134,13 +134,13 @@ class Poll(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param events: bitmask of events which should be polled for
-        :param callback: callback which should be called on IO events
+        :param on_event: callback which should be called on IO events
 
         :type events: int
-        :type callback: (uv.Poll, uv.StatusCode, int) -> None
+        :type on_event: (uv.Poll, uv.StatusCode, int) -> None
         """
         if self.closing: raise HandleClosedError()
-        self.callback = callback or self.callback
+        self.on_event = on_event or self.on_event
         code = lib.uv_poll_start(self.uv_poll, events, poll_callback)
         if code < 0: raise UVError(code)
 

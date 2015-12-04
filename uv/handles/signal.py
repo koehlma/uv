@@ -67,7 +67,7 @@ class Signals(Enumeration):
 def uv_signal_cb(uv_signal, signum):
     signal = detach(uv_signal)
     with signal.loop.callback_context:
-        signal.callback(signal, signum)
+        signal.on_signal(signal, signum)
 
 
 @HandleType.SIGNAL
@@ -88,22 +88,22 @@ class Signal(Handle):
     :raises uv.UVError: error during the initialization of the handle
 
     :param loop: event loop which should be used for the handle
-    :param callback: callback which should be called on signal delivery
+    :param on_signal: callback which should be called on signal delivery
 
     :type loop: Loop
-    :type callback: (uv.Signal, int) -> None
+    :type on_signal: (uv.Signal, int) -> None
     """
 
-    __slots__ = ['uv_signal', 'callback']
+    __slots__ = ['uv_signal', 'on_signal']
 
-    def __init__(self, loop=None, callback=None):
+    def __init__(self, loop=None, on_signal=None):
         self.uv_signal = ffi.new('uv_signal_t*')
         super(Signal, self).__init__(self.uv_signal, loop)
-        self.callback = callback or dummy_callback
+        self.on_signal = on_signal or dummy_callback
         """
         Callback which should be called on signal delivery.
 
-        .. function:: callback(Signal-Handle, Signal-Number)
+        .. function:: on_signal(Signal-Handle, Signal-Number)
 
         :readonly: False
         :type: (uv.Signal, int) -> None
@@ -126,7 +126,7 @@ class Signal(Handle):
         if self.closing: raise HandleClosedError()
         return self.uv_signal.signum
 
-    def start(self, signum, callback=None):
+    def start(self, signum, on_signal=None):
         """
         Starts the handle.
 
@@ -134,13 +134,13 @@ class Signal(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param signum: signal number which should be monitored
-        :param callback: callback which should be called on signal delivery
+        :param on_signal: callback which should be called on signal delivery
 
         :type signum: int
-        :type callback: (uv.Signal) -> None
+        :type on_signal: (uv.Signal) -> None
         """
         if self.closing: raise HandleClosedError()
-        self.callback = callback or self.callback
+        self.on_signal = on_signal or self.on_signal
         code = lib.uv_signal_start(self.uv_signal, uv_signal_cb, signum)
         if code < 0: raise UVError(code)
 

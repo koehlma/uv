@@ -30,7 +30,7 @@ __all__ = ['Timer']
 def uv_timer_cb(uv_timer):
     timer = detach(uv_timer)
     with timer.loop.callback_context:
-        timer.callback(timer)
+        timer.on_timeout(timer)
 
 
 @HandleType.TIMER
@@ -41,18 +41,18 @@ class Timer(Handle):
     :raises uv.UVError: error during the initialization of the handle
 
     :param loop: event loop which should be used for the handle
-    :param callback: callback which should be called on timeout
+    :param on_timeout: callback which should be called on timeout
 
     :type loop: Loop
-    :type callback: (uv.Timer) -> None
+    :type on_timeout: (uv.Timer) -> None
     """
 
-    __slots__ = ['uv_timer', 'callback']
+    __slots__ = ['uv_timer', 'on_timeout']
 
-    def __init__(self, loop=None, callback=None):
+    def __init__(self, loop=None, on_timeout=None):
         self.uv_timer = ffi.new('uv_timer_t*')
         super(Timer, self).__init__(self.uv_timer, loop)
-        self.callback = callback or dummy_callback
+        self.on_timeout = on_timeout or dummy_callback
         """
         Callback which should be called on timeout.
 
@@ -120,7 +120,7 @@ class Timer(Handle):
         code = lib.uv_timer_again(self.uv_timer)
         if code < 0: raise UVError(code)
 
-    def start(self, timeout, callback=None, repeat=0):
+    def start(self, timeout, on_timeout=None, repeat=0):
         """
         Starts the timer. If `timeout` is zero, the callback fires
         on the next event loop iteration. If repeat is non-zero, the
@@ -131,15 +131,15 @@ class Timer(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param timeout: timeout which should be used (in milliseconds)
-        :param callback: callback which should be called on timeout
+        :param on_timeout: callback which should be called on timeout
         :param repeat: repeat interval which should be set (in milliseconds)
 
         :type timeout: int
-        :type callback: (uv.Timer) -> None
+        :type on_timeout: (uv.Timer) -> None
         :type repeat: int
         """
         if self.closing: raise HandleClosedError()
-        self.callback = callback or self.callback
+        self.on_timeout = on_timeout or self.on_timeout
         code = lib.uv_timer_start(self.uv_timer, uv_timer_cb, timeout, repeat)
         if code < 0: raise UVError(code)
 

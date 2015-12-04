@@ -52,7 +52,7 @@ def main():
     server.listen(1000, callback=on_connection)
 
     sigint = uv.Signal()
-    sigint.start(uv.Signals.SIGINT, callback=on_quit)
+    sigint.start(uv.Signals.SIGINT, on_signal=on_quit)
 
     loop.run()
 
