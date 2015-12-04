@@ -182,4 +182,8 @@ class FSEvent(Handle):
         code = lib.uv_fs_event_stop(self.uv_fs_event)
         if code < 0: raise UVError(code)
 
+    def destroy(self):
+        self.uv_fs_event = None
+        super(FSEvent, self).destroy()
+
     __call__ = start
