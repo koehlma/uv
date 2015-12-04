@@ -23,50 +23,6 @@ py_data* py_detach(void* pointer) {
 }
 
 
-typedef struct {
-    void* magic;
-    void* object;
-    struct {
-        char* base;
-        size_t length;
-        int in_use;
-    } buffer;
-} py_loop_data;
-
-void* py_loop_attach(py_loop_data* data, void* object) {
-    data->magic = py_loop_attach;
-    data->object = object;
-    return (void*) data;
-}
-
-py_loop_data* py_loop_detach(void* pointer) {
-    if (pointer != NULL && ((py_loop_data*) pointer)->magic == &py_loop_attach) {
-        return (py_loop_data*) pointer;
-    }
-    return NULL;
-}
-
-void py_allocate(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buffer) {
-    py_loop_data* data = handle->loop->data;
-    if (data->buffer.in_use) {
-        buffer->base = NULL;
-        buffer->len = 0;
-    } else {
-        buffer->base = data->buffer.base;
-        buffer->len = data->buffer.length;
-        data->buffer.in_use = 1;
-    }
-}
-
-void py_release(uv_handle_t* handle) {
-    py_loop_data* data = handle->loop->data;
-    data->buffer.in_use = 0;
-}
-
-static uv_alloc_cb py_get_allocator(void) {
-    return &py_allocate;
-}
-
 
 /* Cross-Platform */
 typedef struct {

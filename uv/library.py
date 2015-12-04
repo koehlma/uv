@@ -66,30 +66,18 @@ version_patch = version_hex & 0xff
 version = Version(version_string, version_major, version_minor, version_patch)
 
 
-Attachment = namedtuple('Attachment', ['data', 'reference'])
+Attachment = namedtuple('Attachment', ['c_data', 'c_reference'])
 
 
 def attach(structure, instance):
     attachment = Attachment(ffi.new('py_data*'), ffi.new_handle(instance))
-    lib.py_attach(attachment.data, attachment.reference)
-    structure.data = attachment.data
+    lib.py_attach(attachment.c_data, attachment.c_reference)
+    structure.data = attachment.c_data
     return attachment
 
 
 def detach(structure):
     data = lib.py_detach(structure.data)
-    if data: return ffi.from_handle(data.object)
-
-
-def attach_loop(structure, loop):
-    attachment = Attachment(ffi.new('py_loop_data*'), ffi.new_handle(loop))
-    lib.py_loop_attach(attachment.data, attachment.reference)
-    structure.data = attachment.data
-    return attachment
-
-
-def detach_loop(structure):
-    data = lib.py_loop_detach(structure.data)
     if data: return ffi.from_handle(data.object)
 
 

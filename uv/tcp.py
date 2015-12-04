@@ -42,8 +42,7 @@ class TCP(Stream):
         if code < 0:
             self.destroy()
             raise UVError(code)
-        self._simultaneous_accepts = False
-        self.sockadd = None
+        self.sockaddr = None
 
     @property
     def family(self):

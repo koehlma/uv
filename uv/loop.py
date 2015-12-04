@@ -21,7 +21,7 @@ import sys
 import threading
 import traceback
 
-from .library import ffi, lib, attach_loop
+from .library import ffi, lib, attach
 
 from .common import Enumeration
 from .error import UVError, LoopClosedError
@@ -48,6 +48,26 @@ class CallbackContext(object):
             print('Exception happened during callback execution!', file=sys.stderr)
             traceback.print_exception(exc_type, exc_value, exc_traceback)
         return True
+
+
+class Allocator(object):
+    def __init__(self, buffer_size=2**16):
+        self.buffer_size = buffer_size
+        self.buffer_in_use = False
+        self.c_buffer = ffi.new('char[]', self.buffer_size)
+        self.uv_alloc_cb = ffi.callback('uv_alloc_cb', self.allocate)
+
+    def allocate(self, uv_handle, suggested_size, uv_buf):
+        if self.buffer_in_use:
+            uv_buf.base = ffi.NULL
+            uv_buf.len = 0
+        else:
+            uv_buf.base = self.c_buffer
+            uv_buf.len = self.buffer_size
+        self.buffer_in_use = True
+
+    def release(self, handle):
+        self.buffer_in_use = False
 
 
 class Loop:
@@ -89,7 +109,7 @@ class Loop:
         """
         with cls._global_lock: return frozenset(cls._loops)
 
-    def __init__(self, buffer_size=2**16, allocate=None, release=None, default=False):
+    def __init__(self, buffer_size=2**16, allocator=Allocator, default=False):
         if default:
             assert Loop._default is None
             self.uv_loop = lib.uv_default_loop()
@@ -99,17 +119,9 @@ class Loop:
             code = lib.uv_loop_init(self.uv_loop)
             if code < 0: raise UVError(code)
 
-        self.attachment = attach_loop(self.uv_loop, self)
+        self.attachment = attach(self.uv_loop, self)
 
-        if allocate is None or release is None:
-            self.c_data_buffer = ffi.new('char[%d]' % buffer_size)
-            self.attachment.data.buffer.length = buffer_size
-            self.attachment.data.buffer.base = self.c_data_buffer
-            self.allocate = lib.py_get_allocator()
-            self.release = lib.py_release
-        else:
-            self.allocate = ffi.callback(allocate)
-            self.release = ffi.callback(release)
+        self.allocator = allocator(buffer_size)
 
         self.callback_context = CallbackContext()
         """
@@ -142,6 +154,16 @@ class Loop:
         """
         with Loop._global_lock: Loop._loops.add(self)
         self.make_current()
+
+    def _allocate(self, uv_handle, suggested_size, uv_buf):
+        assert not self.buffer_in_use
+        uv_buf.base = self.c_buffer
+        uv_buf.len = self.buffer_size
+        self.buffer_in_use = True
+
+    def _release(self, *args):
+        assert self.buffer_in_use
+        self.buffer_in_use = False
 
     @property
     def alive(self):

@@ -43,7 +43,7 @@ def uv_connection_cb(uv_stream, status):
 def uv_read_cb(uv_stream, length, buffer):
     stream = detach(uv_stream)
     data = bytes(ffi.buffer(buffer.base, length)) if length > 0 else b''
-    stream.loop.release(ffi.cast('uv_handle_t*', uv_stream))
+    stream.loop.allocator.release(stream)
     with stream.loop.callback_context:
         stream.on_read(stream, length, data)
 
@@ -150,7 +150,8 @@ class Stream(Handle):
 
     def read_start(self, callback=None):
         self.on_read = callback or self.on_read
-        code = lib.uv_read_start(self.uv_stream, self.loop.allocate, uv_read_cb)
+        uv_alloc_cb = self.loop.allocator.uv_alloc_cb
+        code = lib.uv_read_start(self.uv_stream, uv_alloc_cb, uv_read_cb)
         if code < 0: raise UVError(code)
 
     def read_stop(self):
