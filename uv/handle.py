@@ -93,8 +93,10 @@ class Handle(object):
         """
         Callback which should be called after the handle has been closed.
 
+        .. function:: on_closed(Handle)
+
         :readonly: False
-        :type: (Handle) -> None
+        :type: (uv.Handle) -> None
         """
         self.closed = False
         """

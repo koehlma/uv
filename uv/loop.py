@@ -17,13 +17,14 @@
 
 from __future__ import print_function, division
 
+import abc
 import sys
 import threading
 import traceback
 
 from .library import ffi, lib, attach
 
-from .common import Enumeration
+from .common import Enumeration, with_metaclass
 from .error import UVError, LoopClosedError
 
 
@@ -50,14 +51,21 @@ class CallbackContext(object):
         return True
 
 
-class Allocator(object):
+class Allocator(with_metaclass(abc.ABCMeta)):
+    uv_alloc_cb = None
+
+    @abc.abstractmethod
+    def finalize(self, uv_handle, length, uv_buf): pass
+
+
+class DefaultAllocator(Allocator):
     def __init__(self, buffer_size=2**16):
         self.buffer_size = buffer_size
         self.buffer_in_use = False
         self.c_buffer = ffi.new('char[]', self.buffer_size)
-        self.uv_alloc_cb = ffi.callback('uv_alloc_cb', self.allocate)
+        self.uv_alloc_cb = ffi.callback('uv_alloc_cb', self._allocate)
 
-    def allocate(self, uv_handle, suggested_size, uv_buf):
+    def _allocate(self, uv_handle, suggested_size, uv_buf):
         if self.buffer_in_use:
             uv_buf.base = ffi.NULL
             uv_buf.len = 0
@@ -66,8 +74,9 @@ class Allocator(object):
             uv_buf.len = self.buffer_size
         self.buffer_in_use = True
 
-    def release(self, handle):
+    def finalize(self, uv_handle, length, uv_buf):
         self.buffer_in_use = False
+        return bytes(ffi.buffer(uv_buf.base, length)) if length > 0 else b''
 
 
 class Loop:
@@ -109,7 +118,7 @@ class Loop:
         """
         with cls._global_lock: return frozenset(cls._loops)
 
-    def __init__(self, buffer_size=2**16, allocator=Allocator, default=False):
+    def __init__(self, allocator=None, default=False, buffer_size=2**16):
         if default:
             assert Loop._default is None
             self.uv_loop = lib.uv_default_loop()
@@ -121,7 +130,7 @@ class Loop:
 
         self.attachment = attach(self.uv_loop, self)
 
-        self.allocator = allocator(buffer_size)
+        self.allocator = allocator or DefaultAllocator(buffer_size)
 
         self.callback_context = CallbackContext()
         """
@@ -164,16 +173,6 @@ class Loop:
         """
         with Loop._global_lock: Loop._loops.add(self)
         self.make_current()
-
-    def _allocate(self, uv_handle, suggested_size, uv_buf):
-        assert not self.buffer_in_use
-        uv_buf.base = self.c_buffer
-        uv_buf.len = self.buffer_size
-        self.buffer_in_use = True
-
-    def _release(self, *args):
-        assert self.buffer_in_use
-        self.buffer_in_use = False
 
     @property
     def alive(self):

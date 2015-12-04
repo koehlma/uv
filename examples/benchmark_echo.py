@@ -19,7 +19,7 @@ import uv
 
 
 def on_shutdown(request, _):
-    request.handle.close()
+    request.stream.close()
 
 
 def on_read(stream, length, data):
@@ -29,7 +29,7 @@ def on_read(stream, length, data):
 
 def on_connection(server, _):
     connection = server.accept()
-    connection.read_start(callback=on_read)
+    connection.read_start(on_read=on_read)
 
 
 def on_quit(sigint, _):

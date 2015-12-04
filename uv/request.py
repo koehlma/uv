@@ -85,7 +85,7 @@ class Request(object):
     def type(self):
         """
         Type of the request. Returns a subclass of :class:`uv.Request`.
-        
+
         :type: type
         """
         return RequestType(self.uv_request.type).cls
