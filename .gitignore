@@ -18,3 +18,5 @@ MANIFEST
 .tox
 
 .coverage
+
+_uvcffi*
