@@ -29,7 +29,7 @@ __all__ = ['Timer']
 def uv_timer_cb(uv_timer):
     timer = detach(uv_timer)
     with timer.loop.callback_context:
-        timer.on_timeout(timer)
+        timer.callback(timer)
 
 
 @HandleType.TIMER
