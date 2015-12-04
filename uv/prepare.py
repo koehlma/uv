@@ -44,7 +44,7 @@ class Prepare(Handle):
     :param callback: callback which should be called right before polling for IO
 
     :type loop: Loop
-    :type callback: (Prepare) -> None
+    :type callback: (uv.Prepare) -> None
     """
     __slots__ = ['uv_prepare', 'callback']
 

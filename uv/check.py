@@ -44,7 +44,7 @@ class Check(Handle):
     :param callback: callback which should be called right after polling for IO
 
     :type loop: Loop
-    :type callback: (uv.Async) -> None
+    :type callback: (uv.Check) -> None
     """
 
     __slots__ = ['uv_check', 'callback']

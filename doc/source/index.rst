@@ -18,6 +18,9 @@ Contents:
     handles/check
     handles/idle
     handles/poll
+    handles/prepare
+    handles/signal
+    handles/timer
 
 
 Indices and tables

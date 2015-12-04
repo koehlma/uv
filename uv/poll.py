@@ -89,6 +89,7 @@ class Poll(Handle):
     :param loop: event loop which should be used for the handle
     :param callback: callback which should be called on IO events
 
+    :type fd: int
     :type loop: Loop
     :type callback: (uv.Poll, uv.StatusCode, int) -> None
     """
