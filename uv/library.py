@@ -39,7 +39,7 @@ def with_metaclass(meta, *bases):
 class _EnumerationMeta(type):
     value2member = {}
 
-    def __prepare__(mcs, cls, bases):
+    def __prepare__(mcs, *args, **kwargs):
         return OrderedDict()
 
     def __new__(mcs, name, bases, attributes):
