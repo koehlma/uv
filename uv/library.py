@@ -29,7 +29,7 @@ __all__ = ['lib', 'ffi', 'version', ]
 if os.environ.get('PYTHON_MOCK_LIBUV', None) == 'True':
     from types import ModuleType
 
-    from .mock import Mock
+    from .helpers.mock import Mock
 
     uvcffi = ModuleType('uvcffi')
     uvcffi.__version__ = __version__
@@ -48,7 +48,7 @@ if uvcffi.__version__ != __version__:
 trace_uvcffi = os.environ.get('PYTHON_TRACE_LIBUV', None) == 'True'
 
 if trace_uvcffi:
-    from .tracer import LIBTracer, FFITracer
+    from .helpers.tracer import LIBTracer, FFITracer
 
     lib = LIBTracer()
     ffi = FFITracer()
