@@ -23,8 +23,10 @@ from collections import namedtuple
 
 from . import __version__
 
+__all__ = ['lib', 'ffi', 'version', ]
 
-if os.environ.get('MOCK_UVCFFI', None) == 'True':
+
+if os.environ.get('PYTHON_MOCK_LIBUV', None) == 'True':
     from types import ModuleType
 
     from .mock import Mock
@@ -35,15 +37,15 @@ if os.environ.get('MOCK_UVCFFI', None) == 'True':
     uvcffi.lib = Mock()
 
     sys.modules['uvcffi'] = uvcffi
+else:
+    import uvcffi
 
-
-import uvcffi
 
 if uvcffi.__version__ != __version__:
-    raise RuntimeError('incompatible CFFI base library (%s)' % uvcffi.__version__)
+    raise RuntimeError('incompatible cffi base library (%s)' % uvcffi.__version__)
 
 
-trace_uvcffi = os.environ.get('TRACE_UVCFFI', None) == 'True'
+trace_uvcffi = os.environ.get('PYTHON_TRACE_LIBUV', None) == 'True'
 
 if trace_uvcffi:
     from .tracer import LIBTracer, FFITracer

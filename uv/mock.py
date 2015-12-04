@@ -116,6 +116,10 @@ class Mock(object):
         return '0.0.0'
 
     @staticmethod
+    def uv_version():
+        return 0
+
+    @staticmethod
     def string(string):
         return string.encode()
 

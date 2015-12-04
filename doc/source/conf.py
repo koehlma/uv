@@ -9,7 +9,7 @@ __dir__ = os.path.dirname(__file__)
 
 sys.path.insert(0, os.path.join(__dir__, '..', '..'))
 
-os.environ['MOCK_UVCFFI'] = 'True'
+os.environ['PYTHON_MOCK_LIBUV'] = 'True'
 
 import uv
 
