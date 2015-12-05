@@ -59,6 +59,10 @@ _path_2 = os.path.expandvars(r'%SYSTEMDRIVE%\Python27\python.exe')
 WIN32_PYTHON27_PATHS = [_path_1, _path_2]
 
 
+LICENSE = ('License :: OSI Approved :: GNU Lesser General Public '
+           'License v3 or later (LGPLv3+)')
+
+
 with open(os.path.join(__dir__, 'uv', '__init__.py'), 'rb') as init_py:
     init_source = init_py.read().decode('utf-8')
 
@@ -304,7 +308,7 @@ setup(name='uv',
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',
           'Intended Audience :: Developers',
-          'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+          LICENSE,
           'Operating System :: POSIX :: Linux',
           'Operating System :: POSIX :: BSD :: FreeBSD',
           'Operating System :: Microsoft :: Windows',
