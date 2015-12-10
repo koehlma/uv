@@ -96,7 +96,7 @@ class _FD(int):
 
 
 def _get_fileno(fileobj):
-    try: return fileobj.fileno()
+    try: return _FD(fileobj.fileno())
     except: return None
 
 
@@ -104,15 +104,15 @@ PIPE = CreatePipe(readable=True, writable=True)
 """
 Create a readable and writable inter process communication pipe.
 """
-STDIN = _FD(_get_fileno(sys.stdin))
+STDIN = _get_fileno(sys.stdin)
 """
 Standard input file descriptor.
 """
-STDOUT = _FD(_get_fileno(sys.stdout))
+STDOUT = _get_fileno(sys.stdout)
 """
 Standard output file descriptor.
 """
-STDERR = _FD(_get_fileno(sys.stderr))
+STDERR = _get_fileno(sys.stderr)
 """
 Standard error file descriptor.
 """
