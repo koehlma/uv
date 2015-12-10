@@ -17,20 +17,17 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from ..library import ffi, lib, detach
+from ..library import ffi, lib, detach, str_c2py
 
-from ..common import dummy_callback, Enumeration
+from ..common import Enumeration, dummy_callback
 from ..error import UVError, HandleClosedError
-from ..handle import HandleType, Handle
+from ..handle import Handle, HandleType
 
 __all__ = ['FSMonitor', 'FSEventFlags', 'FSEvent']
 
 
 class FSEventFlags(Enumeration):
-    """
-    FS event flags enumeration.
-    """
-
+    """ """
     WATCH_ENTRY = lib.UV_FS_EVENT_WATCH_ENTRY
     """
     By default, if the fs event watcher is given a directory name,
@@ -73,13 +70,10 @@ class FSEventFlags(Enumeration):
 
 
 class FSEvent(Enumeration):
-    """
-    FS event types enumeration.
-    """
-
+    """ """
     RENAME = lib.UV_RENAME
     """
-    File has been renamed or deleted.
+    File has been renamed.
 
     :type: int
     """
@@ -94,9 +88,8 @@ class FSEvent(Enumeration):
 @ffi.callback('uv_fs_event_cb')
 def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
     fs_monitor = detach(uv_fs_event)
-    filename = ffi.string(c_filename).decode()
     with fs_monitor.loop.callback_context:
-        fs_monitor.on_event(fs_monitor, status, filename, events)
+        fs_monitor.on_event(fs_monitor, status, str_c2py(c_filename), events)
 
 
 @HandleType.FS_EVENT
@@ -113,10 +106,11 @@ class FSMonitor(Handle):
     :param loop: event loop the handle should run on
     :param on_event: callback called on FS event
 
-    :type path: str
+    :type path: unicode
     :type flags: int
     :type loop: uv.Loop
-    :type on_event: (uv.FSMonitor, uv.StatusCode, str, int) -> None
+    :type on_event: ((uv.FSMonitor, uv.StatusCode, unicode, int) -> None) |
+                    ((Any, uv.FSMonitor, uv.StatusCode, unicode, int) -> None)
     """
 
     __slots__ = ['uv_fs_event', 'on_event', 'flags', 'path']
@@ -134,7 +128,7 @@ class FSMonitor(Handle):
             handle if you change it during the handle is active.
 
         :readonly: False
-        :type: str
+        :type: unicode
         """
         self.flags = flags
         """
@@ -152,10 +146,11 @@ class FSMonitor(Handle):
         """
         Callback called on FS events.
 
-        .. function:: on_event(FSEvent-Handle, Status-Code, Filename, Event-Mask)
+        .. function:: on_event(FSMonitor, Status, Filename, Events)
 
         :readonly: False
-        :type: (uv.FSEvent, uv.StatusCode, str, int) -> None
+        :type: ((uv.FSMonitor, uv.StatusCode, unicode, int) -> None) |
+               ((Any, uv.FSMonitor, uv.StatusCode, unicode, int) -> None)
         """
         code = lib.uv_fs_event_init(self.loop.uv_loop, self.uv_fs_event)
         if code < 0:
@@ -173,9 +168,10 @@ class FSMonitor(Handle):
         :param flags: flags to be used for monitoring
         :param on_event: callback called on FS events
 
-        :type path: str
+        :type path: unicode
         :type flags: int
-        :type on_event: (uv.FSMonitor, uv.StatusCode, str, int) -> None
+        :type on_event: ((uv.FSMonitor, uv.StatusCode, unicode, int) -> None) |
+                        ((Any, uv.FSMonitor, uv.StatusCode, unicode, int) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.path = path or self.path

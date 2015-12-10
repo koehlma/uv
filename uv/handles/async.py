@@ -21,7 +21,7 @@ from ..library import ffi, lib, detach
 
 from ..common import dummy_callback
 from ..error import UVError, HandleClosedError
-from ..handle import HandleType, Handle
+from ..handle import Handle, HandleType
 
 __all__ = ['Async']
 
@@ -46,7 +46,7 @@ class Async(Handle):
     :param on_wakeup: callback called from within the event loop's thread
 
     :type loop: uv.Loop
-    :type on_wakeup: (uv.Async) -> None
+    :type on_wakeup: ((uv.Async) -> None) | ((Any, uv.Async) -> None)
     """
 
     __slots__ = ['uv_async', 'on_wakeup']
@@ -58,10 +58,10 @@ class Async(Handle):
         """
         Callback called from within the event loop's thread after wakeup.
 
-        .. function:: on_wakeup(Async-Handle)
+        .. function:: on_wakeup(Async)
 
         :readonly: False
-        :type: (uv.Async) -> None
+        :type: ((uv.Async) -> None) | ((Any, uv.Async) -> None)
         """
         code = lib.uv_async_init(self.loop.uv_loop, self.uv_async, uv_async_cb)
         if code < 0:
@@ -78,7 +78,7 @@ class Async(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param on_wakeup: callback called from within the event loop's thread
-        :type on_wakeup: (uv.Async) -> None
+        :type on_wakeup: ((uv.Async) -> None) | ((Any, uv.Async) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.on_wakeup = on_wakeup or self.on_wakeup

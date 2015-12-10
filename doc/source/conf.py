@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
+import re
 import sys
 
-import os
-
 __dir__ = os.path.dirname(__file__)
-
 sys.path.insert(0, os.path.join(__dir__, '..', '..'))
-
 os.environ['PYTHON_MOCK_LIBUV'] = 'True'
 
 import uv
@@ -46,3 +44,30 @@ todo_include_todos = False
 html_static_path = ['_static']
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3.5', None)}
+
+callable_type = re.compile(r':type\s*(?P<name>[a-z_]+)?:\s*'
+                           r'(\(+([a-zA-Z_.]+,\s*)*([a-zA-Z_.]+)\)'
+                           r'\s*->\s*[a-zA-Z_.]+\s*\)*\s*\|?\s*)+')
+
+argument_types = re.compile(r'\((([a-zA-Z_.]+,\s*)*([a-zA-Z_.]+))\)')
+return_type = re.compile(r'->\s*([a-zA-Z_.]+)')
+
+
+def convert_callable_types(app, what, name, obj, options, lines):
+    docstring = '\n'.join(lines)
+    match = callable_type.search(docstring)
+    while match:
+        if match.group('name'):
+            replacement = ':type %s: Callable[[' % match.group('name')
+        else:
+            replacement = ':type: Callable[['
+        replacement += argument_types.search(match.group(0)).group(1)
+        replacement += '], ' + return_type.search(match.group(0)).group(1)
+        replacement += ']'
+        docstring = docstring[:match.start()] + replacement + docstring[match.end():]
+        match = callable_type.search(docstring)
+    lines[:] = docstring.splitlines()
+
+
+def setup(app):
+    app.connect('autodoc-process-docstring', convert_callable_types)

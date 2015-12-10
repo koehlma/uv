@@ -17,12 +17,15 @@
 
 from __future__ import print_function, unicode_literals, division
 
+from ..library import ffi, lib, detach
+
 from ..common import dummy_callback
 from ..buffers import Buffers
 from ..error import UVError, HandleClosedError, StatusCode
 from ..handle import HandleType, Handle
-from ..library import ffi, lib, detach
 from ..request import RequestType, Request
+
+__all__ = ['ShutdownRequest', 'ConnectRequest', 'WriteRequest', 'Stream']
 
 
 @ffi.callback('uv_shutdown_cb')
@@ -45,7 +48,8 @@ class ShutdownRequest(Request):
     :param on_shutdown: callback called after shutdown has been completed
 
     :type stream: uv.Stream
-    :type on_shutdown: (uv.ShutdownRequest, uv.StatusCode) -> None
+    :type on_shutdown: ((uv.ShutdownRequest, uv.StatusCode) -> None) |
+                       ((Any, uv.ShutdownRequest, uv.StatusCode) -> None)
     """
 
     __slots__ = ['uv_shutdown', 'stream', 'on_shutdown']
@@ -68,7 +72,8 @@ class ShutdownRequest(Request):
         .. function:: on_shutdown(Shutdown-Request, Status)
 
         :readonly: False
-        :type: (uv.ShutdownRequest, uv.StatusCode) -> None
+        :type: ((uv.ShutdownRequest, uv.StatusCode) -> None) |
+               ((Any, uv.ShutdownRequest, uv.StatusCode) -> None)
         """
         code = lib.uv_shutdown(self.uv_shutdown, self.stream.uv_stream, uv_shutdown_cb)
         if code < 0:
@@ -100,7 +105,8 @@ class WriteRequest(Request):
     :type stream: uv.Stream
     :type buffers: list[bytes] | bytes
     :type send_stream: uv.Stream
-    :type on_write: (uv.WriteRequest, uv.StatusCode) -> None
+    :type on_write: ((uv.WriteRequest, uv.StatusCode) -> None) |
+                    ((Any, uv.WriteRequest, uv.StatusCode) -> None)
     """
 
     __slots__ = ['uv_write', 'buffers', 'stream', 'send_stream', 'on_write']
@@ -131,7 +137,8 @@ class WriteRequest(Request):
         .. function: on_write(Write-Request, Status)
 
         :readonly: False
-        :type: (uv.WriteRequest, uv.StatusCode) -> None
+        :type: ((uv.WriteRequest, uv.StatusCode) -> None) |
+               ((Any, uv.WriteRequest, uv.StatusCode) -> None)
         """
         uv_stream = self.stream.uv_stream
         c_buffers, uv_buffers = self.buffers
@@ -168,7 +175,8 @@ class ConnectRequest(Request):
     :param on_connect: callback called after connection has been established
 
     :type stream: uv.Stream
-    :type on_connect: (uv.ConnectRequest, uv.StatusCode) -> None
+    :type on_connect: ((uv.ConnectRequest, uv.StatusCode) -> None) |
+                      ((Any, uv.ConnectRequest, uv.StatusCode) -> None)
     """
 
     __slots__ = ['uv_connect', 'stream', 'on_connect']
@@ -190,7 +198,8 @@ class ConnectRequest(Request):
         .. function: on_connect(Connect-Request, Status)
 
         :readonly: False
-        :type: (uv.ConnectRequest, uv.StatusCode) -> None
+        :type: ((uv.ConnectRequest, uv.StatusCode) -> None) |
+               ((Any, uv.ConnectRequest, uv.StatusCode) -> None)
         """
 
 
@@ -237,7 +246,8 @@ class Stream(Handle):
         .. function:: on_read(Stream, Status, Length, Data)
 
         :readonly: False
-        :type: (uv.Stream, uv.StatusCode, int, bytes) -> None
+        :type: ((uv.Stream, uv.StatusCode, int, bytes) -> None) |
+               ((Any, uv.Stream, uv.StatusCode, int, bytes) -> None)
         """
         self.on_connection = dummy_callback
         """
@@ -246,7 +256,8 @@ class Stream(Handle):
         .. function:: on_connection(Stream, Status)
 
         :readonly: False
-        :type: (uv.Stream, uv.StatusCode) -> None
+        :type: ((uv.Stream, uv.StatusCode) -> None) |
+               ((Any, uv.Stream, uv.StatusCode) -> None)
         """
         self.ipc = ipc
         """
@@ -261,6 +272,7 @@ class Stream(Handle):
         """
         Stream is readable or not.
 
+        :readonly: True
         :type: bool
         """
         if self.closing: return False
@@ -271,6 +283,7 @@ class Stream(Handle):
         """
         Stream is writable or not.
 
+        :readonly: True
         :type: bool
         """
         if self.closing: return False
@@ -281,7 +294,7 @@ class Stream(Handle):
         """
         Address family of stream, may be None.
 
-        :type: int | None
+        :rtype: int | None
         """
         return None
 
@@ -294,7 +307,8 @@ class Stream(Handle):
         .. function: on_shutdown(Stream, Status)
 
         :param on_shutdown: callback called after shutdown is complete
-        :type on_shutdown: (uv.ShutdownRequest, uv.StatusCode) -> None
+        :type on_shutdown: ((uv.ShutdownRequest, uv.StatusCode) -> None) |
+                           ((Any, uv.ShutdownRequest, uv.StatusCode) -> None)
 
         :returns: shutdown request
         :rtype: uv.ShutdownRequest
@@ -314,7 +328,8 @@ class Stream(Handle):
         :param on_connection: callback called when a new connection is available
 
         :type backlog: int
-        :type on_connection: (uv.Stream, uv.StatusCode) -> None
+        :type on_connection: ((uv.Stream, uv.StatusCode) -> None) |
+                             ((Any, uv.Stream, uv.StatusCode) -> None
         """
         if self.closing: raise HandleClosedError()
         self.on_connection = on_connection or self.on_connection
@@ -323,9 +338,9 @@ class Stream(Handle):
 
     def accept(self, cls=None, *args, **kwargs):
         """
-        This method is used in conjunction with `listen()` to accept incoming
-        connections. Call this method after receiving a `on_connection` event
-        to accept the connection.
+        This method is used in conjunction with :func:`Stream.listen` to accept
+        incoming connections. Call this method after receiving a `on_connection`
+        event to accept the connection.
 
         When the `on_connection` callback is called it is guaranteed that
         this method will complete successfully the first time. If you attempt
@@ -359,7 +374,8 @@ class Stream(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param on_read: callback called after data was read
-        :type on_read: (uv.Stream, uv.StatusCode, int, bytes) -> None
+        :type on_read: ((uv.Stream, uv.StatusCode, int, bytes) -> None) |
+                       ((Any, uv.Stream, uv.StatusCode, int, bytes) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.on_read = on_read or self.on_read
@@ -396,7 +412,8 @@ class Stream(Handle):
 
         :type buffers: list[bytes] | bytes
         :type send_stream: uv.Stream
-        :type on_write: (uv.WriteRequest, uv.StatusCode) -> None
+        :type on_write: ((uv.WriteRequest, uv.StatusCode) -> None) |
+                        ((Any, uv.WriteRequest, uv.StatusCode) -> None)
 
         :returns: write request
         :rtype: uv.WriteRequest

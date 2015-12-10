@@ -21,7 +21,7 @@ from ..library import ffi, lib, detach
 
 from ..common import dummy_callback
 from ..error import UVError, HandleClosedError
-from ..handle import HandleType, Handle
+from ..handle import Handle, HandleType
 
 __all__ = ['Check']
 
@@ -45,7 +45,7 @@ class Check(Handle):
     :param on_check: callback called right after polling for IO
 
     :type loop: uv.Loop
-    :type on_check: (uv.Check) -> None
+    :type on_check: ((uv.Check) -> None) | ((Any, uv.Check) -> None)
     """
 
     __slots__ = ['uv_check', 'on_check']
@@ -57,10 +57,10 @@ class Check(Handle):
         """
         Callback called right after polling for IO once per loop iteration.
 
-        .. function:: on_check(Check-Handle)
+        .. function:: on_check(Check)
 
         :readonly: False
-        :type: (uv.Check) -> None
+        :type: ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
         code = lib.uv_check_init(self.loop.uv_loop, self.uv_check)
         if code < 0:
@@ -75,7 +75,7 @@ class Check(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param on_check: callback called right after polling for IO
-        :type on_check: (uv.Check) -> None
+        :type on_check: ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.on_check = on_check or self.on_check

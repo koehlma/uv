@@ -26,12 +26,11 @@ from ..handle import HandleType, Handle
 from ..request import RequestType, Request
 from ..buffers import Buffers
 
+__all__ = ['UDPFlags', 'UDPMembership', 'UDP', 'SendRequest']
+
 
 class UDPFlags(Enumeration):
-    """
-    UDP flags enumeration.
-    """
-
+    """ """
     IPV6ONLY = lib.UV_UDP_IPV6ONLY
     """
     Disable dual stack support.
@@ -59,10 +58,7 @@ class UDPFlags(Enumeration):
 
 
 class UDPMembership(Enumeration):
-    """
-    Membership type for a multicast address.
-    """
-
+    """ """
     LEAVE_GROUP = lib.UV_LEAVE_GROUP
     """
     Leave group.
@@ -96,8 +92,9 @@ class SendRequest(Request):
 
     :type udp: uv.UDP
     :type buffers: list[bytes] | bytes
-    :type address: tuple
-    :type on_send: (uv.SendRequest, uv.StatusCode) -> None
+    :type address: tuple | uv.Address
+    :type on_send: ((uv.SendRequest, uv.StatusCode) -> None) |
+                   ((Any, uv.SendRequest, uv.StatusCode) -> None)
     """
 
     __slots__ = ['uv_send', 'buffers', 'udp', 'on_send']
@@ -121,7 +118,8 @@ class SendRequest(Request):
         .. function: on_write(Send-Request, Status)
 
         :readonly: False
-        :type: (uv.SendRequest, uv.StatusCode) -> None
+        :type: ((uv.SendRequest, uv.StatusCode) -> None) |
+               ((Any, uv.SendRequest, uv.StatusCode) -> None)
         """
         uv_udp = self.udp.uv_udp
         c_buffers, uv_buffers = self.buffers
@@ -157,7 +155,8 @@ class UDP(Handle):
 
     :type flags: int
     :type loop: uv.Loop
-    :type on_receive: (uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None
+    :type on_receive: ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
+                      ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
     """
 
     __slots__ = ['uv_udp', 'on_receive']
@@ -169,10 +168,11 @@ class UDP(Handle):
         """
         Callback called after package has been received.
 
-        .. function:: on_receive(UDP-Handle, Status, Address, Length, Data, Flags)
+        .. function:: on_receive(UDP, Status, Address, Length, Data, Flags)
 
         :readonly: False
-        :type: (uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None
+        :type: ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
+               ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
         """
         code = lib.uv_udp_init_ex(self.loop.uv_loop, self.uv_udp, flags)
         if code < 0:
@@ -273,7 +273,7 @@ class UDP(Handle):
     @property
     def family(self):
         """
-        Address family of stream, may be None.
+        Address family UDP handle, may be None.
 
         :type: int | None
         """
@@ -318,7 +318,7 @@ class UDP(Handle):
         :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
         :param flags: bind flags to be used (mask of :class:`uv.TCPBindFlags`)
 
-        :type address: tuple
+        :type address: tuple | uv.Address
         :type flags: int
         """
         if self.closing: raise HandleClosedError()
@@ -341,8 +341,9 @@ class UDP(Handle):
         :param on_send: callback called after all data has been sent
 
         :type buffers: list[bytes] | bytes
-        :type address: tuple
-        :type on_send: (uv.SendRequest, uv.StatusCode) -> None
+        :type address: tuple | uv.Address
+        :type on_send: ((uv.SendRequest, uv.StatusCode) -> None) |
+                       ((Any, uv.SendRequest, uv.StatusCode) -> None)
 
         :returns: send request
         :rtype: uv.SendRequest
@@ -361,7 +362,7 @@ class UDP(Handle):
         :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
 
         :type buffers: list[bytes] | bytes
-        :type address: tuple
+        :type address: tuple | uv.Address
 
         :return: number of bytes sent
         :rtype: int
@@ -384,7 +385,9 @@ class UDP(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param on_receive: callback called after package has been received
-        :type on_receive: (uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None
+        :type on_receive:
+            ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
+            ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.on_receive = on_receive or self.on_receive

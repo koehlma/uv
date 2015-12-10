@@ -21,7 +21,7 @@ from ..library import ffi, lib, detach
 
 from ..common import dummy_callback
 from ..error import UVError, HandleClosedError
-from ..handle import HandleType, Handle
+from ..handle import Handle, HandleType
 
 __all__ = ['Idle']
 
@@ -54,7 +54,7 @@ class Idle(Handle):
     :param on_idle: callback called before prepare handles
 
     :type loop: uv.Loop
-    :type on_idle: (uv.Idle) -> None
+    :type on_idle: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
     """
 
     __slots__ = ['uv_idle', 'on_idle']
@@ -66,10 +66,10 @@ class Idle(Handle):
         """
         Callback called before prepare handles.
 
-        .. function:: on_idle(Idle-Handle)
+        .. function:: on_idle(Idle)
 
         :readonly: False
-        :type: (uv.Idle) -> None
+        :type: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
         """
         code = lib.uv_idle_init(self.loop.uv_loop, self.uv_idle)
         if code < 0:
@@ -84,7 +84,7 @@ class Idle(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param on_idle: callback called before prepare handles
-        :type on_idle: (uv.Idle) -> None
+        :type on_idle: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.on_idle = on_idle or self.on_idle

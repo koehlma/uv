@@ -29,9 +29,7 @@ __all__ = ['Signal', 'Signals']
 
 
 class Signals(Enumeration):
-    """
-    Generic signals enumeration.
-    """
+    """ """
 
     SIGINT = getattr(signal, 'SIGINT', 2)
     """
@@ -95,7 +93,7 @@ class Signal(Handle):
     :param on_signal: callback called on signal delivery
 
     :type loop: uv.Loop
-    :type on_signal: (uv.Signal, int) -> None
+    :type on_signal: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
     """
 
     __slots__ = ['uv_signal', 'on_signal']
@@ -107,10 +105,10 @@ class Signal(Handle):
         """
         Callback called on signal delivery.
 
-        .. function:: on_signal(Signal-Handle, Signal-Number)
+        .. function:: on_signal(Signal, Signum)
 
         :readonly: False
-        :type: (uv.Signal, int) -> None
+        :type: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
         """
         code = lib.uv_signal_init(self.loop.uv_loop, self.uv_signal)
         if code < 0:
@@ -141,7 +139,7 @@ class Signal(Handle):
         :param on_signal: callback called on signal delivery
 
         :type signum: int
-        :type on_signal: (uv.Signal) -> None
+        :type on_signal: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.on_signal = on_signal or self.on_signal

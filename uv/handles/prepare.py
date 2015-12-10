@@ -44,8 +44,8 @@ class Prepare(Handle):
     :param loop: event loop the handle should run on
     :param on_prepare: callback called right before polling for IO
 
-    :type loop: Loop
-    :type on_prepare: (uv.Prepare) -> None
+    :type loop: uv.Loop
+    :type on_prepare: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
     """
 
     __slots__ = ['uv_prepare', 'on_prepare']
@@ -57,10 +57,10 @@ class Prepare(Handle):
         """
         Callback which called before polling for IO.
 
-        .. function:: on_prepare(Prepare-Handle)
+        .. function:: on_prepare(Prepare)
 
         :readonly: False
-        :type: (uv.Prepare) -> None
+        :type: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
         """
         code = lib.uv_prepare_init(self.loop.uv_loop, self.uv_prepare)
         if code < 0:
@@ -75,7 +75,7 @@ class Prepare(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param on_prepare: callback called before polling for IO
-        :type on_prepare: (uv.Prepare) -> None
+        :type on_prepare: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.on_prepare = on_prepare or self.on_prepare

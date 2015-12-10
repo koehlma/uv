@@ -91,7 +91,8 @@ class Poll(Handle):
 
     :type fd: int
     :type loop: uv.Loop
-    :type on_event: (uv.Poll, uv.StatusCode, int) -> None
+    :type on_event: ((uv.Poll, uv.StatusCode, int) -> None) |
+                    ((Any, uv.Poll, uv.StatusCode, int) -> None)
     """
 
     __slots__ = ['uv_poll', 'fd', 'on_event']
@@ -110,10 +111,11 @@ class Poll(Handle):
         """
         Callback called on IO events.
 
-        .. function:: on_event(Poll-Handle, Status-Code, Event-Mask)
+        .. function:: on_event(Poll, Status, Events)
 
         :readonly: False
-        :type: (uv.Poll, uv.StatusCode, int) -> None
+        :type: ((uv.Poll, uv.StatusCode, int) -> None) |
+               ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
         code = lib.cross_uv_poll_init_socket(self.loop.uv_loop, self.uv_poll, fd)
         if code < 0:
@@ -139,7 +141,8 @@ class Poll(Handle):
         :param on_event: callback called on IO events
 
         :type events: int
-        :type on_event: (uv.Poll, uv.StatusCode, int) -> None
+        :type on_event: ((uv.Poll, uv.StatusCode, int) -> None) |
+                        ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.on_event = on_event or self.on_event

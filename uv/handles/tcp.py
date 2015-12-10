@@ -28,12 +28,11 @@ from ..common import Enumeration
 
 from .stream import Stream, ConnectRequest, uv_connect_cb
 
+__all__ = ['TCPFlags', 'TCP']
+
 
 class TCPFlags(Enumeration):
-    """
-    TCP flags enumeration.
-    """
-
+    """ """
     IPV6ONLY = lib.UV_TCP_IPV6ONLY
     """
     Disable dual stack support.
@@ -45,7 +44,7 @@ class TCPFlags(Enumeration):
 @HandleType.TCP
 class TCP(Stream):
     """
-    TCP handles are used to represent both TCP streams and servers.
+    TCP handles are used to represent both TCP clients and servers.
 
     :raises uv.UVError: error while initializing the handle
 
@@ -186,9 +185,9 @@ class TCP(Stream):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
-        :param flags: bind flags to be used (mask of :class:`uv.TCPBindFlags`)
+        :param flags: bind flags to be used (mask of :class:`uv.TCPFlags`)
 
-        :type address: tuple
+        :type address: tuple | uv.Address
         :type flags: int
         """
         if self.closing: raise HandleClosedError()
@@ -208,8 +207,9 @@ class TCP(Stream):
         :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
         :param on_connect: callback called after connection has been established
 
-        :type address: tuple
-        :type on_connect: (uv.ConnectRequest, uv.StatusCode) -> None
+        :type address: tuple | uv.Address
+        :type on_connect: ((uv.ConnectRequest, uv.StatusCode) -> None) |
+                          ((Any, uv.ConnectRequest, uv.StatusCode) -> None)
 
         :returns: connect request
         :rtype: uv.ConnectRequest

@@ -17,7 +17,7 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from uv.library import ffi, lib, detach
+from ..library import ffi, lib, detach
 
 from ..common import dummy_callback
 from ..error import UVError, HandleClosedError
@@ -44,7 +44,7 @@ class Timer(Handle):
     :param on_timeout: callback called on timeout
 
     :type loop: uv.Loop
-    :type on_timeout: (uv.Timer) -> None
+    :type on_timeout: ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
     """
 
     __slots__ = ['uv_timer', 'on_timeout']
@@ -56,10 +56,10 @@ class Timer(Handle):
         """
         Callback called on timeout.
 
-        .. function:: callback(Timer-Handle)
+        .. function:: callback(Timer)
 
         :readonly: False
-        :type: (uv.Timer) -> None
+        :type: ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
         """
         code = lib.uv_timer_init(self.loop.uv_loop, self.uv_timer)
         if code < 0:
@@ -135,7 +135,7 @@ class Timer(Handle):
         :param repeat: repeat interval (in milliseconds)
 
         :type timeout: int
-        :type on_timeout: (uv.Timer) -> None
+        :type on_timeout: ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
         :type repeat: int
         """
         if self.closing: raise HandleClosedError()

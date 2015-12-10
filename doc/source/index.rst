@@ -12,17 +12,23 @@ Contents:
 
     error
 
-    handles/handle
+    handle
 
     handles/async
     handles/check
     handles/idle
+    handles/pipe
     handles/poll
     handles/prepare
-    handles/signal
+    handles/process
+    handles/sig
     handles/timer
+    handles/stream
+    handles/tcp
+    handles/tty
+    handles/udp
 
-    handles/fs_event
+    handles/fs_monitor
     handles/fs_poll
 
 

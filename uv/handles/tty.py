@@ -25,20 +25,35 @@ from ..handle import HandleType
 
 from .stream import Stream
 
+__all__ = ['ConsoleSize', 'reset_mode', 'TTYMode', 'TTY']
+
 
 class ConsoleSize(tuple):
     def __new__(cls, width, height):
         return tuple.__new__(cls, (width, height))
 
+    # to satisfy pycharm
     def __init__(self, width, height):
         super(ConsoleSize, self).__init__((width, height))
 
     @property
     def width(self):
+        """
+        Width of th console.
+
+        :readonly: True
+        :type: int
+        """
         return self[0]
 
     @property
     def height(self):
+        """
+        Height of th console.
+
+        :readonly: True
+        :type: int
+        """
         return self[1]
 
 
@@ -57,21 +72,18 @@ def reset_mode():
 
 
 class TTYMode(Enumeration):
-    """
-    TTY modes enumeration.
-    """
-
+    """ """
     NORMAL = lib.UV_TTY_MODE_NORMAL
     """
-    initial normal terminal mode
+    Initial normal terminal mode.
     """
     RAW = lib.UV_TTY_MODE_RAW
     """
-    raw input mode (on windows, `ENABLE_WINDOW_INPUT` is also enabled)
+    Raw input mode (on windows, `ENABLE_WINDOW_INPUT` is also enabled).
     """
     IO = lib.UV_TTY_MODE_IO
     """
-    binary-safe IO mode for IPC (Unix only)
+    Binary-safe IO mode for IPC (Unix only).
     """
 
 

@@ -81,11 +81,9 @@ def detach(structure):
     if data: return ffi.from_handle(data.object)
 
 
-def str_py2c(string):
+def mutable_c_string(string):
     return ffi.new('char[]', str(string).encode())
 
 
-def str_c2py(cdata):
-    return ffi.string(cdata).decode()
-
-
+def str_c2py(c_string):
+    return ffi.string(c_string).decode()

@@ -158,7 +158,6 @@ class Pipe(Stream):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param path: path to bind to
-
         :type path: unicode
         """
         if self.closing: raise HandleClosedError()
@@ -167,7 +166,7 @@ class Pipe(Stream):
 
     def connect(self, path, on_connect=None):
         """
-        Connect to the Unix domain socket or the named pipe.
+        Connect to the given Unix domain socket or named pipe.
 
         :raises uv.UVError: error while connecting to `path`
         :raises uv.HandleClosedError: handle has already been closed or is closing
@@ -176,7 +175,8 @@ class Pipe(Stream):
         :param on_connect: callback called after connection has been established
 
         :type path: unicode
-        :type on_connect: (uv.ConnectRequest, uv.StatusCode) -> None
+        :type on_connect: ((uv.ConnectRequest, uv.StatusCode) -> None) |
+                          ((Any, uv.ConnectRequest, uv.StatusCode) -> None)
 
         :returns: connect request
         :rtype: uv.ConnectRequest

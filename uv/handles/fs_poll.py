@@ -22,7 +22,7 @@ from ..library import ffi, lib, detach
 from ..common import dummy_callback
 from ..error import UVError
 from ..fs import unpack_stat
-from ..handle import HandleType, Handle
+from ..handle import Handle, HandleType
 
 __all__ = ['FSPoll']
 
@@ -39,7 +39,7 @@ def uv_fs_poll_cb(uv_fs_poll, status, uv_previous_stat, uv_current_stat):
 @HandleType.FS_POLL
 class FSPoll(Handle):
     """
-    FS poll handles monitor a given path for changes. Unlike :class:`uv.FSEvent`
+    FS poll handles monitor a given path for changes. Unlike :class:`uv.FSMonitor`
     fs poll handles use stat to detect when a file has changed so they can work
     on file systems where fs event handles can not.
 
@@ -50,10 +50,11 @@ class FSPoll(Handle):
     :param loop: event loop the handle should run on
     :param on_change: callback called on FS change
 
-    :type path: str
+    :type path: unicode
     :type interval: int
     :type loop: uv.Loop
-    :type on_change: (uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None
+    :type on_change: ((uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None) |
+                     ((Any, uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
     """
 
     __slots__ = ['uv_fs_poll', 'on_change', 'path', 'interval']
@@ -71,7 +72,7 @@ class FSPoll(Handle):
             handle if you change it during the handle is active.
 
         :readonly: False
-        :type: str
+        :type: unicode
         """
         self.interval = interval
         """
@@ -89,10 +90,11 @@ class FSPoll(Handle):
         """
         Callback called on FS change.
 
-        .. function:: on_change(FSPoll-Handle, Status-Code, Previous-Stat, Current-Stat)
+        .. function:: on_change(FSPoll, Status, Previous-Stat, Current-Stat)
 
         :readonly: False
-        :type: (uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None
+        :type: ((uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
+               ((Any, uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
         """
         code = lib.uv_fs_poll_init(self.loop.uv_loop, self.uv_fs_poll)
         if code < 0:
@@ -113,9 +115,10 @@ class FSPoll(Handle):
         :param interval: interval to be used for monitoring (in milliseconds)
         :param on_change: callback called on FS change
 
-        :type path: str
+        :type path: unicode
         :type interval: int
-        :type on_change: (uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None
+        :type on_change: ((uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None) |
+                         ((Any, uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
         """
         if self.closing: raise HandleClosedError()
         self.path = path or self.path
