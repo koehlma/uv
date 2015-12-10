@@ -392,10 +392,7 @@ class Stream(Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param on_read: callback called after data was read
-
         :type on_read: (uv.Stream, uv.StatusCode, int, bytes) -> None
-
-        :return: new stream connection of type `cls`
         """
         if self.closing: raise HandleClosedError()
         self.on_read = on_read or self.on_read

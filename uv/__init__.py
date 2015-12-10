@@ -60,10 +60,13 @@ from .handles.stream import Stream, ShutdownRequest, ConnectRequest
 from .handles.tcp import TCP, TCPFlags
 from .handles.timer import Timer
 from .handles.tty import TTY
-from .handles.udp import UDP
+from .handles.udp import UDP, UDPFlags, UDPMembership, SendRequest
 
 from .handles.fs_monitor import FSMonitor, FSEvent, FSEventFlags
 from .handles.fs_poll import FSPoll
+
+from .dns import Address, Address4, Address6, AddrInfo
+from .fs import Stat
 
 from . import dns
 from . import fs

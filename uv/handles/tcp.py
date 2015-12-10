@@ -81,7 +81,7 @@ class TCP(Stream):
         code = lib.cross_uv_tcp_open(self.uv_tcp, fd)
         if code < 0: raise UVError(code)
 
-    def nodelay(self, enable):
+    def set_nodelay(self, enable):
         """
         Enable / disable Nagle’s algorithm.
 
@@ -95,7 +95,7 @@ class TCP(Stream):
         code = lib.uv_tcp_nodelay(self.uv_tcp, int(enable))
         if code < 0: raise UVError(code)
 
-    def keepalive(self, enable, delay=0):
+    def set_keepalive(self, enable, delay=0):
         """
         Enable / disable TCP keep-alive.
 
@@ -112,7 +112,7 @@ class TCP(Stream):
         code = lib.uv_tcp_keepalive(self.uv_tcp, int(enable), delay)
         if code < 0: raise UVError(code)
 
-    def simultaneous_accepts(self, enable):
+    def set_simultaneous_accepts(self, enable):
         """
         Enable / disable simultaneous asynchronous accept requests that are queued
         by the operating system when listening for new TCP connections.

@@ -34,6 +34,11 @@ __all__ = ['AddrInfo', 'NameInfo', 'Address4', 'Address6', 'GetAddrInfo',
 AddrInfo = namedtuple('AddrInfo', ['family', 'type', 'protocol', 'canonname', 'address'])
 NameInfo = namedtuple('NameInfo', ['host', 'service'])
 
+
+class Address(tuple):
+    pass
+
+
 Address4 = namedtuple('Address4', ['host', 'port'])
 Address6 = namedtuple('Address6', ['host', 'port', 'flowinfo', 'scope_id'])
 

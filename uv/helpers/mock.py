@@ -28,6 +28,13 @@ MOCK_CONSTANTS = {
 
     'UV_TCP_IPV6ONLY': 1,
 
+    'UV_UDP_IPV6ONLY': 1,
+    'UV_UDP_PARTIAL': 2,
+    'UV_UDP_REUSEADDR': 4,
+
+    'UV_LEAVE_GROUP': 0,
+    'UV_JOIN_GROUP': 1,
+
     'UV_E2BIG': -7,
     'UV_EACCES': -13,
     'UV_EADDRINUSE': -98,

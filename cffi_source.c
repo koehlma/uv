@@ -53,12 +53,18 @@ uv_handle_type cross_uv_guess_handle(int fd) {
 int cross_uv_tty_init(uv_loop_t* loop, uv_tty_t* tty, int fd, int readable) {
     return uv_tty_init(loop, tty, (uv_file) fd, readable);
 }
+
 int cross_uv_pipe_open(uv_pipe_t* pipe, int fd) {
     return uv_pipe_open(pipe, (uv_file) fd);
 }
 int cross_uv_tcp_open(uv_tcp_t* tcp, int fd) {
     return uv_tcp_open(tcp, (uv_os_sock_t) fd);
 }
+int cross_uv_udp_open(uv_udp_t* udp, int fd) {
+    return uv_udp_open(udp, (uv_os_sock_t) fd);
+}
+
+
 void cross_set_process_uid_gid(uv_process_options_t* options, int uid, int gid) {
     options->uid = (uv_uid_t) uid;
     options->gid = (uv_gid_t) gid;
