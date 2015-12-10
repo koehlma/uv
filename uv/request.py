@@ -78,7 +78,9 @@ class Request(object):
         :readonly: True
         :type: bool
         """
-        if self.loop.closed: raise LoopClosedError()
+        if self.loop.closed:
+            self.finished = True
+            raise LoopClosedError()
         self.loop.requests.add(self)
 
     @property

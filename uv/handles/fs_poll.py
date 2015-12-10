@@ -55,6 +55,7 @@ class FSPoll(Handle):
     :type loop: uv.Loop
     :type on_change: (uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None
     """
+
     __slots__ = ['uv_fs_poll', 'on_change', 'path', 'interval']
 
     def __init__(self, path=None, interval=5000, loop=None, on_change=None):

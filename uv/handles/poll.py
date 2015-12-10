@@ -93,6 +93,7 @@ class Poll(Handle):
     :type loop: uv.Loop
     :type on_event: (uv.Poll, uv.StatusCode, int) -> None
     """
+
     __slots__ = ['uv_poll', 'fd', 'on_event']
 
     def __init__(self, fd, loop=None, on_event=None):

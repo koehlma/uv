@@ -118,6 +118,7 @@ class FSMonitor(Handle):
     :type loop: uv.Loop
     :type on_event: (uv.FSMonitor, uv.StatusCode, str, int) -> None
     """
+
     __slots__ = ['uv_fs_event', 'on_event', 'flags', 'path']
 
     def __init__(self, path=None, flags=0, loop=None, on_event=None):

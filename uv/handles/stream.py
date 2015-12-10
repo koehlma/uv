@@ -31,6 +31,7 @@ class Buffers(tuple):
     def __new__(cls, buffers):
         """
         :type buffers: list[bytes] | bytes
+        :rtype: uv.Buffers
         """
         buffers = [buffers] if isinstance(buffers, bytes) else buffers
         c_buffers = [ffi.new('char[]', buf) for buf in buffers]
@@ -38,14 +39,23 @@ class Buffers(tuple):
         for index, buf in enumerate(buffers):
             uv_buffers[index].base = c_buffers[index]
             uv_buffers[index].len = len(buf)
-        super(Buffers, cls).__new__((c_buffers, uv_buffers))
+        return tuple.__new__(cls, (c_buffers, uv_buffers))
+
+    def __len__(self):
+        return len(self[0])
 
     @property
     def c_buffers(self):
+        """
+        :rtype: list[ffi.CData]
+        """
         return self[0]
 
     @property
     def uv_buffers(self):
+        """
+        :rtype: ffi.CData
+        """
         return self[1]
 
 
@@ -59,6 +69,19 @@ def uv_shutdown_cb(uv_request, status):
 
 @RequestType.SHUTDOWN
 class ShutdownRequest(Request):
+    """
+    Shutdown request.
+
+    :raises uv.UVError: error while initializing the request
+    :raises uv.HandleClosedError: stream has already been closed or is closing
+
+    :param stream: stream to shutdown
+    :param on_shutdown: callback called after shutdown has been completed
+
+    :type stream: uv.Stream
+    :type on_shutdown: (uv.ShutdownRequest, uv.StatusCode) -> None
+    """
+
     __slots__ = ['uv_shutdown', 'stream', 'on_shutdown']
 
     def __init__(self, stream, on_shutdown=None):
@@ -66,9 +89,25 @@ class ShutdownRequest(Request):
         self.uv_shutdown = ffi.new('uv_shutdown_t*')
         super(ShutdownRequest, self).__init__(self.uv_shutdown, stream.loop)
         self.stream = stream
+        """
+        Stream this request belongs to.
+
+        :readonly: True
+        :type: uv.Stream
+        """
         self.on_shutdown = on_shutdown or dummy_callback
-        code = lib.uv_shutdown(self.uv_shutdown, self.uv_stream, uv_shutdown_cb)
-        if code < 0: raise UVError(code)
+        """
+        Callback called after shutdown has been completed.
+
+        .. function:: on_shutdown(Shutdown-Request, Status)
+
+        :readonly: False
+        :type: (uv.ShutdownRequest, uv.StatusCode) -> None
+        """
+        code = lib.uv_shutdown(self.uv_shutdown, self.stream.uv_stream, uv_shutdown_cb)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
 
 @ffi.callback('uv_write_cb')
@@ -81,6 +120,23 @@ def uv_write_cb(uv_request, status):
 
 @RequestType.WRITE
 class WriteRequest(Request):
+    """
+    Write request.
+
+    :raises uv.UVError: error while initializing the request
+    :raises uv.HandleClosedError: stream has already been closed or is closing
+
+    :param stream: stream to write to
+    :param buffers: data to write
+    :param send_stream: stream handle to send
+    :param on_write: callback called after all data has been written
+
+    :type stream: uv.Stream
+    :type buffers: list[bytes] | bytes
+    :type send_stream: uv.Stream
+    :type on_write: (uv.WriteRequest, uv.StatusCode) -> None
+    """
+
     __slots__ = ['uv_write', 'buffers', 'stream', 'send_stream', 'on_write']
 
     def __init__(self, stream, buffers, send_stream=None, on_write=None):
@@ -90,7 +146,7 @@ class WriteRequest(Request):
         self.buffers = Buffers(buffers)
         self.stream = stream
         """
-        Stream this request is running on.
+        Stream this request belongs to.
 
         :readonly: True
         :type: uv.Stream
@@ -106,20 +162,22 @@ class WriteRequest(Request):
         """
         Callback called after all data has been written.
 
-        .. function: on_write(Request, Status)
+        .. function: on_write(Write-Request, Status)
 
         :readonly: False
         :type: (uv.WriteRequest, uv.StatusCode) -> None
         """
         uv_stream = self.stream.uv_stream
+        c_buffers, uv_buffers = self.buffers
         if send_stream is None:
-            code = lib.uv_write(self.uv_write, uv_stream, self.buffers.uv_buffers,
-                                len(self.buffers.uv_buffers), uv_write_cb)
+            code = lib.uv_write(self.uv_write, uv_stream, uv_buffers,
+                                len(self.buffers), uv_write_cb)
         else:
-            code = lib.uv_write2(self.uv_write, uv_stream, self.buffers.uv_buffers,
-                                 len(self.buffers.uv_buffers), seld.send_stream.uv_stream,
-                                 uv_write_cb)
-        if code < 0: raise UVError(code)
+            code = lib.uv_write2(self.uv_write, uv_stream, uv_buffers, len(self.buffers),
+                                 seld.send_stream.uv_stream, uv_write_cb)
+        if code < 0:
+            self.destroy()
+            raise UVError(code)
 
 
 @ffi.callback('uv_connect_cb')
@@ -132,16 +190,42 @@ def uv_connect_cb(uv_request, status):
 
 @RequestType.CONNECT
 class ConnectRequest(Request):
-    __slots__ = ['uv_connect', 'on_connect']
+    """
+    Connect request.
 
-    def __init__(self, on_connect=None):
+    .. warning::
+
+        This request cannot be used directly. Please use the stream's
+        `connect` method to establish a connection.
+
+    :param stream: stream to write to
+    :param on_connect: callback called after connection has been established
+
+    :type stream: uv.Stream
+    :type on_connect: (uv.ConnectRequest, uv.StatusCode) -> None
+    """
+
+    __slots__ = ['uv_connect', 'stream', 'on_connect']
+
+    def __init__(self, stream, on_connect=None):
         self.uv_connect = ffi.new('uv_connect_t*')
-        super(ConnectRequest, self).__init__(self.uv_connect)
-        self.on_connect = on_connect or dummy_callback
+        super(ConnectRequest, self).__init__(self.uv_connect, stream.loop)
+        self.stream = stream
+        """
+        Stream this request belongs to.
 
-    @property
-    def handle(self):
-        return detach(self.uv_connect.stream)
+        :readonly: True
+        :type: uv.Stream
+        """
+        self.on_connect = on_connect or dummy_callback
+        """
+        Callback called after connection has been established.
+
+        .. function: on_connect(Connect-Request, Status)
+
+        :readonly: False
+        :type: (uv.ConnectRequest, uv.StatusCode) -> None
+        """
 
 
 @ffi.callback('uv_connection_cb')
@@ -167,11 +251,11 @@ class Stream(Handle):
 
     :param uv_stream: allocated c struct for this stream
     :param ipc: does the stream support inter process communication
-    :param loop: loop where the handle should run on
+    :param loop: event loop the handle should run on
 
     :type uv_stream: ffi.CData
     :type ipc: bool
-    :type loop: Loop
+    :type loop: uv.Loop
     """
 
     __slots__ = ['uv_stream', 'on_read', 'on_connection', 'ipc']
@@ -371,6 +455,6 @@ class Stream(Handle):
         """
         if self.closing: raise HandleClosedError()
         buffers = Buffers(buffers)
-        code = lib.uv_try_write(self.uv_stream, buffers.uv_buffers, len(bufs.uv_buffers))
+        code = lib.uv_try_write(self.uv_stream, buffers.uv_buffers, len(buffers))
         if code < 0: raise UVError(code)
         return code

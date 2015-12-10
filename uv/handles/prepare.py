@@ -47,6 +47,7 @@ class Prepare(Handle):
     :type loop: Loop
     :type on_prepare: (uv.Prepare) -> None
     """
+
     __slots__ = ['uv_prepare', 'on_prepare']
 
     def __init__(self, loop=None, on_prepare=None):
