@@ -174,7 +174,7 @@ def getnameinfo(ip, port, flags=0, callback=None, loop=None):
 
 
 def c_create_sockaddr(ip, port, flowinfo=0, scope_id=0):
-    c_sockaddr = ffi.new('struct sockaddr *')
+    c_sockaddr = ffi.new('struct sockaddr_storage*')
     c_ip = ip.encode()
     code = lib.uv_ip4_addr(c_ip, port, ffi.cast('struct sockaddr_in*', c_sockaddr))
     if not code: return c_sockaddr

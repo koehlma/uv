@@ -40,7 +40,7 @@ def main():
     loop = uv.Loop.get_current()
 
     server = uv.TCP()
-    server.bind('0.0.0.0', 4444)
+    server.bind(('0.0.0.0', 4444))
     server.listen(20, on_connection=on_connection)
 
     sigint = uv.Signal()

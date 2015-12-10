@@ -21,6 +21,9 @@ struct sockaddr_in6 {
     unsigned short sin6_port;
     ...;
 };
+struct sockaddr_storage {
+    ...;
+};
 
 
 typedef union {...;} uv_file;
@@ -761,6 +764,7 @@ int cross_uv_poll_init_socket(uv_loop_t*, uv_poll_t*, int);
 uv_handle_type cross_uv_guess_handle(int);
 int cross_uv_tty_init(uv_loop_t*, uv_tty_t*, int, int);
 int cross_uv_pipe_open(uv_pipe_t*, int);
+int cross_uv_tcp_open(uv_tcp_t*, int);
 void cross_set_process_uid_gid(uv_process_options_t*, int, int);
 
 int cross_uv_fs_close(uv_loop_t*, uv_fs_t*, int, uv_fs_cb);

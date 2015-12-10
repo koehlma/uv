@@ -56,6 +56,9 @@ int cross_uv_tty_init(uv_loop_t* loop, uv_tty_t* tty, int fd, int readable) {
 int cross_uv_pipe_open(uv_pipe_t* pipe, int fd) {
     return uv_pipe_open(pipe, (uv_file) fd);
 }
+int cross_uv_tcp_open(uv_tcp_t* tcp, int fd) {
+    return uv_tcp_open(tcp, (uv_os_sock_t) fd);
+}
 void cross_set_process_uid_gid(uv_process_options_t* options, int uid, int gid) {
     options->uid = (uv_uid_t) uid;
     options->gid = (uv_gid_t) gid;

@@ -19,60 +19,209 @@ from __future__ import print_function, unicode_literals, division
 
 import socket
 
-from ..dns import c_create_sockaddr
-from ..error import UVError
-from ..handle import HandleType
 from ..library import ffi, lib
+
+from ..dns import c_create_sockaddr, unpack_sockaddr
+from ..error import UVError, HandleClosedError
+from ..handle import HandleType
 from ..common import Enumeration
+
 from .stream import Stream, ConnectRequest, uv_connect_cb
 
 
-class TCPFlags(Enumeration):
+class TCPBindFlags(Enumeration):
+    """
+    TCP flags enumeration.
+    """
+
     IPV6ONLY = lib.UV_TCP_IPV6ONLY
+    """
+    Disable dual stack support.
+
+    :type: int
+    """
 
 
 @HandleType.TCP
 class TCP(Stream):
-    __slots__ = ['tcp', 'sockaddr']
+    """
+    TCP handles are used to represent both TCP streams and servers.
 
-    def __init__(self, flags=0, ipc=False, loop=None):
-        self.tcp = ffi.new('uv_tcp_t*')
-        super(TCP, self).__init__(self.tcp, loop, ipc)
-        code = lib.uv_tcp_init_ex(self.loop.uv_loop, self.tcp, flags)
+    :raises uv.UVError: error while initializing the handle
+
+    :param flags: tcp flags to be used
+    :param loop: event loop the handle should run on
+
+    :type flags: int
+    :type loop: uv.Loop
+    """
+
+    __slots__ = ['uv_tcp', '_family']
+
+    def __init__(self, flags=0, loop=None):
+        self.uv_tcp = ffi.new('uv_tcp_t*')
+        super(TCP, self).__init__(self.uv_tcp, False, loop)
+        code = lib.uv_tcp_init_ex(self.loop.uv_loop, self.uv_tcp, flags)
         if code < 0:
             self.destroy()
             raise UVError(code)
-        self.sockaddr = None
+        self._family = socket.AF_INET
+
+    def open(self, fd):
+        """
+        Open an existing file descriptor as a tcp handle.
+
+        :raises uv.UVError: error while opening the handle
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param fd: file descriptor
+        :type fd: int
+        """
+        if self.closing: raise HandleClosedError()
+        code = lib.cross_uv_tcp_open(self.uv_tcp, fd)
+        if code < 0: raise UVError(code)
+
+    def nodelay(self, enable):
+        """
+        Enable / disable Nagle’s algorithm.
+
+        :raises uv.UVError: error enabling / disabling the algorithm
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param enable: enable / disable
+        :type enable: bool
+        """
+        if self.closing: raise HandleClosedError()
+        code = lib.uv_tcp_nodelay(self.uv_tcp, int(enable))
+        if code < 0: raise UVError(code)
+
+    def keepalive(self, enable, delay=0):
+        """
+        Enable / disable TCP keep-alive.
+
+        :raises uv.UVError: error enabling / disabling tcp keep-alive
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param enable: enable / disable
+        :param delay: initial delay in seconds
+
+        :type enable: bool
+        :type delay: int
+        """
+        if self.closing: raise HandleClosedError()
+        code = lib.uv_tcp_keepalive(self.uv_tcp, int(enable), delay)
+        if code < 0: raise UVError(code)
+
+    def simultaneous_accepts(self, enable):
+        """
+        Enable / disable simultaneous asynchronous accept requests that are queued
+        by the operating system when listening for new TCP connections.
+
+        This setting is used to tune a TCP server for the desired performance.
+        Having simultaneous accepts can significantly improve the rate of accepting
+        connections (which is why it is enabled by default) but may lead to uneven
+        load distribution in multi-process setups.
+
+        :raises uv.UVError: error enabling / disabling simultaneous accepts
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param enable: enable / disable
+        :type enable: bool
+        """
+        if self.closing: raise HandleClosedError()
+        code = lib.uv_tcp_simultaneous_accepts(self.uv_tcp, int(enable))
+        if code < 0: raise UVError(code)
 
     @property
     def family(self):
-        return socket.AF_INET
+        return self._family
 
     @property
-    def address(self):
-        pass
+    def sockname(self):
+        """
+        The current address to which the handle is bound to.
+
+        :raises uv.UVError: error while receiving sockname
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :readonly: True
+        :rtype: uv.Address4 | uv.Address6
+        """
+        if self.closing: raise HandleClosedError()
+        c_storage = ffi.new('struct sockaddr_storage*')
+        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
+        c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
+        code = lib.uv_tcp_getsockname(self.uv_tcp, c_sockaddr, c_size)
+        if code < 0: raise UVError(code)
+        return unpack_sockaddr(c_sockaddr)
 
     @property
-    def peer_address(self):
-        pass
+    def peername(self):
+        """
+        The address of the peer connected to the handle.
 
-    def keepalive(self):
-        pass
+        :raises uv.UVError: error while receiving peername
+        :raises uv.HandleClosedError: handle has already been closed or is closing
 
-    def nodelay(self):
-        pass
+        :readonly: True
+        :rtype: uv.Address4 | uv.Address6
+        """
+        if self.closing: raise HandleClosedError()
+        c_storage = ffi.new('struct sockaddr_storage*')
+        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
+        c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
+        code = lib.uv_tcp_getpeername(self.uv_tcp, c_sockaddr, c_size)
+        if code < 0: raise UVError(code)
+        return unpack_sockaddr(c_sockaddr)
 
+    def bind(self, address, flags=0):
+        """
+        Bind the handle to an address. When the port is already taken, you
+        can expect to see an :class:`uv.StatusCode.EADDRINUSE` error from
+        either `bind()`, `listen()` or `connect()`. That is, a successful
+        call to this function does not guarantee that the call to `listen()`
+        or `connect()` will succeed as well.
 
-    def bind(self, ip, port, flags=0):
-        self.sockaddr = c_create_sockaddr(ip, port)
-        code = lib.uv_tcp_bind(self.tcp, self.sockaddr, flags)
+        :raises uv.UVError: error while binding to `address`
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
+        :param flags: bind flags to be used (mask of :class:`uv.TCPBindFlags`)
+
+        :type address: tuple
+        :type flags: int
+        """
+        if self.closing: raise HandleClosedError()
+        c_storage = c_create_sockaddr(*address)
+        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
+        self._family = c_sockaddr.sa_family
+        code = lib.uv_tcp_bind(self.uv_tcp, c_sockaddr, flags)
         if code < 0: raise UVError(code)
 
-    def connect(self, ip, port, callback=None):
-        request = ConnectRequest(callback)
-        self.sockaddr = c_create_sockaddr(ip, port)
-        c_require(request.uv_connect, self.sockaddr)
-        self.requests.add(request)
-        code = lib.uv_tcp_connect(request.uv_connect, self.tcp, self.sockaddr, uv_connect_cb)
-        if code < 0: raise UVError(code)
+    def connect(self, address, on_connect=None):
+        """
+        Establish an IPv4 or IPv6 TCP connection.
+
+        :raises uv.UVError: error while connecting to `address`
+        :raises uv.HandleClosedError: handle has already been closed or is closing
+
+        :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
+        :param on_connect: callback called after connection has been established
+
+        :type address: tuple
+        :type on_connect: (uv.ConnectRequest, uv.StatusCode) -> None
+
+        :returns: connect request
+        :rtype: uv.ConnectRequest
+        """
+        if self.closing: raise HandleClosedError()
+        request = ConnectRequest(stream, on_connect)
+        c_storage = c_create_sockaddr(*address)
+        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
+        self._family = c_sockaddr.sa_family
+        uv_tcp = self.uv_tcp
+        code = lib.uv_tcp_connect(request.uv_connect, uv_tcp, c_sockaddr, uv_connect_cb)
+        if code < 0:
+            request.destroy()
+            raise UVError(code)
         return request

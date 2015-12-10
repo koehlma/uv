@@ -26,6 +26,8 @@ MOCK_CONSTANTS = {
     'UV_FS_EVENT_STAT': 2,
     'UV_FS_EVENT_RECURSIVE': 4,
 
+    'UV_TCP_IPV6ONLY': 1,
+
     'UV_E2BIG': -7,
     'UV_EACCES': -13,
     'UV_EADDRINUSE': -98,
