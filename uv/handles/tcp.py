@@ -29,7 +29,7 @@ from ..common import Enumeration
 from .stream import Stream, ConnectRequest, uv_connect_cb
 
 
-class TCPBindFlags(Enumeration):
+class TCPFlags(Enumeration):
     """
     TCP flags enumeration.
     """

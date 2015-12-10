@@ -57,7 +57,7 @@ from .handles.prepare import Prepare
 from .handles.process import Process
 from .handles.sig import Signal, Signals
 from .handles.stream import Stream, ShutdownRequest, ConnectRequest
-from .handles.tcp import TCP, TCPBindFlags
+from .handles.tcp import TCP, TCPFlags
 from .handles.timer import Timer
 from .handles.tty import TTY
 from .handles.udp import UDP
