@@ -71,7 +71,7 @@ def populate_stdio_container(uv_stdio, fileobj=None):
         uv_stdio.data.stream = fileobj.uv_stream
         flags = StandardIOFlags.INHERIT_STREAM
     elif fileobj is PIPE:
-        fileobj = Pipe()
+        fileobj = Pipe(ipc=True)
         uv_stdio.data.stream = fileobj.uv_stream
         flags = StandardIOFlags.CREATE_PIPE | StandardIOFlags.RW_PIPE
     elif isinstance(fileobj, int):
