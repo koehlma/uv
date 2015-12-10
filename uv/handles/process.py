@@ -95,14 +95,12 @@ class _FD(int):
     def __repr__(self): return '<FileDescriptor: {}>'.format(self)
 
 
-PIPE = CreatePipe(readable=True, writable=True)
-
-
 def _get_fileno(fileobj):
     try: return fileobj.fileno()
     except: return None
 
 
+PIPE = CreatePipe(readable=True, writable=True)
 """
 Create a readable and writable inter process communication pipe.
 """
