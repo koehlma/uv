@@ -99,15 +99,15 @@ PIPE = CreatePipe(readable=True, writable=True)
 """
 Create a readable and writable inter process communication pipe.
 """
-STDIN = _FD(sys.stdin.fileno())
+STDIN = _FD(sys.stdin.fileno()) if hasattr(sys.stdin, 'fileno') else None
 """
 Standard input file descriptor.
 """
-STDOUT = _FD(sys.stdout.fileno())
+STDOUT = _FD(sys.stdout.fileno()) if hasattr(sys.stdout, 'fileno') else None
 """
 Standard output file descriptor.
 """
-STDERR = _FD(sys.stderr.fileno())
+STDERR = _FD(sys.stderr.fileno()) if hasattr(sys.stderr, 'fileno') else None
 """
 Standard error file descriptor.
 """
