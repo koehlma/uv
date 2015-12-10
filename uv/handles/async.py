@@ -36,14 +36,14 @@ def uv_async_cb(uv_async):
 @HandleType.ASYNC
 class Async(Handle):
     """
-    Async handles will wake-up the event loop from an other thread and
+    Async handles will wakeup the event loop from an other thread and
     run the given callback within the event loop's thread. They are the
     only thread-safe handles.
 
-    :raises uv.UVError: error during the initialization of the handle
+    :raises uv.UVError: error while initializing the handle
 
-    :param loop: event loop which should be used for the handle
-    :param on_wakeup: callback which should be called from within the event loop
+    :param loop: event loop the handle should run on
+    :param on_wakeup: callback called from within the event loop's thread
 
     :type loop: uv.Loop
     :type on_wakeup: (uv.Async) -> None
@@ -56,7 +56,7 @@ class Async(Handle):
         super(Async, self).__init__(self.uv_async, loop)
         self.on_wakeup = on_wakeup or dummy_callback
         """
-        Callback which should be called from within the event loop.
+        Callback called from within the event loop's thread after wakeup.
 
         .. function:: on_wakeup(Async-Handle)
 
@@ -70,23 +70,19 @@ class Async(Handle):
 
     def send(self, on_wakeup=None):
         """
-        Wake-up the event loop and execute the callback afterwards. Multiple calls
+        Wakeup the event loop and execute the callback afterwards. Multiple calls
         to this method are coalesced if they happen before the callback has been
         called. This means not every call will yield a execution of the callback.
 
-        :raises uv.UVError: error while trying to wake-up event loop
+        :raises uv.UVError: error while trying to wakeup the event loop
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param on_wakeup: callback which should be called from within the event loop
+        :param on_wakeup: callback called from within the event loop's thread
         :type on_wakeup: (uv.Async) -> None
         """
         if self.closing: raise HandleClosedError()
         self.on_wakeup = on_wakeup or self.on_wakeup
         code = lib.uv_async_send(self.uv_async)
         if code < 0: raise UVError(code)
-
-    def destroy(self):
-        self.uv_async = None
-        super(Async, self).destroy()
 
     __call__ = send

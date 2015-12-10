@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import platform
 import sys
 
 from collections import OrderedDict
@@ -23,6 +24,10 @@ from collections import OrderedDict
 
 is_py2 = sys.version_info[0] == 2
 is_py3 = sys.version_info[0] == 3
+
+
+is_pypy = platform.python_implementation().lower() == 'pypy'
+is_cpython = platform.python_implementation().lower() == 'cpython'
 
 
 def with_metaclass(meta, *bases):

@@ -25,7 +25,7 @@ from ..library import ffi, lib, detach, str_py2c
 from ..common import dummy_callback, Enumeration
 
 from .pipe import Pipe
-from .signal import Signals
+from .sig import Signals
 from .stream import Stream
 
 __all__ = ['disable_stdio_inheritance', 'PIPE', 'ProcessFlags', 'Process']

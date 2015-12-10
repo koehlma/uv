@@ -41,7 +41,7 @@ def main():
 
     server = uv.TCP()
     server.bind('0.0.0.0', 4444)
-    server.listen(20, callback=on_connection)
+    server.listen(20, on_connection=on_connection)
 
     sigint = uv.Signal()
     sigint.start(uv.Signals.SIGINT, on_signal=on_quit)

@@ -55,14 +55,14 @@ from .handles.pipe import Pipe
 from .handles.poll import Poll, PollEvent
 from .handles.prepare import Prepare
 from .handles.process import Process
-from .handles.signal import Signal, Signals
+from .handles.sig import Signal, Signals
 from .handles.stream import Stream
 from .handles.tcp import TCP
 from .handles.timer import Timer
 from .handles.tty import TTY
 from .handles.udp import UDP
 
-from .handles.fs_event import FSEvent, Event, EventFlags
+from .handles.fs_monitor import FSMonitor, FSEvent, FSEventFlags
 from .handles.fs_poll import FSPoll
 
 from . import dns

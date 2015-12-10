@@ -43,16 +43,16 @@ class FSPoll(Handle):
     fs poll handles use stat to detect when a file has changed so they can work
     on file systems where fs event handles can not.
 
-    :raises uv.UVError: error during the initialization of the handle
+    :raises uv.UVError: error while initializing the handle
 
-    :param path: path which should be monitored
-    :param interval: interval which should be used for monitoring (in milliseconds)
-    :param loop: event loop which should be used for the handle
-    :param on_change: callback which should be called on FS change
+    :param path: path to be monitored
+    :param interval: interval to be used for monitoring (in milliseconds)
+    :param loop: event loop the handle should run on
+    :param on_change: callback called on FS change
 
     :type path: str
     :type interval: int
-    :type loop: Loop
+    :type loop: uv.Loop
     :type on_change: (uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None
     """
     __slots__ = ['uv_fs_poll', 'on_change', 'path', 'interval']
@@ -62,7 +62,7 @@ class FSPoll(Handle):
         super(FSPoll, self).__init__(loop)
         self.path = path
         """
-        Path which should be monitored.
+        Path to be monitored.
 
         .. warning::
 
@@ -74,7 +74,7 @@ class FSPoll(Handle):
         """
         self.interval = interval
         """
-        Interval which should be used for monitoring (in milliseconds).
+        Interval to be used for monitoring (in milliseconds).
 
         .. warning::
 
@@ -86,7 +86,7 @@ class FSPoll(Handle):
         """
         self.on_change = on_change or dummy_callback
         """
-        Callback which should be called on FS change.
+        Callback called on FS change.
 
         .. function:: on_change(FSPoll-Handle, Status-Code, Previous-Stat, Current-Stat)
 
@@ -108,9 +108,9 @@ class FSPoll(Handle):
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param path: path which should be monitored
-        :param interval: interval which should be used for monitoring (in milliseconds)
-        :param on_change: callback which should be called on FS change
+        :param path: path to be monitored
+        :param interval: interval to be used for monitoring (in milliseconds)
+        :param on_change: callback called on FS change
 
         :type path: str
         :type interval: int
@@ -133,9 +133,5 @@ class FSPoll(Handle):
         if self.closing: return
         code = lib.uv_fs_poll_stop(self.uv_fs_poll)
         if code < 0: raise UVError(code)
-
-    def destroy(self):
-        self.uv_fs_poll = None
-        super(FSPoll, self).destroy()
 
     __call__ = start

@@ -36,22 +36,22 @@ def uv_idle_cb(uv_idle):
 @HandleType.IDLE
 class Idle(Handle):
     """
-    Idle handles will run the given callback once per loop
-    iteration, right before the :class:`uv.Prepare` handles.
+    Idle handles will run the given callback once per loop iteration,
+    right before the :class:`uv.Prepare` handles.
 
-    The notable difference with prepare handles is, that when
-    there are active idle handles, the loop will perform a zero
-    timeout poll instead of blocking for IO.
+    The notable difference with prepare handles is, that when there
+    are active idle handles, the loop will perform a zero timeout poll
+    instead of blocking for IO.
 
     .. warning:
 
         Despite the name, idle handles will get their callback called on
         every loop iteration, not when the loop is actually "idle".
 
-    :raises uv.UVError: error during the initialization of the handle
+    :raises uv.UVError: error while initializing the handle
 
-    :param loop: event loop which should be used for the handle
-    :param on_idle: callback which should be called before prepare handles
+    :param loop: event loop the handle should run on
+    :param on_idle: callback called before prepare handles
 
     :type loop: uv.Loop
     :type on_idle: (uv.Idle) -> None
@@ -64,7 +64,7 @@ class Idle(Handle):
         super(Idle, self).__init__(self.uv_idle, loop)
         self.on_idle = on_idle or dummy_callback
         """
-        Callback which should be called before prepare handles.
+        Callback called before prepare handles.
 
         .. function:: on_idle(Idle-Handle)
 
@@ -83,7 +83,7 @@ class Idle(Handle):
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param on_idle: callback which should be called before prepare handles
+        :param on_idle: callback called before prepare handles
         :type on_idle: (uv.Idle) -> None
         """
         if self.closing: raise HandleClosedError()

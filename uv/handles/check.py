@@ -39,12 +39,12 @@ class Check(Handle):
     Check handles will run the given callback once per loop iteration,
     right after polling for IO.
 
-    :raises uv.UVError: error during the initialization of the handle
+    :raises uv.UVError: error while initializing the handle
 
-    :param loop: event loop which should be used for the handle
-    :param on_check: callback which should be called right after polling for IO
+    :param loop: event loop the handle should run on
+    :param on_check: callback called right after polling for IO
 
-    :type loop: Loop
+    :type loop: uv.Loop
     :type on_check: (uv.Check) -> None
     """
 
@@ -55,7 +55,7 @@ class Check(Handle):
         super(Check, self).__init__(self.uv_check, loop)
         self.on_check = on_check or dummy_callback
         """
-        Callback which should be called after polling for IO.
+        Callback called right after polling for IO once per loop iteration.
 
         .. function:: on_check(Check-Handle)
 
@@ -74,7 +74,7 @@ class Check(Handle):
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param on_check: callback which should be called after polling for IO
+        :param on_check: callback called right after polling for IO
         :type on_check: (uv.Check) -> None
         """
         if self.closing: raise HandleClosedError()
@@ -91,9 +91,5 @@ class Check(Handle):
         if self.closing: return
         code = lib.uv_check_stop(self.uv_check)
         if code < 0: raise UVError(code)
-
-    def destroy(self):
-        self.uv_check = None
-        super(Check, self).destroy()
 
     __call__ = start

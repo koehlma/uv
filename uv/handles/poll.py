@@ -30,6 +30,7 @@ class PollEvent(Enumeration):
     """
     Poll event types enumeration.
     """
+
     READABLE = lib.UV_READABLE
     """
     File descriptor is readable.
@@ -59,7 +60,7 @@ class Poll(Handle):
     external libraries that rely on the event loop to signal them about
     the socket status changes. Using them for any other purpose is not
     recommended. Use :class:`uv.TCP`, :class:`uv.UDP`, etc. instead,
-    which provide faster an more scalable implementations, that what
+    which provide faster and more scalable implementations, than what
     can be archived with :class:`uv.Poll`, especially on Windows.
 
     It is possible that poll handles occasionally signal that a file
@@ -82,14 +83,14 @@ class Poll(Handle):
         handles. On Unix any file descriptor that would be accepted
         by :manpage:`poll(2)` can be used.
 
-    :raises uv.UVError: error during the initialization of the handle
+    :raises uv.UVError: error while initializing the handle
 
-    :param fd: file descriptor which should be polled (is set to non-blocking mode)
-    :param loop: event loop which should be used for the handle
-    :param on_event: callback which should be called on IO events
+    :param fd: file descriptor to be polled (is set to non-blocking mode)
+    :param loop: event loop the handle should run on
+    :param on_event: callback called on IO events
 
     :type fd: int
-    :type loop: Loop
+    :type loop: uv.Loop
     :type on_event: (uv.Poll, uv.StatusCode, int) -> None
     """
     __slots__ = ['uv_poll', 'fd', 'on_event']
@@ -106,7 +107,7 @@ class Poll(Handle):
         """
         self.on_event = on_event or dummy_callback
         """
-        Callback which should be called on IO events.
+        Callback called on IO events.
 
         .. function:: on_event(Poll-Handle, Status-Code, Event-Mask)
 
@@ -133,8 +134,8 @@ class Poll(Handle):
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param events: bitmask of events which should be polled for
-        :param on_event: callback which should be called on IO events
+        :param events: bitmask of events to be polled for
+        :param on_event: callback called on IO events
 
         :type events: int
         :type on_event: (uv.Poll, uv.StatusCode, int) -> None

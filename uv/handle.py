@@ -327,7 +327,6 @@ class Handle(object):
             make sure there are no references from Python anymore to those objects
             after the handle has been closed. You should never call it directly!
         """
-        self.uv_handle = None
         self.closing = True
         self.closed = True
         self.loop.handles.remove(self)

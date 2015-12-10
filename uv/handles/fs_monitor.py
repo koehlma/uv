@@ -23,17 +23,18 @@ from ..common import dummy_callback, Enumeration
 from ..error import UVError, HandleClosedError
 from ..handle import HandleType, Handle
 
-__all__ = ['FSEvent', 'EventFlags', 'Event']
+__all__ = ['FSMonitor', 'FSEventFlags', 'FSEvent']
 
 
-class EventFlags(Enumeration):
+class FSEventFlags(Enumeration):
     """
     FS event flags enumeration.
     """
+
     WATCH_ENTRY = lib.UV_FS_EVENT_WATCH_ENTRY
     """
     By default, if the fs event watcher is given a directory name,
-    we will watch for all events in that directory. This flags
+    it will watch for all events in that directory. This flags
     overrides this behavior and makes :class:`uv.FSEvent` report
     only changes to the directory entry itself. This flag does not
     affect individual files watched.
@@ -41,17 +42,21 @@ class EventFlags(Enumeration):
     .. note::
 
         This flag is currently not implemented yet on any backend.
+
+    :type: int
     """
     STAT = lib.UV_FS_EVENT_STAT
     """
     By default :class:`uv.FSEvent` will try to use a kernel interface such
     as inotify or kqueue to detect events. This may not work on remote
     filesystems such as NFS mounts. This flag makes :class:`uv.FSEvent` fall
-    back to calling stat() on a regular interval.
+    back to calling `stat()` on a regular interval.
 
     .. note::
 
         This flag is currently not implemented yet on any backend.
+
+    :type: int
     """
     RECURSIVE = lib.UV_FS_EVENT_RECURSIVE
     """
@@ -62,58 +67,65 @@ class EventFlags(Enumeration):
     .. note::
 
         Currently the only supported platforms are OSX and Windows.
+
+    :type: int
     """
 
 
-class Event(Enumeration):
+class FSEvent(Enumeration):
     """
     FS event types enumeration.
     """
+
     RENAME = lib.UV_RENAME
     """
     File has been renamed or deleted.
+
+    :type: int
     """
     CHANGE = lib.UV_CHANGE
     """
-    File has changed.
+    File has been changed.
+
+    :type: int
     """
 
 
 @ffi.callback('uv_fs_event_cb')
 def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
-    fs_event = detach(uv_fs_event)
+    fs_monitor = detach(uv_fs_event)
     filename = ffi.string(c_filename).decode()
-    with fs_event.loop.callback_context:
-        fs_event.on_event(fs_event, status, filename, events)
+    with fs_monitor.loop.callback_context:
+        fs_monitor.on_event(fs_monitor, status, filename, events)
 
 
 @HandleType.FS_EVENT
-class FSEvent(Handle):
+class FSMonitor(Handle):
     """
     FS handles monitor a given path for changes, for example, if the
     file was renamed or there was a generic change in it. This handle
     uses the best backend for the job on each platform.
 
-    :raises uv.UVError: error during the initialization of the handle
+    :raises uv.UVError: error while initializing the handle
 
-    :param path: path which should be monitored
-    :param flags: flags which should be used
-    :param loop: event loop which should be used for the handle
-    :param on_event: callback which should be called on FS event
+    :param path: path to be monitored
+    :param flags: flags to be used for monitoring
+    :param loop: event loop the handle should run on
+    :param on_event: callback called on FS event
 
     :type path: str
     :type flags: int
-    :type loop: Loop
-    :type on_event: (uv.FSEvent, uv.StatusCode, str, int) -> None
+    :type loop: uv.Loop
+    :type on_event: (uv.FSMonitor, uv.StatusCode, str, int) -> None
     """
     __slots__ = ['uv_fs_event', 'on_event', 'flags', 'path']
 
     def __init__(self, path=None, flags=0, loop=None, on_event=None):
         self.uv_fs_event = ffi.new('uv_fs_event_t*')
-        super(FSEvent, self).__init__(self.uv_fs_event, loop)
+        super(FSMonitor, self).__init__(self.uv_fs_event, loop)
         self.path = path
         """
-        Path which should be monitored.
+        Path to be monitored.
 
         .. warning::
 
@@ -125,7 +137,7 @@ class FSEvent(Handle):
         """
         self.flags = flags
         """
-        Flags which should be used for monitoring.
+        Flags to be used for monitoring.
 
         .. warning::
 
@@ -137,7 +149,7 @@ class FSEvent(Handle):
         """
         self.on_event = on_event or dummy_callback
         """
-        Callback which should be called on FS events.
+        Callback called on FS events.
 
         .. function:: on_event(FSEvent-Handle, Status-Code, Filename, Event-Mask)
 
@@ -156,13 +168,13 @@ class FSEvent(Handle):
         :raises uv.UVError: error while starting the handle
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
-        :param path: path which should be monitored
-        :param flags: flags which should be used for monitoring
-        :param on_event: callback which should be called on FS events
+        :param path: path to be monitored
+        :param flags: flags to be used for monitoring
+        :param on_event: callback called on FS events
 
         :type path: str
         :type flags: int
-        :type on_event: (uv.FSEvent, uv.StatusCode, str, int) -> None
+        :type on_event: (uv.FSMonitor, uv.StatusCode, str, int) -> None
         """
         if self.closing: raise HandleClosedError()
         self.path = path or self.path
@@ -181,9 +193,5 @@ class FSEvent(Handle):
         if self.closing: return
         code = lib.uv_fs_event_stop(self.uv_fs_event)
         if code < 0: raise UVError(code)
-
-    def destroy(self):
-        self.uv_fs_event = None
-        super(FSEvent, self).destroy()
 
     __call__ = start
