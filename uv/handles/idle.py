@@ -101,8 +101,4 @@ class Idle(Handle):
         code = lib.uv_idle_stop(self.uv_idle)
         if code < 0: raise UVError(code)
 
-    def destroy(self):
-        self.uv_idle = None
-        super(Idle, self).destroy()
-
     __call__ = start

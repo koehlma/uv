@@ -156,8 +156,4 @@ class Poll(Handle):
         code = lib.uv_poll_stop(self.uv_poll)
         if code < 0: raise UVError(code)
 
-    def destroy(self):
-        self.uv_poll = None
-        super(Poll, self).destroy()
-
     __call__ = start

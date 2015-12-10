@@ -92,8 +92,4 @@ class Prepare(Handle):
         code = lib.uv_prepare_stop(self.uv_prepare)
         if code < 0: raise UVError(code)
 
-    def destroy(self):
-        self.uv_prepare = None
-        super(Prepare, self).destroy()
-
     __call__ = start

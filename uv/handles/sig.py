@@ -158,8 +158,4 @@ class Signal(Handle):
         code = lib.uv_signal_stop(self.uv_signal)
         if code < 0: raise UVError(code)
 
-    def destroy(self):
-        self.uv_signal = None
-        super(Signal, self).destroy()
-
     __call__ = start
