@@ -20,7 +20,7 @@ from __future__ import print_function, unicode_literals, division
 from ..library import ffi, lib, detach
 
 from ..common import dummy_callback
-from ..error import UVError, HandleClosedError
+from ..error import UVError, HandleClosedError, StatusCode
 from ..handle import HandleType, Handle
 from ..request import RequestType, Request
 
@@ -239,8 +239,9 @@ def uv_connection_cb(uv_stream, status):
 def uv_read_cb(uv_stream, length, uv_buf):
     stream = detach(uv_stream)
     data = stream.loop.allocator.finalize(uv_stream, length, uv_buf)
+    length, status = (0, length) if length < 0 else (length, StatusCode.SUCCESS)
     with stream.loop.callback_context:
-        stream.on_read(stream, length, data)
+        stream.on_read(stream, status, length, data)
 
 
 @HandleType.STREAM

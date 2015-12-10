@@ -22,8 +22,8 @@ def on_shutdown(request, _):
     request.stream.close()
 
 
-def on_read(stream, length, data):
-    if length < 0: stream.close()
+def on_read(stream, status, length, data):
+    if status is not uv.StatusCode.SUCCESS: stream.close()
     if data: stream.write(data)
 
 
