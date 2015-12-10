@@ -24,8 +24,7 @@ from ..dns import c_create_sockaddr, unpack_sockaddr
 from ..error import UVError, HandleClosedError, StatusCode
 from ..handle import HandleType, Handle
 from ..request import RequestType, Request
-
-from .stream import Buffers
+from ..buffers import Buffers
 
 
 class UDPFlags(Enumeration):

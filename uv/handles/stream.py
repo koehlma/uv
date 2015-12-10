@@ -17,46 +17,12 @@
 
 from __future__ import print_function, unicode_literals, division
 
-from ..library import ffi, lib, detach
-
 from ..common import dummy_callback
+from ..buffers import Buffers
 from ..error import UVError, HandleClosedError, StatusCode
 from ..handle import HandleType, Handle
+from ..library import ffi, lib, detach
 from ..request import RequestType, Request
-
-
-class Buffers(tuple):
-    __slots__ = []
-
-    def __new__(cls, buffers):
-        """
-        :type buffers: list[bytes] | bytes
-        :rtype: uv.Buffers
-        """
-        buffers = [buffers] if isinstance(buffers, bytes) else buffers
-        c_buffers = [ffi.new('char[]', buf) for buf in buffers]
-        uv_buffers = ffi.new('uv_buf_t[]', len(buffers))
-        for index, buf in enumerate(buffers):
-            uv_buffers[index].base = c_buffers[index]
-            uv_buffers[index].len = len(buf)
-        return tuple.__new__(cls, (c_buffers, uv_buffers))
-
-    def __len__(self):
-        return len(self[0])
-
-    @property
-    def c_buffers(self):
-        """
-        :rtype: list[ffi.CData]
-        """
-        return self[0]
-
-    @property
-    def uv_buffers(self):
-        """
-        :rtype: ffi.CData
-        """
-        return self[1]
 
 
 @ffi.callback('uv_shutdown_cb')
