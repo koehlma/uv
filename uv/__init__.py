@@ -59,7 +59,7 @@ from .handles.sig import Signal, Signals
 from .handles.stream import Stream, ShutdownRequest, ConnectRequest
 from .handles.tcp import TCP, TCPFlags
 from .handles.timer import Timer
-from .handles.tty import TTY
+from .handles.tty import TTY, reset_mode, TTYMode, ConsoleSize
 from .handles.udp import UDP, UDPFlags, UDPMembership, SendRequest
 
 from .handles.fs_monitor import FSMonitor, FSEvent, FSEventFlags
