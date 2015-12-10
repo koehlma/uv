@@ -174,7 +174,7 @@ class WriteRequest(Request):
                                 len(self.buffers), uv_write_cb)
         else:
             code = lib.uv_write2(self.uv_write, uv_stream, uv_buffers, len(self.buffers),
-                                 seld.send_stream.uv_stream, uv_write_cb)
+                                 self.send_stream.uv_stream, uv_write_cb)
         if code < 0:
             self.destroy()
             raise UVError(code)
@@ -327,7 +327,7 @@ class Stream(Handle):
         .. function: on_shutdown(Stream, Status)
 
         :param on_shutdown: callback called after shutdown is complete
-        :type on_shutdown: (uv.Stream, uv.StatusCode) -> None
+        :type on_shutdown: (uv.ShutdownRequest, uv.StatusCode) -> None
 
         :returns: shutdown request
         :rtype: uv.ShutdownRequest
