@@ -15,32 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import threading
-
 from common import TestCase
 
 import uv
 
 
-class TestAsync(TestCase):
-    def test_async(self):
-        def on_wakeup(async):
-            self.async_called = True
-            async.close()
-            self.assert_equal(self.loop_thread, threading.current_thread)
+class TestCheck(TestCase):
+    def test_check(self):
+        def on_check(check):
+            self.on_check_called += 1
+            if self.on_timeout_called > 5: check.close()
 
-        def on_prepare(prepare):
-            threading.Thread(target=self.async.send).start()
-            prepare.close()
+        def on_timeout(timer):
+            self.on_timeout_called += 1
+            if self.on_timeout_called > 5: timer.close()
 
-        self.async_called = False
-        self.loop_thread = threading.current_thread
+        self.on_check_called = 0
+        self.on_timeout_called = 0
 
-        self.async = uv.Async(on_wakeup=on_wakeup)
+        self.check = uv.Check(on_check=on_check)
+        self.check.start()
 
-        self.prepare = uv.Prepare(on_prepare=on_prepare)
-        self.prepare.start()
+        self.timer = uv.Timer(on_timeout=on_timeout)
+        self.timer.start(5, repeat=5)
 
         self.loop.run()
 
-        self.assert_true(self.async_called)
+        self.assert_equal(self.on_timeout_called + 1, self.on_check_called)

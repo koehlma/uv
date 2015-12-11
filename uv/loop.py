@@ -79,7 +79,7 @@ class DefaultAllocator(Allocator):
         return bytes(ffi.buffer(uv_buf.base, length)) if length > 0 else b''
 
 
-class Loop:
+class Loop(object):
     _global_lock = threading.Lock()
     _thread_locals = threading.local()
     _default = None
@@ -217,6 +217,7 @@ class Loop:
         self.uv_loop = None
         self.closed = True
         with Loop._global_lock: Loop._loops.remove(self)
+        if Loop._thread_locals.loop is self: Loop._thread_locals.loop = None
 
     def close_all_handles(self, callback=None):
         for handle in self.handles: handle.close(callback)

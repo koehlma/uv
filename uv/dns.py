@@ -20,27 +20,137 @@ from __future__ import print_function, unicode_literals, division
 import socket
 import warnings
 
-from collections import namedtuple
-
 from .library import ffi, lib, detach, str_c2py
 
 from .common import dummy_callback
 from .error import UVError, get_status_code
 from .request import RequestType, Request
 
-__all__ = ['AddrInfo', 'NameInfo', 'Address4', 'Address6', 'GetAddrInfo',
+__all__ = ['AddrInfo', 'NameInfo', 'Address', 'Address4', 'Address6', 'GetAddrInfo',
            'getaddrinfo', 'GetNameInfo', 'getnameinfo']
 
-AddrInfo = namedtuple('AddrInfo', ['family', 'type', 'protocol', 'canonname', 'address'])
-NameInfo = namedtuple('NameInfo', ['host', 'service'])
+
+class AddrInfo(tuple):
+    """
+    Address information.
+    """
+
+    __slots__ = []
+
+    def __new__(cls, family, socktype, protocol, canonname, address):
+        return tuple.__new__(cls, (family, socktype, protocol, canonname, address))
+
+    def __init__(self, family, socktype, protocol, canonname, address):
+        tuple.__init__(self, (family, socktype, protocol, canonname, address))
+
+    @property
+    def family(self):
+        return self[0]
+
+    @property
+    def type(self):
+        return self[1]
+
+    @property
+    def protocol(self):
+        return self[2]
+
+    @property
+    def canonname(self):
+        return self[3]
+
+    @property
+    def address(self):
+        return self[4]
+
+
+class NameInfo(tuple):
+    """
+    Name information.
+    """
+
+    __slots__ = []
+
+    def __new__(cls, host, service):
+        return tuple.__new__(cls, (host, service))
+
+    def __init__(self, host, service):
+        tuple.__init__(self, (host, service))
+
+    @property
+    def host(self):
+        return self[0]
+
+    @property
+    def service(self):
+        return self[1]
 
 
 class Address(tuple):
-    pass
+    """
+    Socket address.
+    """
+
+    __slots__ = []
+
+    def __new__(cls, host, port):
+        return tuple.__new__(cls, (host, port))
+
+    def __init__(self, host, port):
+        tuple.__init__(self, (host, port))
+
+    @property
+    def host(self):
+        """
+        address host
+
+        :rtype: unicode
+        """
+        return self[0]
+
+    @property
+    def port(self):
+        """
+        address port
+
+        :rtype: int
+        """
+        return self[1]
 
 
-Address4 = namedtuple('Address4', ['host', 'port'])
-Address6 = namedtuple('Address6', ['host', 'port', 'flowinfo', 'scope_id'])
+class Address4(Address):
+    """
+    Socket IPv4 address.
+    """
+
+
+class Address6(Address):
+    """
+    Socket IPv6 address.
+    """
+    def __new__(cls, host, port, flowinfo=0, scope_id=0):
+        return tuple.__new__(cls, (host, port, flowinfo, scope_id))
+
+    def __init__(self, host, port, flowinfo=0, scope_id=0):
+        tuple.__init__(self, (host, port, flowinfo, scope_id))
+
+    @property
+    def flowinfo(self):
+        """
+        address flow information
+
+        :rtype: int
+        """
+        return self[2]
+
+    @property
+    def scope_id(self):
+        """
+        address scope id
+
+        :rtype: int
+        """
+        return self[3]
 
 
 def unpack_addrinfo(c_addrinfo):

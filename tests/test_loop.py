@@ -15,19 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import threading
 import time
-import unittest
+
+from common import TestCase
 
 import uv
 
 
-class TestLoop(unittest.TestCase):
-    def setUp(self):
-        self.loop = uv.Loop()
-
+class TestLoop(TestCase):
     def test_loop_alive(self):
-        self.assertFalse(self.loop.alive)
+        self.assert_false(self.loop.alive)
 
         self.loop_alive = False
 
@@ -35,12 +32,13 @@ class TestLoop(unittest.TestCase):
             self.loop_alive = self.loop.alive
             prepare.close()
 
-        self.prepare = uv.Prepare(self.loop, on_prepare)
+        self.prepare = uv.Prepare(on_prepare=on_prepare)
 
         self.prepare.start()
         self.loop.run()
 
-        self.assertTrue(self.loop_alive)
+        self.assert_true(self.loop_alive)
+        self.assert_false(self.loop.alive)
 
     def test_run_once(self):
         self.callback_called = 0
@@ -50,11 +48,11 @@ class TestLoop(unittest.TestCase):
             prepare.close()
 
         for _ in range(500):
-            self.prepare = uv.Prepare(self.loop, on_prepare)
+            self.prepare = uv.Prepare(on_prepare=on_prepare)
             self.prepare.start()
             self.loop.run(uv.RunMode.ONCE)
 
-        self.assertEqual(self.callback_called, 500)
+        self.assert_equal(self.callback_called, 500)
 
     def test_run_nowait(self):
         self.callback_called = False
@@ -63,31 +61,30 @@ class TestLoop(unittest.TestCase):
             self.callback_called = True
             timer.close()
 
-        self.timer = uv.Timer(self.loop, on_timeout)
-
+        self.timer = uv.Timer(on_timeout=on_timeout)
         self.timer.start(100, repeat=100)
+
         self.loop.run(uv.RunMode.NOWAIT)
 
-        self.assertFalse(self.callback_called)
+        self.assert_false(self.callback_called)
+
+        self.timer.close()
+        self.loop.run()
 
     def test_get_handles(self):
-        prepare = uv.Prepare(self.loop)
-        timer = uv.Timer(self.loop)
+        prepare = uv.Prepare()
+        timer = uv.Timer()
 
-        handles = self.loop.handles
-
-        self.assertEqual(len(handles), 2)
-        self.assertTrue(prepare in handles)
-        self.assertTrue(timer in handles)
+        self.assert_equal(len(self.loop.handles), 2)
+        self.assert_in(prepare, self.loop.handles)
+        self.assert_in(timer, self.loop.handles)
 
         prepare.close()
         timer.close()
 
         self.loop.run()
 
-        handles = self.loop.handles
-
-        self.assertEqual(len(handles), 0)
+        self.assert_equal(len(self.loop.handles), 0)
 
     def test_stop(self):
         self.timer_called = 0
@@ -105,46 +102,61 @@ class TestLoop(unittest.TestCase):
             if self.prepare_called == 10:
                 prepare.close()
 
-        self.timer = uv.Timer(self.loop, on_timeout)
+        self.timer = uv.Timer(on_timeout=on_timeout)
         self.timer.start(10, repeat=10)
-        self.prepare = uv.Prepare(self.loop, on_prepare)
+        self.prepare = uv.Prepare(on_prepare=on_prepare)
         self.prepare.start()
 
         self.loop.run()
-        self.assertEqual(self.timer_called, 2)
-        self.assertTrue(self.prepare_called >= 2)
+        self.assert_equal(self.timer_called, 2)
+        self.assert_greater_equal(self.prepare_called, 2)
         self.loop.run(uv.RunMode.NOWAIT)
-        self.assertTrue(self.prepare_called >= 3)
+        self.assert_greater_equal(self.prepare_called, 3)
         self.loop.run()
-        self.assertEqual(self.timer_called, 10)
-        self.assertEqual(self.prepare_called, 10)
+        self.assert_equal(self.timer_called, 10)
+        self.assert_equal(self.prepare_called, 10)
 
     def test_close(self):
-        self.prepare = uv.Prepare(self.loop)
+        self.prepare = uv.Prepare()
         self.prepare.start()
 
-        self.assertFalse(self.loop.closed)
+        self.assert_false(self.loop.closed)
 
-        self.assertRaises(uv.UVError, self.loop.close)
+        self.assert_raises(uv.UVError, self.loop.close)
         self.prepare.close()
-        self.assertRaises(uv.UVError, self.loop.close)
+        self.assert_raises(uv.UVError, self.loop.close)
 
         self.loop.run()
 
         self.loop.close()
 
-        self.assertRaises(uv.LoopClosedError, uv.Async, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.Check, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.Idle, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.Pipe, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.Poll, 0, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.Prepare, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.Process, ['python'], loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.Signal, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.TCP, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.Timer, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.TTY, 0, loop=self.loop)
-        self.assertRaises(uv.LoopClosedError, uv.UDP, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Async, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Check, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Idle, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Pipe, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Poll, 0, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Prepare, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Process, ['python'], loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Signal, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.TCP, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.Timer, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.TTY, 0, loop=self.loop)
+        self.assert_raises(uv.LoopClosedError, uv.UDP, loop=self.loop)
+
+    def test_update_time(self):
+        def on_prepare(prepare):
+            now = self.loop.now
+            time.sleep(0.5)
+            self.assert_equal(now, self.loop.now)
+            self.loop.update_time()
+            self.assert_greater(self.loop.now, now)
+            prepare.close()
+
+        self.prepare = uv.Prepare(on_prepare=on_prepare)
+        self.prepare.start()
+
+        self.loop.run()
+
 
     '''
     def test_current_loop(self):
@@ -183,16 +195,3 @@ class TestLoop(unittest.TestCase):
         self.assertEqual(uv.Loop.default_loop(), uv.Loop.current_loop())
     '''
 
-    def test_update_time(self):
-        def on_prepare(prepare):
-            now = self.loop.now
-            time.sleep(0.5)
-            self.assertEqual(now, self.loop.now)
-            self.loop.update_time()
-            self.assertGreater(self.loop.now, now)
-            prepare.close()
-
-        self.prepare = uv.Prepare(self.loop, on_prepare)
-        self.prepare.start()
-
-        self.loop.run()
