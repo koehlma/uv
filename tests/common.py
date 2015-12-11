@@ -19,7 +19,18 @@ import unittest
 
 import uv
 
-from uv.common import dummy_callback
+from uv.common import dummy_callback, is_py3
+
+PY2_RERAISE = '''
+def reraise(exc_type, exc_value, exc_traceback):
+    raise exc_type, exc_value, exc_traceback
+'''
+
+if is_py3:
+    def reraise(exc_type, exc_value, exc_traceback):
+        raise exc_value.with_traceback(exc_traceback)
+else:
+    exec(PY2_RERAISE)
 
 
 class TestLoop(uv.Loop):
@@ -39,12 +50,13 @@ class TestLoop(uv.Loop):
             self.exc_value = exc_value
             self.exc_traceback = exc_traceback
             self.stop()
+        return True
 
     def run(self, mode=uv.RunMode.DEFAULT):
         self.exc_type = None
         result = super(TestLoop, self).run(mode)
         if self.exc_type is not None:
-            raise self.exc_type, self.exc_value, self.exc_traceback
+            reraise(self.exc_type, self.exc_value, self.exc_traceback)
         return result
 
 
