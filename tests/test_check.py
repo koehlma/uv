@@ -41,4 +41,4 @@ class TestCheck(TestCase):
 
         self.loop.run()
 
-        self.assert_equal(self.on_timeout_called + 1, self.on_check_called)
+        self.assert_less_equal(self.on_timeout_called, self.on_check_called)
