@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function, unicode_literals, division
+
 import threading
 
 from common import TestCase
@@ -24,16 +26,31 @@ import uv
 
 class TestAsync(TestCase):
     def test_async(self):
+        def thread():
+            while True:
+                with self.lock:
+                    if self.async_callback_called == 3:
+                        break
+                    self.async.send()
+
+        def on_closed(_):
+            self.close_callback_called += 1
+
         def on_wakeup(async):
-            self.async_called = True
-            async.close()
+            with self.lock:
+                self.async_callback_called += 1
+                if self.async_callback_called == 3:
+                    async.close(on_closed=on_closed)
             self.assert_equal(self.loop_thread, threading.current_thread)
 
         def on_prepare(prepare):
-            threading.Thread(target=self.async.send).start()
-            prepare.close()
+            threading.Thread(target=thread).start()
+            prepare.close(on_closed=on_closed)
 
-        self.async_called = False
+        self.async_callback_called = 0
+        self.close_callback_called = 0
+        self.lock = threading.RLock()
+
         self.loop_thread = threading.current_thread
 
         self.async = uv.Async(on_wakeup=on_wakeup)
@@ -43,4 +60,5 @@ class TestAsync(TestCase):
 
         self.loop.run()
 
-        self.assert_true(self.async_called)
+        self.assert_equal(self.async_callback_called, 3)
+        self.assert_equal(self.close_callback_called, 2)

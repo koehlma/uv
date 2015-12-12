@@ -43,6 +43,8 @@ __email__ = 'mail@koehlma.de'
 
 from .library import version as uv_version
 
+from .common import is_win32, is_linux, is_posix, is_nt, is_py3, is_py2
+
 from .error import UVError, HandleClosedError, LoopClosedError, StatusCode
 from .handle import Handle
 from .loop import RunMode, Loop

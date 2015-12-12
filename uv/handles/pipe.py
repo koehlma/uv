@@ -168,7 +168,6 @@ class Pipe(Stream):
         """
         Connect to the given Unix domain socket or named pipe.
 
-        :raises uv.UVError: error while connecting to `path`
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         :param path: path to connect to
@@ -184,9 +183,5 @@ class Pipe(Stream):
         if self.closing: raise HandleClosedError()
         request = ConnectRequest(self, on_connect)
         c_path = path.encode()
-        uv_pipe = self.uv_pipe
-        code = lib.uv_pipe_connect(request.uv_connect, uv_pipe, c_path, uv_connect_cb)
-        if code < 0:
-            request.destroy()
-            raise UVError(code)
+        lib.uv_pipe_connect(request.uv_connect, self.uv_pipe, c_path, uv_connect_cb)
         return request
