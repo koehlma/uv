@@ -72,6 +72,7 @@ class TestPingPong(common.TestCase):
     def test_pipe(self):
         self.server = uv.Pipe()
         self.server.bind(common.TEST_PIPE1)
+        self.server.pending_instances(100)
         self.server.listen(5, on_connection=self.on_connection)
 
         self.client = uv.Pipe()
@@ -80,13 +81,14 @@ class TestPingPong(common.TestCase):
         self.run_ping_pong()
 
     def test_tcp_ipv4(self):
+        address = (common.TEST_IPV4, common.TEST_PORT1)
+
         self.server = uv.TCP()
-        self.server.bind((common.TEST_IPV4, common.TEST_PORT1))
+        self.server.bind(address)
         self.server.listen(5, on_connection=self.on_connection)
 
         self.client = uv.TCP()
-        self.client.connect((common.TEST_IPV4, common.TEST_PORT1),
-                            on_connect=self.on_connect)
+        self.client.connect(address, on_connect=self.on_connect)
 
         self.run_ping_pong()
 

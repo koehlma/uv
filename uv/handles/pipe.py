@@ -104,6 +104,16 @@ class Pipe(Stream):
         """
         return self.accept(cls=self.pending_type)
 
+    def pending_instances(self, amount):
+        """
+        Set the number of pending pipe instance handles when the pipe server is
+        waiting for connections.
+
+        :param amount: amount of pending instances
+        :type amount: int
+        """
+        lib.uv_pipe_pending_instances(self.uv_pipe, amount)
+
     @property
     def family(self):
         return socket.AF_UNIX if is_posix else None
