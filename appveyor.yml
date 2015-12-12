@@ -70,7 +70,7 @@ build_script:
   - "%CMD_IN_ENV% python setup.py build"
 
 test_script:
-  - "%CMD_IN_ENV% python setup.py nosetests"
+  - "%CMD_IN_ENV% python setup.py nosetests --verbosity=2"
 
 after_test:
   - "C:\\Python35\\python.exe appveyor\\build.py"
