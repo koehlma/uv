@@ -17,8 +17,6 @@
 
 from __future__ import print_function, unicode_literals, division
 
-import os
-
 import common
 
 import uv
@@ -52,12 +50,10 @@ class TestPingPong(common.TestCase):
         request.stream.read_start(on_read=self.on_read)
 
     def on_connection(self, stream, status):
-        try:
-            connection = stream.accept()
-            connection.read_start(on_read=self.on_read)
-            connection.write(b'PING')
-        except uv.UVError as error:
-            print(error)
+        self.assert_equal(status, uv.StatusCode.SUCCESS)
+        connection = stream.accept()
+        connection.read_start(on_read=self.on_read)
+        connection.write(b'PING')
 
     def set_up(self):
         self.buffer = []

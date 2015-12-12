@@ -37,8 +37,8 @@ else:
 
 
 if uv.is_win32:
-    TEST_PIPE1 = '\\\\?\\pipe\\python-uv-test1'
-    TEST_PIPE2 = '\\\\?\\pipe\\python-uv-test2'
+    TEST_PIPE1 = r'\\?\pipe\python-uv-test1'
+    TEST_PIPE2 = r'\\?\pipe\python-uv-test2'
 else:
     TEST_PIPE1 = '/tmp/python-uv-test1'
     TEST_PIPE2 = '/tmp/python-uv-test2'

@@ -47,7 +47,7 @@ class Pipe(Stream):
 
     __slots__ = ['uv_pipe']
 
-    def __init__(self, loop=None, ipc=True):
+    def __init__(self, loop=None, ipc=False):
         self.uv_pipe = ffi.new('uv_pipe_t*')
         super(Pipe, self).__init__(self.uv_pipe, ipc, loop)
         code = lib.uv_pipe_init(self.loop.uv_loop, self.uv_pipe, int(ipc))
