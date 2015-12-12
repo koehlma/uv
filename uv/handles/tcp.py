@@ -215,7 +215,7 @@ class TCP(Stream):
         :rtype: uv.ConnectRequest
         """
         if self.closing: raise HandleClosedError()
-        request = ConnectRequest(stream, on_connect)
+        request = ConnectRequest(self, on_connect)
         c_storage = c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         self._family = c_sockaddr.sa_family

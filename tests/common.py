@@ -33,6 +33,22 @@ else:
     exec(PY2_RERAISE)
 
 
+if uv.is_win32:
+    TEST_PIPE1 = r'\\?\pipe\python-uv-test1'
+    TEST_PIPE2 = r'\\?\pipe\python-uv-test2'
+else:
+    TEST_PIPE1 = '/tmp/python-uv-test1'
+    TEST_PIPE2 = '/tmp/python-uv-test2'
+
+BAD_PIPE = '/path/to/unix/socket/that/really/should/not/be/there'
+
+TEST_IPV4 = '127.0.0.1'
+TEST_IPV6 = '::1'
+
+TEST_PORT1 = 12345
+TEST_PORT2 = 12346
+
+
 class TestLoop(uv.Loop):
     def __init__(self):
         super(TestLoop, self).__init__()
