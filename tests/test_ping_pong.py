@@ -52,10 +52,12 @@ class TestPingPong(common.TestCase):
         request.stream.read_start(on_read=self.on_read)
 
     def on_connection(self, stream, status):
-        self.assert_equal(status, uv.StatusCode.SUCCESS)
-        connection = stream.accept()
-        connection.read_start(on_read=self.on_read)
-        connection.write(b'PING')
+        try:
+            connection = stream.accept()
+            connection.read_start(on_read=self.on_read)
+            connection.write(b'PING')
+        except uv.UVError as error:
+            print(error)
 
     def set_up(self):
         self.buffer = []
