@@ -73,3 +73,8 @@ void cross_set_process_uid_gid(uv_process_options_t* options, int uid, int gid) 
 int cross_uv_fs_close(uv_loop_t* loop, uv_fs_t* request, int fd, uv_fs_cb callback) {
     return uv_fs_close(loop, request, (uv_file) fd, callback);
 }
+
+void cross_uv_buf_set(uv_buf_t* buffer, char* base, unsigned int length) {
+    buffer->base = base;
+    buffer->len = length;
+}

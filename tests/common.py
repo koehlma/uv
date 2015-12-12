@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function, unicode_literals, division
+
+import os
 import unittest
 
 import uv
@@ -34,8 +37,8 @@ else:
 
 
 if uv.is_win32:
-    TEST_PIPE1 = r'\\?\pipe\python-uv-test1'
-    TEST_PIPE2 = r'\\?\pipe\python-uv-test2'
+    TEST_PIPE1 = '\\\\?\\pipe\\python-uv-test1'
+    TEST_PIPE2 = '\\\\?\\pipe\\python-uv-test2'
 else:
     TEST_PIPE1 = '/tmp/python-uv-test1'
     TEST_PIPE2 = '/tmp/python-uv-test2'
@@ -47,6 +50,12 @@ TEST_IPV6 = '::1'
 
 TEST_PORT1 = 12345
 TEST_PORT2 = 12346
+
+try: os.remove(TEST_PIPE1)
+except: pass
+
+try: os.remove(TEST_PIPE2)
+except: pass
 
 
 class TestLoop(uv.Loop):

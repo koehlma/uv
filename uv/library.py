@@ -87,3 +87,7 @@ def mutable_c_string(string):
 
 def str_c2py(c_string):
     return ffi.string(c_string).decode()
+
+
+def uv_buffer_set(uv_buffer, c_base, length):
+    lib.cross_uv_buf_set(uv_buffer, c_base, length)

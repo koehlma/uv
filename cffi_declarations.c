@@ -769,3 +769,5 @@ int cross_uv_udp_open(uv_udp_t*, int);
 void cross_set_process_uid_gid(uv_process_options_t*, int, int);
 
 int cross_uv_fs_close(uv_loop_t*, uv_fs_t*, int, uv_fs_cb);
+
+void cross_uv_buf_set(uv_buf_t*, char*, unsigned int);
