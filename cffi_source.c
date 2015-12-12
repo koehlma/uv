@@ -78,3 +78,6 @@ void cross_uv_buf_set(uv_buf_t* buffer, char* base, unsigned int length) {
     buffer->base = base;
     buffer->len = length;
 }
+char* cross_uv_buf_get_base(uv_buf_t* buffer) {
+    return buffer->base;
+}

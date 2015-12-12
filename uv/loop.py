@@ -22,7 +22,7 @@ import sys
 import threading
 import traceback
 
-from .library import ffi, lib, attach, uv_buffer_set
+from .library import ffi, lib, attach, uv_buffer_set, uv_buffer_get_base
 
 from .common import Enumeration, with_metaclass
 from .error import UVError, LoopClosedError
@@ -74,7 +74,8 @@ class DefaultAllocator(Allocator):
 
     def finalize(self, uv_handle, length, uv_buf):
         self.buffer_in_use = False
-        return bytes(ffi.buffer(uv_buf.base, length)) if length > 0 else b''
+        c_base = uv_buffer_get_base(uv_buf)
+        return bytes(ffi.buffer(c_base, length)) if length > 0 else b''
 
 
 class Loop(object):

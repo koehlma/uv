@@ -91,3 +91,7 @@ def str_c2py(c_string):
 
 def uv_buffer_set(uv_buffer, c_base, length):
     lib.cross_uv_buf_set(uv_buffer, c_base, length)
+
+
+def uv_buffer_get_base(uv_buffer):
+    return lib.cross_uv_buf_get_base(uv_buffer)
