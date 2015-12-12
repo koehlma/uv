@@ -30,7 +30,7 @@ class Buffers(tuple):
         c_buffers = [ffi.new('char[]', buf) for buf in buffers]
         uv_buffers = ffi.new('uv_buf_t[]', len(buffers))
         for index, buf in enumerate(buffers):
-            uv_buffer_set(uv_buffers[index], c_buffers[index], len(buf))
+            uv_buffer_set(ffi.addressof(uv_buffers[index]), c_buffers[index], len(buf))
         return tuple.__new__(cls, (c_buffers, uv_buffers))
 
     def __len__(self):
