@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from .library import ffi
+from .library import ffi, uv_buffer_set
 
 
 class Buffers(tuple):
@@ -30,8 +30,7 @@ class Buffers(tuple):
         c_buffers = [ffi.new('char[]', buf) for buf in buffers]
         uv_buffers = ffi.new('uv_buf_t[]', len(buffers))
         for index, buf in enumerate(buffers):
-            uv_buffers[index].base = c_buffers[index]
-            uv_buffers[index].len = len(buf)
+            uv_buffer_set(uv_buffers[index], c_buffers[index], len(buf))
         return tuple.__new__(cls, (c_buffers, uv_buffers))
 
     def __len__(self):
