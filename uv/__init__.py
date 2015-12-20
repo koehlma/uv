@@ -58,7 +58,7 @@ from .handles.poll import *
 from .handles.prepare import *
 from .handles.process import *
 from .handles.process import *
-from .handles.sig import *
+from .handles.signal import *
 from .handles.stream import *
 from .handles.tcp import *
 from .handles.timer import *

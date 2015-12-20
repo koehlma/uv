@@ -28,7 +28,7 @@ from ..handle import Handle, HandleType
 
 
 from .pipe import Pipe
-from .sig import Signals
+from .signal import Signals
 from .stream import Stream
 
 __all__ = ['disable_stdio_inheritance', 'CreatePipe', 'PIPE', 'STDIN', 'STDOUT',
