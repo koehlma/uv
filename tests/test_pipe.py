@@ -15,22 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division
+from __future__ import print_function, unicode_literals, division, absolute_import
 
-from common import TestCase, BAD_PIPE
+import common
 
 import uv
 
 
-class TestPipe(TestCase):
+class TestPipe(common.TestCase):
     def test_connect_bad(self):
         def on_connect(request, status):
             self.assert_not_equal(status, uv.StatusCode.SUCCESS)
             request.stream.close()
 
         self.pipe = uv.Pipe()
-        self.pipe.connect(BAD_PIPE, on_connect=on_connect)
+        self.pipe.connect(common.BAD_PIPE, on_connect=on_connect)
 
         self.loop.run()
-
-
