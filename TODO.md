@@ -2,7 +2,7 @@
 
 - [ ] better error handling (exceptions for every status code)
 - [ ] auto destroy on exception in constructor
-- [ ] rename FSMonitor to FSEvent (FSEvent → FSEvents)
+- [x] rename FSMonitor to FSEvent (FSEvent → FSEvents)
 - [ ] better docstrings
 - [ ] more and better unittests
 - [ ] complete support of all libuv features

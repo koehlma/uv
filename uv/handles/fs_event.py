@@ -19,7 +19,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from .. import common, error, handle, library
 from ..library import ffi, lib
 
-__all__ = ['FSMonitor', 'FSEventFlags', 'FSEvent']
+__all__ = ['FSEventFlags', 'FSEvents', 'FSEvent']
 
 
 class FSEventFlags(common.Enumeration):
@@ -65,7 +65,7 @@ class FSEventFlags(common.Enumeration):
     """
 
 
-class FSEvent(common.Enumeration):
+class FSEvents(common.Enumeration):
     """ """
     RENAME = lib.UV_RENAME
     """
@@ -90,7 +90,7 @@ def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
 
 
 @handle.HandleType.FS_EVENT
-class FSMonitor(handle.Handle):
+class FSEvent(handle.Handle):
     """
     FS handles monitor a given path for changes, for example, if the
     file was renamed or there was a generic change in it. This handle
@@ -114,7 +114,7 @@ class FSMonitor(handle.Handle):
 
     def __init__(self, path=None, flags=0, loop=None, on_event=None):
         self.uv_fs_event = ffi.new('uv_fs_event_t*')
-        super(FSMonitor, self).__init__(self.uv_fs_event, loop)
+        super(FSEvent, self).__init__(self.uv_fs_event, loop)
         self.path = path
         """
         Path to be monitored.

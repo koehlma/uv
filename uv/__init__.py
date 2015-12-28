@@ -63,7 +63,7 @@ from .handles.timer import *
 from .handles.tty import *
 from .handles.udp import *
 
-from .handles.fs_monitor import *
+from .handles.fs_event import *
 from .handles.fs_poll import *
 
 from .dns import Address, Address4, Address6, AddrInfo
