@@ -19,6 +19,7 @@ import sys
 
 from collections import OrderedDict
 
+from .library import ffi, uv_buffer_set
 
 is_py2 = sys.version_info[0] == 2
 is_py3 = sys.version_info[0] == 3
@@ -75,3 +76,36 @@ is_win32 = sys.platform == 'win32'
 
 
 def dummy_callback(*arguments, **keywords): pass
+
+
+class Buffers(tuple):
+    __slots__ = []
+
+    def __new__(cls, buffers):
+        """
+        :type buffers: list[bytes] | bytes
+        :rtype: uv.Buffers
+        """
+        buffers = [buffers] if isinstance(buffers, bytes) else buffers
+        c_buffers = [ffi.new('char[]', buf) for buf in buffers]
+        uv_buffers = ffi.new('uv_buf_t[]', len(buffers))
+        for index, buf in enumerate(buffers):
+            uv_buffer_set(ffi.addressof(uv_buffers[index]), c_buffers[index], len(buf))
+        return tuple.__new__(cls, (c_buffers, uv_buffers))
+
+    def __len__(self):
+        return len(self[0])
+
+    @property
+    def c_buffers(self):
+        """
+        :rtype: list[ffi.CData]
+        """
+        return self[0]
+
+    @property
+    def uv_buffers(self):
+        """
+        :rtype: ffi.CData
+        """
+        return self[1]
