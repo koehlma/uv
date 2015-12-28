@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, Maximilian Köhl <mail@koehlma.de>
+ * Copyright (C) 2015, Maximilian Koehl <mail@koehlma.de>
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License version 3 as published by
