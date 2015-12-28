@@ -13,27 +13,21 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import sys
 import warnings
 
-from ..library import ffi, lib, detach, mutable_c_string
+from .. import common, error, handle, library
+from ..library import ffi, lib
 
-from ..common import Enumeration, dummy_callback
-from ..error import UVError
-from ..handle import Handle, HandleType
-
-
-from .pipe import Pipe
-from .signal import Signals
-from .stream import Stream
+from . import pipe, signal, stream
 
 __all__ = ['disable_stdio_inheritance', 'CreatePipe', 'PIPE', 'STDIN', 'STDOUT',
            'STDERR', 'ProcessFlags', 'Process']
 
 
-class StandardIOFlags(Enumeration):
+class StandardIOFlags(common.Enumeration):
     IGNORE = lib.UV_IGNORE
 
     INHERIT_FD = lib.UV_INHERIT_FD
@@ -116,7 +110,7 @@ Standard error file descriptor.
 """
 
 
-class ProcessFlags(Enumeration):
+class ProcessFlags(common.Enumeration):
     """ """
     SETUID = lib.UV_PROCESS_SETUID
     SETGID = lib.UV_PROCESS_SETGID
@@ -145,18 +139,18 @@ class ProcessFlags(Enumeration):
 
 @ffi.callback('uv_exit_cb')
 def uv_exit_cb(uv_process, exit_status, term_signum):
-    process = detach(uv_process)
+    process = library.detach(uv_process)
     with process.loop.callback_context:
         process.on_exit(process, exit_status, term_signum)
 
 
 def populate_stdio_container(uv_stdio, file_base=None):
     fileobj = file_base
-    if isinstance(file_base, Stream):
+    if isinstance(file_base, stream.Stream):
         uv_stdio.data.stream = file_base.uv_stream
         uv_stdio.data.flags = StandardIOFlags.INHERIT_STREAM
     elif isinstance(file_base, CreatePipe):
-        fileobj = Pipe(ipc=file_base.ipc)
+        fileobj = pipe.Pipe(ipc=file_base.ipc)
         uv_stdio.data.stream = fileobj.uv_stream
         uv_stdio.data.flags = file_base.flags
     else:
@@ -173,8 +167,8 @@ def populate_stdio_container(uv_stdio, file_base=None):
     return fileobj
 
 
-@HandleType.PROCESS
-class Process(Handle):
+@handle.HandleType.PROCESS
+class Process(handle.Handle):
     """
     Process handles will spawn a new process and allow the user to control
     it and establish communication channels with it using streams.
@@ -217,7 +211,7 @@ class Process(Handle):
 
         self.uv_options = ffi.new('uv_process_options_t*')
 
-        self.c_file = mutable_c_string(arguments[0])
+        self.c_file = library.mutable_c_string(arguments[0])
         self.uv_options.file = self.c_file
 
         self.c_args_list = list(map(mutable_c_string, arguments))
@@ -266,11 +260,12 @@ class Process(Handle):
         self.uv_options.stdio = self.c_stdio_containers
 
         if cwd is not None:
-            self.c_cwd = mutable_c_string(cwd)
+            self.c_cwd = library.mutable_c_string(cwd)
             self.uv_options.cwd = self.c_cwd
 
         if env is not None:
-            self.c_env_list = [mutable_c_string('%s=%s' % item) for item in env.items()]
+            self.c_env_list = [library.mutable_c_string('%s=%s' % item)
+                               for item in env.items()]
             self.c_env_list.append(ffi.NULL)
             self.c_env = ffi.new('char*[]', self.c_env_list)
             self.uv_options.env = self.c_env
@@ -283,7 +278,7 @@ class Process(Handle):
         self.uv_options.flags = flags
         self.uv_options.exit_cb = uv_exit_cb
 
-        self.on_exit = on_exit or dummy_callback
+        self.on_exit = on_exit or common.dummy_callback
         """
         Callback called after process exited.
 
@@ -296,7 +291,7 @@ class Process(Handle):
         code = lib.uv_spawn(self.loop.uv_loop, self.process, self.uv_options)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     @property
     def pid(self):
@@ -308,13 +303,13 @@ class Process(Handle):
         if self.closing: return None
         return self.process.pid
 
-    def kill(self, signum=Signals.SIGINT):
+    def kill(self, signum=signal.Signals.SIGINT):
         """
         Sends the specified signal to the process.
 
         :param signum: signal number
         :type signum: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         code = lib.uv_process_kill(self.process, signum)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)

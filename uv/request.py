@@ -15,16 +15,14 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from .library import ffi, lib, attach
-
-from .common import Enumeration
-from .error import UVError, LoopClosedError
+from . import common, error, library
+from .library import ffi, lib
 from .loop import Loop
 
 __all__ = ['Request']
 
 
-class RequestType(Enumeration):
+class RequestType(common.Enumeration):
     UNKNOWN = lib.UV_UNKNOWN_REQ
     CONNECT = lib.UV_CONNECT
     WRITE = lib.UV_WRITE
@@ -61,7 +59,7 @@ class Request(object):
 
     def __init__(self, uv_request, loop=None):
         self.uv_request = ffi.cast('uv_req_t*', uv_request)
-        self.attachment = attach(self.uv_request, self)
+        self.attachment = library.attach(self.uv_request, self)
         self.loop = loop or Loop.get_current()
         """
         Loop where the handle is running on.
@@ -78,7 +76,7 @@ class Request(object):
         """
         if self.loop.closed:
             self.finished = True
-            raise LoopClosedError()
+            raise error.LoopClosedError()
         self.loop.requests.add(self)
 
     @property
@@ -98,7 +96,7 @@ class Request(object):
         :raises uv.UVError: error while canceling request
         """
         code = lib.uv_cancel(self.uv_request)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def destroy(self):
         """

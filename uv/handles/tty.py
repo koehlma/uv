@@ -13,15 +13,12 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
+from .. import common, error, handle, library
 from ..library import ffi, lib
 
-from ..common import Enumeration
-from ..error import UVError, HandleClosedError
-from ..handle import HandleType
-
-from .stream import Stream
+from . import stream
 
 __all__ = ['ConsoleSize', 'reset_mode', 'TTYMode', 'TTY']
 
@@ -66,10 +63,10 @@ def reset_mode():
     :raises uv.UVError: error while resetting tty mode
     """
     code = lib.uv_tty_reset_mode()
-    if code < 0: raise UVError(code)
+    if code < 0: raise error.UVError(code)
 
 
-class TTYMode(Enumeration):
+class TTYMode(common.Enumeration):
     """ """
     NORMAL = lib.UV_TTY_MODE_NORMAL
     """
@@ -85,8 +82,8 @@ class TTYMode(Enumeration):
     """
 
 
-@HandleType.TTY
-class TTY(Stream):
+@handle.HandleType.TTY
+class TTY(stream.Stream):
     """
     TTY handles represent a stream for the console.
 
@@ -111,7 +108,7 @@ class TTY(Stream):
         code = lib.cross_uv_tty_init(self.loop.uv_loop, self.uv_tty, fd, int(readable))
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     @property
     def console_size(self):
@@ -125,7 +122,7 @@ class TTY(Stream):
         if self.closing: return ConsoleSize(0, 0)
         c_with, c_height = ffi.new('int*'), ffi.new('int*')
         code = lib.uv_tty_get_winsize(self.uv_tty, c_with, c_height)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
         return ConsoleSize(c_with[0], c_height[0])
 
     def set_mode(self, mode=TTYMode.NORMAL):
@@ -138,6 +135,6 @@ class TTY(Stream):
         :param mode: mode to set
         :type mode: uv.TTYMode
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         code = lib.uv_tty_set_mode(self.uv_tty, mode)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)

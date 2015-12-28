@@ -13,26 +13,23 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ..library import ffi, lib, detach
-
-from ..common import dummy_callback
-from ..error import UVError, HandleClosedError
-from ..handle import Handle, HandleType
+from .. import common, error, handle, library
+from ..library import ffi, lib
 
 __all__ = ['Check']
 
 
 @ffi.callback('uv_check_cb')
 def uv_check_cb(uv_check):
-    check = detach(uv_check)
+    check = library.detach(uv_check)
     with check.loop.callback_context:
         check.on_check(check)
 
 
-@HandleType.CHECK
-class Check(Handle):
+@handle.HandleType.CHECK
+class Check(handle.Handle):
     """
     Check handles will run the given callback once per loop iteration,
     right after polling for IO.
@@ -51,7 +48,7 @@ class Check(Handle):
     def __init__(self, loop=None, on_check=None):
         self.uv_check = ffi.new('uv_check_t*')
         super(Check, self).__init__(self.uv_check, loop)
-        self.on_check = on_check or dummy_callback
+        self.on_check = on_check or common.dummy_callback
         """
         Callback called right after polling for IO once per loop iteration.
 
@@ -63,7 +60,7 @@ class Check(Handle):
         code = lib.uv_check_init(self.loop.uv_loop, self.uv_check)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     def start(self, on_check=None):
         """
@@ -75,10 +72,10 @@ class Check(Handle):
         :param on_check: callback called right after polling for IO
         :type on_check: ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         self.on_check = on_check or self.on_check
         code = lib.uv_check_start(self.uv_check, uv_check_cb)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def stop(self):
         """
@@ -88,6 +85,6 @@ class Check(Handle):
         """
         if self.closing: return
         code = lib.uv_check_stop(self.uv_check)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     __call__ = start

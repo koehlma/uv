@@ -13,16 +13,13 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import socket
 import warnings
 
-from .library import ffi, lib, detach, str_c2py
-
-from .common import dummy_callback
-from .error import UVError, get_status_code
-from .request import RequestType, Request
+from . import common, error, library, request
+from .library import ffi, lib
 
 __all__ = ['AddrInfo', 'NameInfo', 'Address', 'Address4', 'Address6', 'GetAddrInfo',
            'getaddrinfo', 'GetNameInfo', 'getnameinfo']
@@ -158,7 +155,7 @@ def unpack_addrinfo(c_addrinfo):
         family = c_next.ai_family
         socktype = c_next.ai_socktype
         protocol = c_next.ai_protocol
-        canonname = str_c2py(c_next.ai_canonname) if c_next.ai_canonname else None
+        canonname = library.str_c2py(c_next.ai_canonname) if c_next.ai_canonname else None
         address = unpack_sockaddr(c_next.ai_addr) if c_next.ai_addr else None
         items.append(AddrInfo(family, socktype, protocol, canonname, address))
         c_next = c_next.ai_next
@@ -176,7 +173,7 @@ def unpack_sockaddr(c_sockaddr):
         port = socket.ntohs(c_sockaddr_in.sin_port)
         lib.uv_ip4_name(c_sockaddr_in, c_host, 16)
 
-        return Address4(str_c2py(c_host), port)
+        return Address4(library.str_c2py(c_host), port)
     elif c_sockaddr.sa_family == socket.AF_INET6:
         c_sockaddr_in6 = ffi.cast('struct sockaddr_in6*', c_sockaddr)
         c_additional = lib.cross_get_ipv6_additional(c_sockaddr_in6)
@@ -187,22 +184,23 @@ def unpack_sockaddr(c_sockaddr):
         scope_id = c_additional.scope_id
         lib.uv_ip6_name(c_sockaddr_in6, c_host, 40)
 
-        return Address6(str_c2py(c_host), port, flowinfo, scope_id)
+        return Address6(library.str_c2py(c_host), port, flowinfo, scope_id)
     warnings.warn('unable to unpack sockaddr - unknown family')
     return None
 
 
 @ffi.callback('uv_getaddrinfo_cb')
 def uv_getaddrinfo_cb(uv_getaddrinfo, status, _):
-    request = detach(uv_getaddrinfo)
-    request.destroy()
-    if status == 0: request.populate()
-    with request.loop.callback_context:
-        request.callback(request, get_status_code(status), request.addrinfo)
+    addrinfo_request = library.detach(uv_getaddrinfo)
+    addrinfo_request.destroy()
+    if status == 0: addrinfo_request.populate()
+    with addrinfo_request.loop.callback_context:
+        addrinfo_request.callback(addrinfo_request, error.get_status_code(status),
+                                  addrinfo_request.addrinfo)
 
 
-@RequestType.GETADDRINFO
-class GetAddrInfo(Request):
+@request.RequestType.GETADDRINFO
+class GetAddrInfo(request.Request):
     __slots__ = ['uv_getaddrinfo', 'c_hints', 'callback', 'host',
                  'port', 'hints', 'flags', 'addrinfo']
 
@@ -217,7 +215,7 @@ class GetAddrInfo(Request):
         self.c_hints.ai_protocol = protocol
         self.c_hints.ai_flags = flags
 
-        self.callback = callback or dummy_callback
+        self.callback = callback or common.dummy_callback
         self.host = host
         self.port = port
         self.hints = AddrInfo(family, socktype, protocol, None, None)
@@ -228,7 +226,7 @@ class GetAddrInfo(Request):
         code = lib.uv_getaddrinfo(self.loop.uv_loop, self.uv_getaddrinfo, uv_callback,
                                   host.encode(), str(port).encode(), self.c_hints)
 
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
         if callback is None: self.populate()
 
     def populate(self):
@@ -240,20 +238,22 @@ class GetAddrInfo(Request):
 
 def getaddrinfo(host, port, family=0, socktype=0, protocol=0,
                 flags=0, callback=None, loop=None):
-    request = GetAddrInfo(host, port, family, socktype, protocol, flags, callback, loop)
-    return request.addrinfo if callback is None else request
+    addrinfo_request = GetAddrInfo(host, port, family, socktype, protocol, flags,
+                                   callback, loop)
+    return addrinfo_request.addrinfo if callback is None else addrinfo_request
 
 
 @ffi.callback('uv_getnameinfo_cb')
 def uv_getnameinfo_cb(uv_getnameinfo, status, c_hostname, c_service):
-    request = detach(uv_getnameinfo)
-    request.destroy()
-    with request.loop.callback_context:
-        request.callback(request, status, str_c2py(c_hostname), str_c2py(c_service))
+    nameinfo_request = library.detach(uv_getnameinfo)
+    nameinfo_request.destroy()
+    with nameinfo_request.loop.callback_context:
+        nameinfo_request.callback(nameinfo_request, status, library.str_c2py(c_hostname),
+                                  library.str_c2py(c_service))
 
 
-@RequestType.GETNAMEINFO
-class GetNameInfo(Request):
+@request.RequestType.GETNAMEINFO
+class GetNameInfo(request.Request):
     __slots__ = ['uv_getnameinfo', 'c_sockaddr', 'callback', 'ip', 'port', 'flags']
 
     def __init__(self, ip, port, flags=0, callback=None, loop=None):
@@ -270,7 +270,7 @@ class GetNameInfo(Request):
         code = lib.uv_getnameinfo(self.loop.uv_loop, self.uv_getnameinfo, uv_callback,
                                   self.c_sockaddr, flags)
 
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     @property
     def host(self):
@@ -282,8 +282,9 @@ class GetNameInfo(Request):
 
 
 def getnameinfo(ip, port, flags=0, callback=None, loop=None):
-    request = GetNameInfo(ip, port, flags, callback, loop)
-    return NameInfo(request.host, request.service) if callback is None else request
+    nameinfo_request = GetNameInfo(ip, port, flags, callback, loop)
+    return (NameInfo(nameinfo_request.host, nameinfo_request.service)
+            if callback is None else request)
 
 
 def c_create_sockaddr(ip, port, flowinfo=0, scope_id=0):
@@ -293,6 +294,6 @@ def c_create_sockaddr(ip, port, flowinfo=0, scope_id=0):
     if not code: return c_sockaddr
     c_sockaddr_in6 = ffi.cast('struct sockaddr_in6*', c_sockaddr)
     code = lib.uv_ip6_addr(c_ip, port, c_sockaddr_in6)
-    if code < 0: raise UVError(code)
+    if code < 0: raise error.UVError(code)
     lib.cross_set_ipv6_additional(c_sockaddr_in6, flowinfo, scope_id)
     return c_sockaddr

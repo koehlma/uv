@@ -20,16 +20,13 @@ import sys
 import threading
 import traceback
 
-from .library import ffi, lib, attach, uv_buffer_set, uv_buffer_get_base
-
-from .common import Enumeration, with_metaclass
-from .error import UVError, LoopClosedError
-
+from . import common, error, library
+from .library import ffi, lib
 
 __all__ = ['RunMode', 'Loop']
 
 
-class RunMode(Enumeration):
+class RunMode(common.Enumeration):
     DEFAULT = lib.UV_RUN_DEFAULT
     ONCE = lib.UV_RUN_ONCE
     NOWAIT = lib.UV_RUN_NOWAIT
@@ -49,7 +46,7 @@ class CallbackContext(object):
         return True
 
 
-class Allocator(with_metaclass(abc.ABCMeta)):
+class Allocator(common.with_metaclass(abc.ABCMeta)):
     uv_alloc_cb = None
 
     @abc.abstractmethod
@@ -65,14 +62,14 @@ class DefaultAllocator(Allocator):
 
     def _allocate(self, uv_handle, suggested_size, uv_buf):
         if self.buffer_in_use:
-            uv_buffer_set(uv_buf, ffi.NULL, 0)
+            library.uv_buffer_set(uv_buf, ffi.NULL, 0)
         else:
-            uv_buffer_set(uv_buf, self.c_buffer, self.buffer_size)
+            library.uv_buffer_set(uv_buf, self.c_buffer, self.buffer_size)
         self.buffer_in_use = True
 
     def finalize(self, uv_handle, length, uv_buf):
         self.buffer_in_use = False
-        c_base = uv_buffer_get_base(uv_buf)
+        c_base = library.uv_buffer_get_base(uv_buf)
         return bytes(ffi.buffer(c_base, length)) if length > 0 else b''
 
 
@@ -123,9 +120,9 @@ class Loop(object):
         else:
             self.uv_loop = ffi.new('uv_loop_t*')
             code = lib.uv_loop_init(self.uv_loop)
-            if code < 0: raise UVError(code)
+            if code < 0: raise error.UVError(code)
 
-        self.attachment = attach(self.uv_loop, self)
+        self.attachment = library.attach(self.uv_loop, self)
 
         self.allocator = allocator or DefaultAllocator(buffer_size)
 
@@ -178,39 +175,38 @@ class Loop(object):
 
     @property
     def now(self):
-        if self.closed: raise LoopClosedError()
+        if self.closed: raise error.LoopClosedError()
         return lib.uv_now(self.uv_loop)
 
     def fileno(self):
-        if self.closed: raise LoopClosedError()
+        if self.closed: raise error.LoopClosedError()
         return lib.uv_backend_fd(self.uv_loop)
 
     def make_current(self):
         Loop._thread_locals.loop = self
 
     def update_time(self):
-        if self.closed: raise LoopClosedError()
+        if self.closed: raise error.LoopClosedError()
         return lib.uv_update_time(self.uv_loop)
 
     def get_timeout(self):
-        if self.closed: raise LoopClosedError()
+        if self.closed: raise error.LoopClosedError()
         return lib.uv_backend_timeout(self.uv_loop)
 
     def run(self, mode=RunMode.DEFAULT):
-        if self.closed: raise LoopClosedError()
+        if self.closed: raise error.LoopClosedError()
         self.make_current()
         result = bool(lib.uv_run(self.uv_loop, mode))
         return result
 
     def stop(self):
-        if self.closed: raise LoopClosedError()
         if self.closed: return
         lib.uv_stop(self.uv_loop)
 
     def close(self):
         if self.closed: return
         code = lib.uv_loop_close(self.uv_loop)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
         self.uv_loop = None
         self.closed = True
         with Loop._global_lock: Loop._loops.remove(self)

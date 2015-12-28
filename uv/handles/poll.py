@@ -13,18 +13,15 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ..library import ffi, lib, detach
-
-from ..common import dummy_callback, Enumeration
-from ..error import UVError, HandleClosedError
-from ..handle import HandleType, Handle
+from .. import common, error, handle, library
+from ..library import ffi, lib
 
 __all__ = ['Poll', 'PollEvent']
 
 
-class PollEvent(Enumeration):
+class PollEvent(common.Enumeration):
     """
     Poll event types enumeration.
     """
@@ -45,13 +42,13 @@ class PollEvent(Enumeration):
 
 @ffi.callback('uv_poll_cb')
 def poll_callback(uv_poll, status, events):
-    poll = detach(uv_poll)
+    poll = library.detach(uv_poll)
     with poll.loop.callback_context:
         poll.on_event(poll, status, events)
 
 
-@HandleType.POLL
-class Poll(Handle):
+@handle.HandleType.POLL
+class Poll(handle.Handle):
     """
     Poll handles are used to watch file descriptors for readability and
     writability. The purpose of poll handles is to enable integrating
@@ -105,7 +102,7 @@ class Poll(Handle):
         :readonly: True
         :type: int
         """
-        self.on_event = on_event or dummy_callback
+        self.on_event = on_event or common.dummy_callback
         """
         Callback called on IO events.
 
@@ -118,7 +115,7 @@ class Poll(Handle):
         code = lib.cross_uv_poll_init_socket(self.loop.uv_loop, self.uv_poll, fd)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     def start(self, events=PollEvent.READABLE, on_event=None):
         """
@@ -142,10 +139,10 @@ class Poll(Handle):
         :type on_event: ((uv.Poll, uv.StatusCode, int) -> None) |
                         ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         self.on_event = on_event or self.on_event
         code = lib.uv_poll_start(self.uv_poll, events, poll_callback)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def stop(self):
         """
@@ -155,6 +152,6 @@ class Poll(Handle):
         """
         if self.closing: return
         code = lib.uv_poll_stop(self.uv_poll)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     __call__ = start

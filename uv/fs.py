@@ -17,12 +17,8 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 from collections import namedtuple
 
-from .library import ffi, lib, detach
-
-from .common import dummy_callback, Enumeration
-from .error import UVError, StatusCode, get_status_code
-from .handle import HandleType
-from .request import Request, RequestType
+from . import common, error, handle, library, request
+from .library import ffi, lib
 
 Timespec = namedtuple('Timespec', ['sec', 'nsec'])
 
@@ -51,7 +47,7 @@ def unpack_dirent(uv_dirent):
     return Dirent(ffi.string(uv_dirent.name).decode(), DirentType(uv_dirent.type))
 
 
-class FSType(Enumeration):
+class FSType(common.Enumeration):
     UNKNOWN = lib.UV_FS_UNKNOWN
     CUSTOM = lib.UV_FS_CUSTOM
     OPEN = lib.UV_FS_OPEN
@@ -87,7 +83,7 @@ class FSType(Enumeration):
         return postprocessor
 
 
-class DirentType(Enumeration):
+class DirentType(common.Enumeration):
     UNKNOWN = lib.UV_DIRENT_UNKNOWN
     FILE = lib.UV_DIRENT_FILE
     DIR = lib.UV_DIRENT_DIR
@@ -98,15 +94,15 @@ class DirentType(Enumeration):
     BLOCK = lib.UV_DIRENT_BLOCK
 
 
-@RequestType.FS
-class FSRequest(Request):
+@request.RequestType.FS
+class FSRequest(request.Request):
     __slots__ = ['uv_fs', 'data', 'callback']
 
     def __init__(self, data=None, callback=None, loop=None):
         self.uv_fs = ffi.new('uv_fs_t*')
         super(FSRequest, self).__init__(self.uv_fs, loop)
         self.data = data
-        self.callback = callback or dummy_callback
+        self.callback = callback or common.dummy_callback
         requests.add(self)
 
     @property
@@ -132,7 +128,7 @@ class FSRequest(Request):
 
 @FSType.CLOSE
 def post_close(request):
-    status = get_status_code(request.result)
+    status = error.get_status_code(request.result)
     return [status]
 
 
@@ -141,13 +137,13 @@ def post_close(request):
 
 @FSType.STAT
 def post_stat(request):
-    status = get_status_code(request.result)
+    status = error.get_status_code(request.result)
     return [status, request.stat]
 
 
 @ffi.callback('uv_fs_cb')
 def fs_callback(uv_request):
-    request = detach(uv_request)
+    request = library.detach(uv_request)
     request.destroy()
     lib.uv_fs_req_cleanup(uv_request)
     with request.loop.callback_context:
@@ -157,14 +153,14 @@ def fs_callback(uv_request):
 def close(fd, callback=None, loop=None):
     request = FSRequest(None, callback, loop)
     code = lib.cross_uv_fs_close(request.loop.uv_loop, request.uv_fs, fd, fs_callback)
-    if code < 0: raise UVError(code)
+    if code < 0: raise error.UVError(code)
     return request
 
 
 @FSType.OPEN
 def post_open(request):
-    if request.result < 0: status, fd = get_status_code(request.result), None
-    else: status, fd = StatusCode.SUCCESS, request.result
+    if request.result < 0: status, fd = error.get_status_code(request.result), None
+    else: status, fd = error.StatusCode.SUCCESS, request.result
     return [status, fd]
 
 
@@ -184,21 +180,23 @@ def open(path, flags, mode=0o777, callback=None, loop=None):
 
     :return:
     """
-    request = FSRequest(None, callback, loop)
+    fs_request = FSRequest(None, callback, loop)
     uv_fs = request.uv_fs
     c_path = path.encode()
-    code = lib.uv_fs_open(request.loop.uv_loop, uv_fs, c_path, flags, mode, fs_callback)
-    if code < 0: raise UVError(code)
+    code = lib.uv_fs_open(fs_request.loop.uv_loop, uv_fs, c_path, flags, mode,
+                          fs_callback)
+    if code < 0: raise error.UVError(code)
     return request
 
 
 def stat(path, callback=None, loop=None):
-    request = FSRequest(callback=callback, loop=loop)
-    code = lib.uv_fs_stat(request.loop.uv_loop, request.uv_fs, path.encode(), fs_callback)
-    if code < 0: raise UVError(code)
+    fs_request = FSRequest(callback=callback, loop=loop)
+    code = lib.uv_fs_stat(fs_request.loop.uv_loop, fs_request.uv_fs, path.encode(),
+                          fs_callback)
+    if code < 0: raise error.UVError(code)
     return request
 
 
-@HandleType.FILE
+@handle.HandleType.FILE
 class File(object):
     pass

@@ -15,14 +15,13 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+from . import common
 from .library import ffi, lib
-
-from .common import Enumeration
 
 __all__ = ['StatusCode', 'UVError', 'HandleClosedError']
 
 
-class StatusCode(Enumeration):
+class StatusCode(common.Enumeration):
     """
     Status code enumeration. Codes (other than SUCCESS) are varying across platforms.
     """

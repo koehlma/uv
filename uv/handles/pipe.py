@@ -13,23 +13,18 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-import socket
-
+from .. import error, handle
 from ..library import ffi, lib
 
-from ..common import is_posix
-from ..error import StatusCode, UVError, HandleClosedError
-from ..handle import HandleType
-
-from .stream import Stream, ConnectRequest, uv_connect_cb
+from . import stream
 
 __all__ = ['Pipe']
 
 
-@HandleType.PIPE
-class Pipe(Stream):
+@handle.HandleType.PIPE
+class Pipe(stream.Stream):
     """
     Pipe handles provide an abstraction over local domain sockets
     on Unix and named pipes on Windows.
@@ -51,7 +46,7 @@ class Pipe(Stream):
         code = lib.uv_pipe_init(self.loop.uv_loop, self.uv_pipe, int(ipc))
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     def open(self, fd):
         """
@@ -63,9 +58,9 @@ class Pipe(Stream):
         :param fd: file descriptor
         :type fd: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         code = lib.cross_uv_pipe_open(self.uv_pipe, fd)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     @property
     def pending_count(self):
@@ -88,8 +83,8 @@ class Pipe(Stream):
         :readonly: True
         :rtype: type
         """
-        if self.closing: raise HandleClosedError()
-        return HandleType(lib.uv_pipe_pending_type(self.uv_pipe)).cls
+        if self.closing: raise error.HandleClosedError()
+        return handle.HandleType(lib.uv_pipe_pending_type(self.uv_pipe)).cls
 
     def pending_accept(self):
         """
@@ -127,14 +122,14 @@ class Pipe(Stream):
         :readonly: True
         :rtype: unicode
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         c_buffer = ffi.new('char[]', 255)
         c_size = ffi.new('size_t*', 255)
         code = lib.uv_pipe_getsockname(self.uv_pipe, c_buffer, c_size)
-        if code == StatusCode.ENOBUFS:
+        if code == error.StatusCode.ENOBUFS:
             c_buffer = ffi.new('char[]', c_size[0])
             code = lib.uv_pipe_getsockname(self.uv_pipe, c_buffer, c_size)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
         return ffi.string(c_buffer, c_size[0]).decode()
 
     @property
@@ -148,14 +143,14 @@ class Pipe(Stream):
         :readonly: True
         :rtype: unicode
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         c_buffer = ffi.new('char[]', 255)
         c_size = ffi.new('size_t*', 255)
         code = lib.uv_pipe_getpeername(self.uv_pipe, c_buffer, c_size)
-        if code == StatusCode.ENOBUFS:
+        if code == error.StatusCode.ENOBUFS:
             c_buffer = ffi.new('char[]', c_size[0])
             code = lib.uv_pipe_getpeername(self.uv_pipe, c_buffer, c_size)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
         return ffi.string(c_buffer, c_size[0]).decode()
 
     def bind(self, path):
@@ -168,9 +163,9 @@ class Pipe(Stream):
         :param path: path to bind to
         :type path: unicode
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         code = lib.uv_pipe_bind(self.uv_pipe, path.encode())
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def connect(self, path, on_connect=None):
         """
@@ -188,8 +183,9 @@ class Pipe(Stream):
         :returns: connect request
         :rtype: uv.ConnectRequest
         """
-        if self.closing: raise HandleClosedError()
-        request = ConnectRequest(self, on_connect)
+        if self.closing: raise error.HandleClosedError()
+        request = stream.ConnectRequest(self, on_connect)
         c_path = path.encode()
-        lib.uv_pipe_connect(request.uv_connect, self.uv_pipe, c_path, uv_connect_cb)
+        lib.uv_pipe_connect(request.uv_connect, self.uv_pipe, c_path,
+                            stream.uv_connect_cb)
         return request

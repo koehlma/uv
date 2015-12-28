@@ -16,8 +16,9 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 from collections import namedtuple
-from .error import UVError
-from .handle import HandleType
+
+
+from . import error, handle
 from .library import ffi, lib
 
 Timeval = namedtuple('Timeval', ['sec', 'usec'])
@@ -54,18 +55,18 @@ def unpack_cpu_info(uv_cpu_info):
 
 def guess_handle(fd):
     uv_handle = lib.cross_uv_guess_handle(fd)
-    return HandleType(uv_handle).cls
+    return handle.HandleType(uv_handle).cls
 
 
 def kill(pid, signum):
     code = lib.uv_kill(pid, signum)
-    if code < 0: raise UVError(code)
+    if code < 0: raise error.UVError(code)
 
 def cpu_info():
     uv_cpu_info_array = ffi.new('uv_cpu_info_t**')
     uv_cpu_info_count = ffi.new('int*')
     code = lib.uv_cpu_info(uv_cpu_info_array, uv_cpu_info_count)
-    if code < 0: raise UVError(code)
+    if code < 0: raise error.UVError(code)
     result = []
     try:
         for index in range(uv_cpu_info_count[0]):

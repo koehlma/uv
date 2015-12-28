@@ -13,26 +13,23 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ..library import ffi, lib, detach
-
-from ..common import dummy_callback
-from ..error import UVError, HandleClosedError
-from ..handle import Handle, HandleType
+from .. import common, error, handle, library
+from ..library import ffi, lib
 
 __all__ = ['Idle']
 
 
 @ffi.callback('uv_idle_cb')
 def uv_idle_cb(uv_idle):
-    idle = detach(uv_idle)
+    idle = library.detach(uv_idle)
     with idle.loop.callback_context:
         idle.on_idle(idle)
 
 
-@HandleType.IDLE
-class Idle(Handle):
+@handle.HandleType.IDLE
+class Idle(handle.Handle):
     """
     Idle handles will run the given callback once per loop iteration,
     right before the :class:`uv.Prepare` handles.
@@ -60,7 +57,7 @@ class Idle(Handle):
     def __init__(self, loop=None, on_idle=None):
         self.uv_idle = ffi.new('uv_idle_t*')
         super(Idle, self).__init__(self.uv_idle, loop)
-        self.on_idle = on_idle or dummy_callback
+        self.on_idle = on_idle or common.dummy_callback
         """
         Callback called before prepare handles.
 
@@ -72,7 +69,7 @@ class Idle(Handle):
         code = lib.uv_idle_init(self.loop.uv_loop, self.uv_idle)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     def start(self, on_idle=None):
         """
@@ -84,10 +81,10 @@ class Idle(Handle):
         :param on_idle: callback called before prepare handles
         :type on_idle: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         self.on_idle = on_idle or self.on_idle
         code = lib.uv_idle_start(self.uv_idle, uv_idle_cb)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def stop(self):
         """
@@ -97,6 +94,6 @@ class Idle(Handle):
         """
         if self.closing: return
         code = lib.uv_idle_stop(self.uv_idle)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     __call__ = start

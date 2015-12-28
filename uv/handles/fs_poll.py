@@ -13,29 +13,25 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ..library import ffi, lib, detach
-
-from ..common import dummy_callback
-from ..error import UVError
-from ..fs import unpack_stat
-from ..handle import Handle, HandleType
+from .. import common, error, fs, handle, library
+from ..library import ffi, lib
 
 __all__ = ['FSPoll']
 
 
 @ffi.callback('uv_fs_poll_cb')
 def uv_fs_poll_cb(uv_fs_poll, status, uv_previous_stat, uv_current_stat):
-    previous_stat = unpack_stat(uv_previous_stat) if uv_previous_stat else None
-    current_stat = unpack_stat(uv_current_stat) if uv_current_stat else None
-    fs_poll = detach(uv_fs_poll)
+    previous_stat = fs.unpack_stat(uv_previous_stat) if uv_previous_stat else None
+    current_stat = fs.unpack_stat(uv_current_stat) if uv_current_stat else None
+    fs_poll = library.detach(uv_fs_poll)
     with fs_poll.loop.callback_context:
         fs_poll.callback(fs_poll, status, previous_stat, current_stat)
 
 
-@HandleType.FS_POLL
-class FSPoll(Handle):
+@handle.HandleType.FS_POLL
+class FSPoll(handle.Handle):
     """
     FS poll handles monitor a given path for changes. Unlike :class:`uv.FSMonitor`
     fs poll handles use stat to detect when a file has changed so they can work
@@ -84,7 +80,7 @@ class FSPoll(Handle):
         :readonly: False
         :type: int
         """
-        self.on_change = on_change or dummy_callback
+        self.on_change = on_change or common.dummy_callback
         """
         Callback called on FS change.
 
@@ -97,7 +93,7 @@ class FSPoll(Handle):
         code = lib.uv_fs_poll_init(self.loop.uv_loop, self.uv_fs_poll)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     def start(self, path=None, interval=None, on_change=None):
         """
@@ -118,13 +114,13 @@ class FSPoll(Handle):
         :type on_change: ((uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None) |
                          ((Any, uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         self.path = path or self.path
         self.interval = interval or self.interval
         self.on_change = on_change or self.on_change
         c_path = self.path.encode()
         code = lib.uv_fs_poll_start(self.uv_fs_poll, uv_fs_poll_cb, c_path, self.interval)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def stop(self):
         """
@@ -134,6 +130,6 @@ class FSPoll(Handle):
         """
         if self.closing: return
         code = lib.uv_fs_poll_stop(self.uv_fs_poll)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     __call__ = start

@@ -15,16 +15,14 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from .library import ffi, lib, attach, detach
-
-from .common import is_linux, dummy_callback, Enumeration
-from .error import UVError, HandleClosedError, LoopClosedError
+from . import common, error, library, request
+from .library import ffi, lib
 from .loop import Loop
 
 __all__ = ['Handle']
 
 
-class HandleType(Enumeration):
+class HandleType(common.Enumeration):
     UNKNOWN = lib.UV_UNKNOWN_HANDLE
     HANDLE = lib.UV_HANDLE
     ASYNC = lib.UV_ASYNC
@@ -52,7 +50,7 @@ class HandleType(Enumeration):
 
 @ffi.callback('uv_close_cb')
 def uv_close_cb(uv_handle):
-    handle = detach(uv_handle)
+    handle = library.detach(uv_handle)
     with handle.loop.callback_context: handle.on_closed(handle)
     handle.destroy()
 
@@ -79,7 +77,7 @@ class Handle(object):
 
     def __init__(self, uv_handle, loop=None):
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
-        self.attachment = attach(self.uv_handle, self)
+        self.attachment = library.attach(self.uv_handle, self)
         self.loop = loop or Loop.get_current()
         """
         Loop where the handle is running on.
@@ -87,7 +85,7 @@ class Handle(object):
         :readonly: True
         :type: Loop
         """
-        self.on_closed = dummy_callback
+        self.on_closed = common.dummy_callback
         """
         Callback which should be called after the handle has been closed.
 
@@ -120,7 +118,7 @@ class Handle(object):
 
         :readonly: False
         """
-        if self.loop.closed: raise LoopClosedError()
+        if self.loop.closed: raise error.LoopClosedError()
         self.loop.handles.add(self)
 
     @property
@@ -184,10 +182,10 @@ class Handle(object):
         :readonly: False
         :type: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         c_buffer_size = ffi.new('int*')
         code = lib.uv_send_buffer_size(self.uv_handle, c_buffer_size)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
         return c_buffer_size[0]
 
     @send_buffer_size.setter
@@ -198,10 +196,10 @@ class Handle(object):
         :param size: size of the send buffer
         :type size: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         c_buffer_size = ffi.new('int*', int(size / 2) if is_linux else size)
         code = lib.uv_send_buffer_size(self.uv_handle, c_buffer_size)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     @property
     def receive_buffer_size(self):
@@ -222,10 +220,10 @@ class Handle(object):
         :readonly: False
         :type: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         c_buffer_size = ffi.new('int*')
         code = lib.uv_recv_buffer_size(self.uv_handle, c_buffer_size)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
         return c_buffer_size[0]
 
     @receive_buffer_size.setter
@@ -236,10 +234,10 @@ class Handle(object):
         :param size: size of the receive buffer
         :type size: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         c_buffer_size = ffi.new('int*', int(size / 2) if is_linux else size)
         code = lib.uv_recv_buffer_size(self.uv_handle, c_buffer_size)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def fileno(self):
         """
@@ -261,10 +259,10 @@ class Handle(object):
         :return: platform dependent file descriptor equivalent
         :rtype: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         uv_fd = ffi.new('uv_os_fd_t*')
         code = lib.uv_fileno(self.uv_handle, uv_fd)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
         return ffi.cast('int*', uv_fd)[0]
 
     def reference(self):
@@ -277,7 +275,7 @@ class Handle(object):
 
         :raises uv.HandleClosedError: handle has already been closed or is closing
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         lib.uv_ref(self.uv_handle)
 
     def dereference(self):
@@ -290,7 +288,7 @@ class Handle(object):
 
         :raises uv.HandleClosedError: handle has already been closed or is closing
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         lib.uv_unref(self.uv_handle)
 
     def close(self, on_closed=None):

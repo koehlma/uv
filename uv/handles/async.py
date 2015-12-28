@@ -13,26 +13,23 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ..library import ffi, lib, detach
-
-from ..common import dummy_callback
-from ..error import UVError, HandleClosedError
-from ..handle import Handle, HandleType
+from .. import common, error, handle, library
+from ..library import ffi, lib
 
 __all__ = ['Async']
 
 
 @ffi.callback('uv_async_cb')
 def uv_async_cb(uv_async):
-    async = detach(uv_async)
+    async = library.detach(uv_async)
     with async.loop.callback_context:
         async.on_wakeup(async)
 
 
-@HandleType.ASYNC
-class Async(Handle):
+@handle.HandleType.ASYNC
+class Async(handle.Handle):
     """
     Async handles will wakeup the event loop from an other thread and
     run the given callback within the event loop's thread. They are the
@@ -52,7 +49,7 @@ class Async(Handle):
     def __init__(self, loop=None, on_wakeup=None):
         self.uv_async = ffi.new('uv_async_t*')
         super(Async, self).__init__(self.uv_async, loop)
-        self.on_wakeup = on_wakeup or dummy_callback
+        self.on_wakeup = on_wakeup or common.dummy_callback
         """
         Callback called from within the event loop's thread after wakeup.
 
@@ -64,7 +61,7 @@ class Async(Handle):
         code = lib.uv_async_init(self.loop.uv_loop, self.uv_async, uv_async_cb)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     def send(self, on_wakeup=None):
         """
@@ -78,9 +75,9 @@ class Async(Handle):
         :param on_wakeup: callback called from within the event loop's thread
         :type on_wakeup: ((uv.Async) -> None) | ((Any, uv.Async) -> None)
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         self.on_wakeup = on_wakeup or self.on_wakeup
         code = lib.uv_async_send(self.uv_async)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     __call__ = send

@@ -13,23 +13,20 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-import signal
+import signal as std_signal
 
-from ..library import ffi, lib, detach
-
-from ..common import dummy_callback, Enumeration
-from ..error import UVError, HandleClosedError
-from ..handle import HandleType, Handle
+from .. import common, error, handle, library
+from ..library import ffi, lib
 
 __all__ = ['Signal', 'Signals']
 
 
-class Signals(Enumeration):
+class Signals(common.Enumeration):
     """ """
 
-    SIGINT = getattr(signal, 'SIGINT', 2)
+    SIGINT = getattr(std_signal, 'SIGINT', 2)
     """
     Is normally delivered when the user presses CTRL+C. However it is
     not generated when terminal is in raw mode.
@@ -43,14 +40,14 @@ class Signals(Enumeration):
 
     :type: int
     """
-    SIGHUP = getattr(signal, 'SIGHUP', 1)
+    SIGHUP = getattr(std_signal, 'SIGHUP', 1)
     """
     Is generated when the user closes the console window. After that the
     OS might terminate the program after a few seconds.
 
     :type: int
     """
-    SIGWINCH = getattr(signal, 'SIGWINCH', 28)
+    SIGWINCH = getattr(std_signal, 'SIGWINCH', 28)
     """
     Is generated when the console window has been resized. On Windows libuv
     emulates SIGWINCH when the program uses a :class:`uv.TTY` handle to
@@ -65,13 +62,13 @@ class Signals(Enumeration):
 
 @ffi.callback('uv_signal_cb')
 def uv_signal_cb(uv_signal, signum):
-    sig = detach(uv_signal)
-    with sig.loop.callback_context:
-        sig.on_signal(sig, signum)
+    signal = library.detach(uv_signal)
+    with signal.loop.callback_context:
+        signal.on_signal(sig, signum)
 
 
-@HandleType.SIGNAL
-class Signal(Handle):
+@handle.HandleType.SIGNAL
+class Signal(handle.Handle):
     """
     Signal handles implement Unix style signal handling on a per-event
     loop bases. Reception of the generic :class:`uv.Signals` is emulated
@@ -99,7 +96,7 @@ class Signal(Handle):
     def __init__(self, loop=None, on_signal=None):
         self.uv_signal = ffi.new('uv_signal_t*')
         super(Signal, self).__init__(self.uv_signal, loop)
-        self.on_signal = on_signal or dummy_callback
+        self.on_signal = on_signal or common.dummy_callback
         """
         Callback called on signal delivery.
 
@@ -111,7 +108,7 @@ class Signal(Handle):
         code = lib.uv_signal_init(self.loop.uv_loop, self.uv_signal)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     @property
     def signum(self):
@@ -123,7 +120,7 @@ class Signal(Handle):
         :readonly: True
         :rtype: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         return self.uv_signal.signum
 
     def start(self, signum, on_signal=None):
@@ -139,10 +136,10 @@ class Signal(Handle):
         :type signum: int
         :type on_signal: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         self.on_signal = on_signal or self.on_signal
         code = lib.uv_signal_start(self.uv_signal, uv_signal_cb, signum)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def stop(self):
         """
@@ -152,6 +149,6 @@ class Signal(Handle):
         """
         if self.closing: return
         code = lib.uv_signal_stop(self.uv_signal)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     __call__ = start

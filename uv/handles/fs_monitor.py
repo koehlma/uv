@@ -13,18 +13,16 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
 
-from ..library import ffi, lib, detach, str_c2py
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from ..common import Enumeration, dummy_callback
-from ..error import UVError, HandleClosedError
-from ..handle import Handle, HandleType
+from .. import common, error, handle, library
+from ..library import ffi, lib
 
 __all__ = ['FSMonitor', 'FSEventFlags', 'FSEvent']
 
 
-class FSEventFlags(Enumeration):
+class FSEventFlags(common.Enumeration):
     """ """
     WATCH_ENTRY = lib.UV_FS_EVENT_WATCH_ENTRY
     """
@@ -67,7 +65,7 @@ class FSEventFlags(Enumeration):
     """
 
 
-class FSEvent(Enumeration):
+class FSEvent(common.Enumeration):
     """ """
     RENAME = lib.UV_RENAME
     """
@@ -85,13 +83,14 @@ class FSEvent(Enumeration):
 
 @ffi.callback('uv_fs_event_cb')
 def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
-    fs_monitor = detach(uv_fs_event)
+    fs_monitor = library.detach(uv_fs_event)
     with fs_monitor.loop.callback_context:
-        fs_monitor.on_event(fs_monitor, status, str_c2py(c_filename), events)
+        filename = library.str_c2py(c_filename)
+        fs_monitor.on_event(fs_monitor, status, filename, events)
 
 
-@HandleType.FS_EVENT
-class FSMonitor(Handle):
+@handle.HandleType.FS_EVENT
+class FSMonitor(handle.Handle):
     """
     FS handles monitor a given path for changes, for example, if the
     file was renamed or there was a generic change in it. This handle
@@ -140,7 +139,7 @@ class FSMonitor(Handle):
         :readonly: False
         :type: int
         """
-        self.on_event = on_event or dummy_callback
+        self.on_event = on_event or common.dummy_callback
         """
         Callback called on FS events.
 
@@ -153,7 +152,7 @@ class FSMonitor(Handle):
         code = lib.uv_fs_event_init(self.loop.uv_loop, self.uv_fs_event)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
 
     def start(self, path=None, flags=None, on_event=None):
         """
@@ -171,13 +170,13 @@ class FSMonitor(Handle):
         :type on_event: ((uv.FSMonitor, uv.StatusCode, unicode, int) -> None) |
                         ((Any, uv.FSMonitor, uv.StatusCode, unicode, int) -> None)
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         self.path = path or self.path
         self.flags = flags or self.flags
         self.on_event = on_event or self.on_event
         c_path = self.path.encode()
         code = lib.uv_fs_event_start(self.uv_fs_event, uv_fs_event_cb, c_path, self.flags)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def stop(self):
         """
@@ -187,6 +186,6 @@ class FSMonitor(Handle):
         """
         if self.closing: return
         code = lib.uv_fs_event_stop(self.uv_fs_event)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     __call__ = start

@@ -13,13 +13,16 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os
 import platform
 import sys
 
 from collections import OrderedDict
 
-from .library import ffi, uv_buffer_set
+from . import library
+from .library import ffi
 
 is_py2 = sys.version_info[0] == 2
 is_py3 = sys.version_info[0] == 3
@@ -90,7 +93,8 @@ class Buffers(tuple):
         c_buffers = [ffi.new('char[]', buf) for buf in buffers]
         uv_buffers = ffi.new('uv_buf_t[]', len(buffers))
         for index, buf in enumerate(buffers):
-            uv_buffer_set(ffi.addressof(uv_buffers[index]), c_buffers[index], len(buf))
+            library.uv_buffer_set(ffi.addressof(uv_buffers[index]), c_buffers[index],
+                                  len(buf))
         return tuple.__new__(cls, (c_buffers, uv_buffers))
 
     def __len__(self):

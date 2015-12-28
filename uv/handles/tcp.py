@@ -13,23 +13,19 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import socket
 
+from .. import common, dns, error, handle
 from ..library import ffi, lib
 
-from ..dns import c_create_sockaddr, unpack_sockaddr
-from ..error import UVError, HandleClosedError
-from ..handle import HandleType
-from ..common import Enumeration
-
-from .stream import Stream, ConnectRequest, uv_connect_cb
+from . import stream
 
 __all__ = ['TCPFlags', 'TCP']
 
 
-class TCPFlags(Enumeration):
+class TCPFlags(common.Enumeration):
     """ """
     IPV6ONLY = lib.UV_TCP_IPV6ONLY
     """
@@ -39,8 +35,8 @@ class TCPFlags(Enumeration):
     """
 
 
-@HandleType.TCP
-class TCP(Stream):
+@handle.HandleType.TCP
+class TCP(stream.Stream):
     """
     TCP handles are used to represent both TCP clients and servers.
 
@@ -61,7 +57,7 @@ class TCP(Stream):
         code = lib.uv_tcp_init_ex(self.loop.uv_loop, self.uv_tcp, flags)
         if code < 0:
             self.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
         self._family = socket.AF_INET
 
     def open(self, fd):
@@ -74,9 +70,9 @@ class TCP(Stream):
         :param fd: file descriptor
         :type fd: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         code = lib.cross_uv_tcp_open(self.uv_tcp, fd)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def set_nodelay(self, enable):
         """
@@ -88,9 +84,9 @@ class TCP(Stream):
         :param enable: enable / disable
         :type enable: bool
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         code = lib.uv_tcp_nodelay(self.uv_tcp, int(enable))
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def set_keepalive(self, enable, delay=0):
         """
@@ -105,9 +101,9 @@ class TCP(Stream):
         :type enable: bool
         :type delay: int
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         code = lib.uv_tcp_keepalive(self.uv_tcp, int(enable), delay)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def set_simultaneous_accepts(self, enable):
         """
@@ -125,9 +121,9 @@ class TCP(Stream):
         :param enable: enable / disable
         :type enable: bool
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         code = lib.uv_tcp_simultaneous_accepts(self.uv_tcp, int(enable))
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     @property
     def family(self):
@@ -144,13 +140,13 @@ class TCP(Stream):
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
         code = lib.uv_tcp_getsockname(self.uv_tcp, c_sockaddr, c_size)
-        if code < 0: raise UVError(code)
-        return unpack_sockaddr(c_sockaddr)
+        if code < 0: raise error.UVError(code)
+        return dns.unpack_sockaddr(c_sockaddr)
 
     @property
     def peername(self):
@@ -163,13 +159,13 @@ class TCP(Stream):
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
         """
-        if self.closing: raise HandleClosedError()
+        if self.closing: raise error.HandleClosedError()
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
         code = lib.uv_tcp_getpeername(self.uv_tcp, c_sockaddr, c_size)
-        if code < 0: raise UVError(code)
-        return unpack_sockaddr(c_sockaddr)
+        if code < 0: raise error.UVError(code)
+        return dns.unpack_sockaddr(c_sockaddr)
 
     def bind(self, address, flags=0):
         """
@@ -188,12 +184,12 @@ class TCP(Stream):
         :type address: tuple | uv.Address
         :type flags: int
         """
-        if self.closing: raise HandleClosedError()
-        c_storage = c_create_sockaddr(*address)
+        if self.closing: raise error.HandleClosedError()
+        c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         self._family = c_sockaddr.sa_family
         code = lib.uv_tcp_bind(self.uv_tcp, c_sockaddr, flags)
-        if code < 0: raise UVError(code)
+        if code < 0: raise error.UVError(code)
 
     def connect(self, address, on_connect=None):
         """
@@ -212,14 +208,15 @@ class TCP(Stream):
         :returns: connect request
         :rtype: uv.ConnectRequest
         """
-        if self.closing: raise HandleClosedError()
-        request = ConnectRequest(self, on_connect)
-        c_storage = c_create_sockaddr(*address)
+        if self.closing: raise error.HandleClosedError()
+        request = stream.ConnectRequest(self, on_connect)
+        c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         self._family = c_sockaddr.sa_family
         uv_tcp = self.uv_tcp
-        code = lib.uv_tcp_connect(request.uv_connect, uv_tcp, c_sockaddr, uv_connect_cb)
+        code = lib.uv_tcp_connect(request.uv_connect, uv_tcp, c_sockaddr,
+                                  stream.uv_connect_cb)
         if code < 0:
             request.destroy()
-            raise UVError(code)
+            raise error.UVError(code)
         return request
