@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
-
 """
 This package aims to provide an object oriented CFFI based wrapper around
 the libuv asynchronous IO library. It supports all handles as well as
@@ -35,6 +33,9 @@ a maximum line length of 90 characters. This allows us to use longer and
 more expressive variable names without ugly line breaking stunts and
 overall makes the code more readable.
 """
+
+from __future__ import print_function, unicode_literals, division, absolute_import
+
 
 __version__ = '0.0.5.dev0'
 __project__ = 'Python libuv CFFI Bindings'
@@ -65,7 +66,7 @@ from .handles.timer import *
 from .handles.tty import *
 from .handles.udp import *
 
-from .handles.fs_monitor import *
+from .handles.fs_event import *
 from .handles.fs_poll import *
 
 from .dns import Address, Address4, Address6, AddrInfo

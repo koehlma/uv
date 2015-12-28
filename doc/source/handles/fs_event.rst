@@ -2,15 +2,15 @@
 
 .. currentmodule:: uv
 
-:class:`FSMonitor` -- fs monitor handle
-=======================================
+:class:`FSEvent` -- fs event handle
+===================================
 
 
-.. autoclass:: uv.FSMonitor
+.. autoclass:: uv.FSEvent
     :members:
     :member-order: bysource
 
-.. autoclass:: uv.FSEvent
+.. autoclass:: uv.FSEvents
     :members:
     :member-order: bysource
 

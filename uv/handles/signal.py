@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
-#
+
 # Copyright (C) 2015, Maximilian Köhl <mail@koehlma.de>
 #
-# This program is free software: you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public License
-# as published by the Free Software Foundation, either version 3 of
-# the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License version 3 as published by
+# the Free Software Foundation.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public License along
+# with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import signal
 
@@ -61,15 +59,16 @@ class Signals(Enumeration):
     When a readable :class:`uv.TTY` handle is used in raw mode, resizing
     the console buffer will also trigger SIGWINCH.
 
-    :type: int
+    :type: int,
     """
 
 
 @ffi.callback('uv_signal_cb')
 def uv_signal_cb(uv_signal, signum):
     sig = detach(uv_signal)
-    with sig.loop.callback_context:
-        sig.on_signal(sig, signum)
+    """ :type: uv.Signal """
+    try: sig.on_signal(sig, signum)
+    except: sig.loop.handle_exception()
 
 
 @HandleType.SIGNAL

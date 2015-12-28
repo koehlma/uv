@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
-#
+
 # Copyright (C) 2015, Maximilian Köhl <mail@koehlma.de>
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import threading
 
@@ -62,3 +61,22 @@ class TestAsync(TestCase):
 
         self.assert_equal(self.async_callback_called, 3)
         self.assert_equal(self.close_callback_called, 2)
+
+    def test_callback_exception(self):
+        def on_wakeup(_):
+            raise ValueError('test exception')
+
+        def excepthook(exc_type, exc_value, _):
+            self.exception_occurred = (exc_type == ValueError and
+                                       exc_value.args[0] == 'test exception')
+            self.async.close()
+
+        self.exception_occurred = False
+
+        self.async = uv.Async(on_wakeup=on_wakeup)
+        self.async.send()
+
+        self.loop.excepthook = excepthook
+        self.loop.run()
+
+        self.assert_true(self.exception_occurred)

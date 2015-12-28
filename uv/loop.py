@@ -37,18 +37,9 @@ class RunMode(Enumeration):
     NOWAIT = lib.UV_RUN_NOWAIT
 
 
-class CallbackContext(object):
-    """
-    Default callback context manager.
-    """
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        if exc_type is not None:
-            print('Exception happened during callback execution!', file=sys.stderr)
-            traceback.print_exception(exc_type, exc_value, exc_traceback)
-        return True
+def default_excepthook(exc_type, exc_value, exc_traceback):
+    print('Exception happened during callback execution!', file=sys.stderr)
+    traceback.print_exception(exc_type, exc_value, exc_traceback)
 
 
 class Allocator(with_metaclass(abc.ABCMeta)):
@@ -131,7 +122,8 @@ class Loop(object):
 
         self.allocator = allocator or DefaultAllocator(buffer_size)
 
-        self.callback_context = CallbackContext()
+        #self.callback_context = CallbackContext()
+        self.excepthook = default_excepthook
         """
         Context manager in which callbacks are executed, if you want to
         change the default behaviour what happens after an exception
@@ -220,3 +212,14 @@ class Loop(object):
 
     def close_all_handles(self, callback=None):
         for handle in self.handles: handle.close(callback)
+
+    def handle_exception(self):
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        try:
+            self.excepthook(exc_type, exc_value, exc_traceback)
+        except:
+            print('Exception occurred during callback execution!', file=sys.stderr)
+            traceback.print_exception(exc_type, exc_value, exc_traceback)
+            msg = 'Another exception occurred during handling of the exception!'
+            print(msg, file=sys.stderr)
+            traceback.print_exc()

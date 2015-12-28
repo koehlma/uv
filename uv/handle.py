@@ -87,7 +87,7 @@ class Handle(object):
         Loop where the handle is running on.
 
         :readonly: True
-        :type: Loop
+        :type: uv.Loop
         """
         self.on_closed = dummy_callback
         """

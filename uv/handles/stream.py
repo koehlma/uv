@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
-#
+
 # Copyright (C) 2015, Maximilian Köhl <mail@koehlma.de>
 #
-# This program is free software: you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public License
-# as published by the Free Software Foundation, either version 3 of
-# the License, or (at your option) any later version.
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License version 3 as published by
+# the Free Software Foundation.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public License along
+# with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from ..library import ffi, lib, detach
 
@@ -31,9 +29,10 @@ __all__ = ['ShutdownRequest', 'ConnectRequest', 'WriteRequest', 'Stream']
 @ffi.callback('uv_shutdown_cb')
 def uv_shutdown_cb(uv_request, status):
     request = detach(uv_request)
+    """ :type: uv.ShutdownRequest """
     request.destroy()
-    with request.loop.callback_context:
-        request.on_shutdown(request, status)
+    try: request.on_shutdown(request, status)
+    except: request.loop.handle_exception()
 
 
 @RequestType.SHUTDOWN
@@ -84,9 +83,10 @@ class ShutdownRequest(Request):
 @ffi.callback('uv_write_cb')
 def uv_write_cb(uv_request, status):
     request = detach(uv_request)
+    """ :type: uv.WriteRequest """
     request.destroy()
-    with request.loop.callback_context:
-        request.on_write(request, status)
+    try: request.on_write(request, status)
+    except: request.loop.handle_exception()
 
 
 @RequestType.WRITE
@@ -156,9 +156,10 @@ class WriteRequest(Request):
 @ffi.callback('uv_connect_cb')
 def uv_connect_cb(uv_request, status):
     request = detach(uv_request)
+    """ :type: uv.ConnectRequest """
     request.destroy()
-    with request.loop.callback_context:
-        request.on_connect(request, status)
+    try: request.on_connect(request, status)
+    except: request.loop.handle_exception()
 
 
 @RequestType.CONNECT
@@ -206,7 +207,7 @@ class ConnectRequest(Request):
 @ffi.callback('uv_connection_cb')
 def uv_connection_cb(uv_stream, status):
     stream = detach(uv_stream)
-    with stream.loop.callback_context:
+    with stream.loop.callback_coentext:
         stream.on_connection(stream, status)
 
 

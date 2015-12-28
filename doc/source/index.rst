@@ -28,7 +28,7 @@ Contents:
     handles/tty
     handles/udp
 
-    handles/fs_monitor
+    handles/fs_event
     handles/fs_poll
 
 

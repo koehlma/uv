@@ -89,6 +89,10 @@ def str_c2py(c_string):
     return ffi.string(c_string).decode()
 
 
+def str_py2c(string):
+    return string.encode()
+
+
 def uv_buffer_set(uv_buffer, c_base, length):
     lib.cross_uv_buf_set(uv_buffer, c_base, length)
 
