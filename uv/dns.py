@@ -192,11 +192,15 @@ def unpack_sockaddr(c_sockaddr):
 @ffi.callback('uv_getaddrinfo_cb')
 def uv_getaddrinfo_cb(uv_getaddrinfo, status, _):
     addrinfo_request = library.detach(uv_getaddrinfo)
-    addrinfo_request.destroy()
-    if status == 0: addrinfo_request.populate()
-    with addrinfo_request.loop.callback_context:
+    """ :type: uv.dns.GetAddrInfo """
+    if status == error.StatusCode.SUCCESS:
+        addrinfo_request.populate()
+    try:
         addrinfo_request.callback(addrinfo_request, error.get_status_code(status),
                                   addrinfo_request.addrinfo)
+    except:
+        addrinfo_request.loop.handle_exception()
+    addrinfo_request.destroy()
 
 
 @request.RequestType.GETADDRINFO
@@ -246,10 +250,13 @@ def getaddrinfo(host, port, family=0, socktype=0, protocol=0,
 @ffi.callback('uv_getnameinfo_cb')
 def uv_getnameinfo_cb(uv_getnameinfo, status, c_hostname, c_service):
     nameinfo_request = library.detach(uv_getnameinfo)
-    nameinfo_request.destroy()
-    with nameinfo_request.loop.callback_context:
+    """ :type: uv.dns.GetNameInfo """
+    try:
         nameinfo_request.callback(nameinfo_request, status, library.str_c2py(c_hostname),
                                   library.str_c2py(c_service))
+    except:
+        nameinfo_request.loop.handle_exception()
+    nameinfo_request.destroy()
 
 
 @request.RequestType.GETNAMEINFO

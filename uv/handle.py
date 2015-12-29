@@ -51,7 +51,11 @@ class HandleType(common.Enumeration):
 @ffi.callback('uv_close_cb')
 def uv_close_cb(uv_handle):
     handle = library.detach(uv_handle)
-    with handle.loop.callback_context: handle.on_closed(handle)
+    """ :type: uv.Handle """
+    try:
+        handle.on_closed(handle)
+    except:
+        handle.loop.handle_exception()
     handle.destroy()
 
 

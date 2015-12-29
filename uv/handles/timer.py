@@ -24,8 +24,11 @@ __all__ = ['Timer']
 @ffi.callback('uv_timer_cb')
 def uv_timer_cb(uv_timer):
     timer = library.detach(uv_timer)
-    with timer.loop.callback_context:
+    """ :type: uv.Timer """
+    try:
         timer.on_timeout(timer)
+    except:
+        timer.loop.handle_exception()
 
 
 @handle.HandleType.TIMER

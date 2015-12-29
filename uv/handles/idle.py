@@ -24,8 +24,10 @@ __all__ = ['Idle']
 @ffi.callback('uv_idle_cb')
 def uv_idle_cb(uv_idle):
     idle = library.detach(uv_idle)
-    with idle.loop.callback_context:
+    try:
         idle.on_idle(idle)
+    except:
+        idle.loop.handle_exception()
 
 
 @handle.HandleType.IDLE

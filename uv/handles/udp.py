@@ -64,9 +64,12 @@ class UDPMembership(common.Enumeration):
 @ffi.callback('uv_udp_send_cb')
 def uv_udp_send_cb(uv_request, status):
     send_request = library.detach(uv_request)
-    send_request.destroy()
-    with send_request.loop.callback_context:
+    """ :type: uv.SendRequest """
+    try:
         send_request.on_send(send_request, status)
+    except:
+        send_request.loop.handle_exception()
+    send_request.destroy()
 
 
 @request.RequestType.SEND
@@ -127,11 +130,14 @@ class SendRequest(request.Request):
 @ffi.callback('uv_udp_recv_cb')
 def uv_udp_recv_cb(uv_udp, length, uv_buf, c_sockaddr, flags):
     udp = library.detach(uv_udp)
+    """ :type: uv.UDP """
     data = udp.loop.allocator.finalize(uv_udp, length, uv_buf)
     length, status = (0, length) if length < 0 else (length, error.StatusCode.SUCCESS)
     address = dns.unpack_sockaddr(c_sockaddr)
-    with udp.loop.callback_context:
+    try:
         udp.on_receive(udp, status, address, length, data, flags)
+    except:
+        udp.loop.handle_exception()
 
 
 @handle.HandleType.UDP

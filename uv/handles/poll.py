@@ -43,8 +43,10 @@ class PollEvent(common.Enumeration):
 @ffi.callback('uv_poll_cb')
 def poll_callback(uv_poll, status, events):
     poll = library.detach(uv_poll)
-    with poll.loop.callback_context:
+    try:
         poll.on_event(poll, status, events)
+    except:
+        poll.loop.handle_exception()
 
 
 @handle.HandleType.POLL

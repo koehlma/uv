@@ -24,8 +24,10 @@ __all__ = ['Prepare']
 @ffi.callback('uv_prepare_cb')
 def uv_prepare_cb(uv_prepare):
     prepare = library.detach(uv_prepare)
-    with prepare.loop.callback_context:
+    try:
         prepare.on_prepare(prepare)
+    except:
+        prepare.loop.handle_exception()
 
 
 @handle.HandleType.PREPARE

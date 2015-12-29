@@ -32,18 +32,10 @@ class RunMode(common.Enumeration):
     NOWAIT = lib.UV_RUN_NOWAIT
 
 
-class CallbackContext(object):
-    """
-    Default callback context manager.
-    """
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        if exc_type is not None:
-            print('Exception happened during callback execution!', file=sys.stderr)
-            traceback.print_exception(exc_type, exc_value, exc_traceback)
-        return True
+def default_excepthook(loop, exc_type, exc_value, exc_traceback):
+    print('Exception happened during callback execution!', file=sys.stderr)
+    traceback.print_exception(exc_type, exc_value, exc_traceback)
+    loop.stop()
 
 
 class Allocator(common.with_metaclass(abc.ABCMeta)):
@@ -126,14 +118,75 @@ class Loop(object):
 
         self.allocator = allocator or DefaultAllocator(buffer_size)
 
-        self.callback_context = CallbackContext()
+        self.excepthook = default_excepthook
         """
-        Context manager in which callbacks are executed, if you want to
-        change the default behaviour what happens after an exception
-        occoured during a callback overwrite this.
+        If an exception occurs during the execution of a callback this
+        excepthook is called with the corresponding event loop and
+        exception details. The default behavior is to print the
+        traceback to stderr and stop the event loop. To override the
+        default behavior assign a custom function to this attribute.
 
-        :readonly: False
-        :type: CallbackContext
+        .. note::
+            If the excepthook raises an exception itself the program
+            would be in an undefined state. Therefore it terminates
+            with `sys.exit(1)` in that case immediately.
+
+
+        .. function:: excepthook(loop, exc_type, exc_value, exc_traceback)
+
+            :param loop:
+                corresponding event loop
+            :param exc_type:
+                exception type (subclass of :class:`BaseException`)
+            :param exc_value:
+                exception instance
+            :param exc_traceback:
+                traceback which encapsulates the call stack at the
+                point where the exception originally occurred
+
+            :type loop:
+                uv.Loop
+            :type exc_type:
+                type
+            :type exc_value:
+                BaseException
+            :type exc_traceback:
+                traceback
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Loop, type, Exception, traceback.Traceback) -> None) |
+            ((Any, uv.Loop, type, Exception, traceback.Traceback) -> None)
+        """
+        self.exc_type = None
+        """
+        Type of last exception handled by excepthook.
+
+        :readonly:
+            True
+        :type:
+            type
+        """
+        self.exc_value = None
+        """
+        Instance of last exception handled by excepthook.
+
+        :readonly:
+            True
+        :type:
+            BaseException
+        """
+        self.exc_traceback = None
+        """
+        Traceback which encapsulates the call stack at the point where
+        the last exception handled by excepthook originally occurred.
+
+        :readonly:
+            True
+        :type:
+            traceback
         """
         self.handles = set()
         """
@@ -214,3 +267,16 @@ class Loop(object):
 
     def close_all_handles(self, callback=None):
         for handle in self.handles: handle.close(callback)
+
+    def handle_exception(self):
+        self.exc_type, self.exc_value, self.exc_traceback = sys.exc_info()
+        try:
+            self.excepthook(self, self.exc_type, self.exc_value, self.exc_traceback)
+        except:
+            # this should never happen during normal operation but if it does the
+            # program would be in an undefined state, so exit immediately
+            try:
+                print('[CRITICAL] error while executing excepthook!')
+                traceback.print_exc()
+            finally:
+                sys.exit(1)

@@ -83,10 +83,13 @@ class FSEvents(common.Enumeration):
 
 @ffi.callback('uv_fs_event_cb')
 def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
-    fs_monitor = library.detach(uv_fs_event)
-    with fs_monitor.loop.callback_context:
-        filename = library.str_c2py(c_filename)
-        fs_monitor.on_event(fs_monitor, status, filename, events)
+    fs_event = library.detach(uv_fs_event)
+    """ :type: uv.FSEvent """
+    filename = library.str_c2py(c_filename)
+    try:
+        fs_event.on_event(fs_event, status, filename, events)
+    except:
+        fs_event.loop.handle_exception()
 
 
 @handle.HandleType.FS_EVENT

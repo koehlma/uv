@@ -26,8 +26,11 @@ def uv_fs_poll_cb(uv_fs_poll, status, uv_previous_stat, uv_current_stat):
     previous_stat = fs.unpack_stat(uv_previous_stat) if uv_previous_stat else None
     current_stat = fs.unpack_stat(uv_current_stat) if uv_current_stat else None
     fs_poll = library.detach(uv_fs_poll)
-    with fs_poll.loop.callback_context:
+    """ :type: uv.FSPoll """
+    try:
         fs_poll.callback(fs_poll, status, previous_stat, current_stat)
+    except:
+        fs_poll.loop.handle_exception()
 
 
 @handle.HandleType.FS_POLL

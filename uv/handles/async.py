@@ -24,8 +24,11 @@ __all__ = ['Async']
 @ffi.callback('uv_async_cb')
 def uv_async_cb(uv_async):
     async = library.detach(uv_async)
-    with async.loop.callback_context:
+    """ :type: uv.Async """
+    try:
         async.on_wakeup(async)
+    except:
+        async.loop.handle_exception()
 
 
 @handle.HandleType.ASYNC

@@ -24,8 +24,11 @@ __all__ = ['Check']
 @ffi.callback('uv_check_cb')
 def uv_check_cb(uv_check):
     check = library.detach(uv_check)
-    with check.loop.callback_context:
+    """ :type: uv.Check """
+    try:
         check.on_check(check)
+    except:
+        check.loop.handle_exception()
 
 
 @handle.HandleType.CHECK

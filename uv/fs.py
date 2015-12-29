@@ -143,11 +143,14 @@ def post_stat(request):
 
 @ffi.callback('uv_fs_cb')
 def fs_callback(uv_request):
-    request = library.detach(uv_request)
-    request.destroy()
+    fs_request = library.detach(uv_request)
+    """ :type: uv.FSRequest """
+    try:
+        fs_request.callback(fs_request, *fs_request.fs_type.postprocessor(fs_request))
+    except:
+        fs_request.loop.handle_exception()
     lib.uv_fs_req_cleanup(uv_request)
-    with request.loop.callback_context:
-        request.callback(request, *request.fs_type.postprocessor(request))
+    fs_request.destroy()
 
 
 def close(fd, callback=None, loop=None):

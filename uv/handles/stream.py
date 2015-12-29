@@ -24,9 +24,12 @@ __all__ = ['ShutdownRequest', 'ConnectRequest', 'WriteRequest', 'Stream']
 @ffi.callback('uv_shutdown_cb')
 def uv_shutdown_cb(uv_request, status):
     shutdown_request = library.detach(uv_request)
-    shutdown_request.destroy()
-    with shutdown_request.loop.callback_context:
+    """ :type: uv.ShutdownRequest """
+    try:
         shutdown_request.on_shutdown(shutdown_request, status)
+    except:
+        shutdown_request.loop.handle_exception()
+    shutdown_request.destroy()
 
 
 @request.RequestType.SHUTDOWN
@@ -77,9 +80,12 @@ class ShutdownRequest(request.Request):
 @ffi.callback('uv_write_cb')
 def uv_write_cb(uv_request, status):
     write_request = library.detach(uv_request)
-    write_request.destroy()
-    with write_request.loop.callback_context:
+    """ :type: uv.WriteRequest """
+    try:
         write_request.on_write(write_request, status)
+    except:
+        write_request.loop.handle_exception()
+    write_request.destroy()
 
 
 @request.RequestType.WRITE
@@ -149,9 +155,12 @@ class WriteRequest(request.Request):
 @ffi.callback('uv_connect_cb')
 def uv_connect_cb(uv_request, status):
     connect_request = library.detach(uv_request)
-    connect_request.destroy()
-    with connect_request.loop.callback_context:
+    """ :type: uv.ConnectRequest """
+    try:
         connect_request.on_connect(connect_request, status)
+    except:
+        connect_request.loop.handle_exception()
+    connect_request.destroy()
 
 
 @request.RequestType.CONNECT
@@ -199,17 +208,23 @@ class ConnectRequest(request.Request):
 @ffi.callback('uv_connection_cb')
 def uv_connection_cb(uv_stream, status):
     stream = library.detach(uv_stream)
-    with stream.loop.callback_context:
+    """ :type: uv.Stream """
+    try:
         stream.on_connection(stream, status)
+    except:
+        stream.loop.handle_exception()
 
 
 @ffi.callback('uv_read_cb')
 def uv_read_cb(uv_stream, length, uv_buf):
     stream = library.detach(uv_stream)
+    """ :type: uv.Stream """
     data = stream.loop.allocator.finalize(uv_stream, length, uv_buf)
     length, status = (0, length) if length < 0 else (length, error.StatusCode.SUCCESS)
-    with stream.loop.callback_context:
+    try:
         stream.on_read(stream, status, length, data)
+    except:
+        stream.loop.handle_exception()
 
 
 @handle.HandleType.STREAM
@@ -255,7 +270,7 @@ class Stream(handle.Handle):
         self.ipc = ipc
         """
         Stream supports inter process communication or not.
-
+0
         :readonly: True
         :type: bool
         """

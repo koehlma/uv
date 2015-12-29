@@ -63,8 +63,11 @@ class Signals(common.Enumeration):
 @ffi.callback('uv_signal_cb')
 def uv_signal_cb(uv_signal, signum):
     signal = library.detach(uv_signal)
-    with signal.loop.callback_context:
+    """ :type: uv.Signal """
+    try:
         signal.on_signal(sig, signum)
+    except:
+        signal.loop.handle_exception()
 
 
 @handle.HandleType.SIGNAL
