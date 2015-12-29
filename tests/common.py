@@ -75,7 +75,7 @@ class TestLoop(uv.Loop):
             self.stop()
         return True
 
-    def run(self, mode=uv.RunMode.DEFAULT):
+    def run(self, mode=uv.RunModes.DEFAULT):
         self.exc_type = None
         result = super(TestLoop, self).run(mode)
         if self.exc_type is not None:

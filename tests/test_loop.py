@@ -48,7 +48,7 @@ class TestLoop(TestCase):
         for _ in range(500):
             self.prepare = uv.Prepare(on_prepare=on_prepare)
             self.prepare.start()
-            self.loop.run(uv.RunMode.ONCE)
+            self.loop.run(uv.RunModes.ONCE)
 
         self.assert_equal(self.callback_called, 500)
 
@@ -62,7 +62,7 @@ class TestLoop(TestCase):
         self.timer = uv.Timer(on_timeout=on_timeout)
         self.timer.start(100, repeat=100)
 
-        self.loop.run(uv.RunMode.NOWAIT)
+        self.loop.run(uv.RunModes.NOWAIT)
 
         self.assert_false(self.callback_called)
 
@@ -108,7 +108,7 @@ class TestLoop(TestCase):
         self.loop.run()
         self.assert_equal(self.timer_called, 2)
         self.assert_greater_equal(self.prepare_called, 2)
-        self.loop.run(uv.RunMode.NOWAIT)
+        self.loop.run(uv.RunModes.NOWAIT)
         self.assert_greater_equal(self.prepare_called, 3)
         self.loop.run()
         self.assert_equal(self.timer_called, 10)

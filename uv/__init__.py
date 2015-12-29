@@ -45,7 +45,7 @@ from .common import is_win32, is_linux, is_posix, is_nt, is_py3, is_py2
 
 from .error import UVError, HandleClosedError, LoopClosedError, StatusCode
 from .handle import Handle
-from .loop import RunMode, Loop
+from .loop import RunModes, Loop
 from .request import Request
 
 from .handles.async import *

@@ -23,10 +23,10 @@ import traceback
 from . import common, error, library
 from .library import ffi, lib
 
-__all__ = ['RunMode', 'Loop']
+__all__ = ['RunModes', 'Loop']
 
 
-class RunMode(common.Enumeration):
+class RunModes(common.Enumeration):
     DEFAULT = lib.UV_RUN_DEFAULT
     ONCE = lib.UV_RUN_ONCE
     NOWAIT = lib.UV_RUN_NOWAIT
@@ -246,7 +246,7 @@ class Loop(object):
         if self.closed: raise error.LoopClosedError()
         return lib.uv_backend_timeout(self.uv_loop)
 
-    def run(self, mode=RunMode.DEFAULT):
+    def run(self, mode=RunModes.DEFAULT):
         if self.closed: raise error.LoopClosedError()
         self.make_current()
         result = bool(lib.uv_run(self.uv_loop, mode))
