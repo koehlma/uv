@@ -15,354 +15,1151 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import builtins
+import io
+import socket
+
 from . import common
 from .library import ffi, lib
 
-__all__ = ['StatusCode', 'UVError', 'HandleClosedError']
+__all__ = ['StatusCodes', 'UVError', 'ClosedStructureError', 'ClosedHandleError',
+           'ClosedLoopError', 'AddressNotAvailableError',
+           'AddressFamilyNotSupportedError']
 
 
-class StatusCode(common.Enumeration):
+class StatusCodes(common.Enumeration):
     """
-    Status code enumeration. Codes (other than SUCCESS) are varying across platforms.
+    Status codes enumeration. Status codes are instances of this class
+    and — beside SUCCESS — vary across platforms. Status codes other
+    than SUCCESS are linked with a corresponding exception.
     """
 
     SUCCESS = 0
     """
-    success
+    Success.
+
+    :type:
+        uv.StatusCodes
     """
 
     E2BIG = lib.UV_E2BIG
     """
-    argument list too long
+    Argument list too long.
+
+    :type:
+        uv.StatusCodes
     """
+
     EACCES = lib.UV_EACCES
     """
-    permission denied
+    Permission denied.
+
+    :type:
+        uv.StatusCodes
     """
+
     EADDRINUSE = lib.UV_EADDRINUSE
     """
-    address already in use
+    Address already in use.
+
+    :type:
+        uv.StatusCodes
     """
+
     EADDRNOTAVAIL = lib.UV_EADDRNOTAVAIL
     """
-    address not available
+    Address not available.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAFNOSUPPORT = lib.UV_EAFNOSUPPORT
     """
-    address family not supported
+    Address family not supported.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAGAIN = lib.UV_EAGAIN
     """
-    resource temporarily unavailable
+    Resource temporarily unavailable.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_ADDRFAMILY = lib.UV_EAI_ADDRFAMILY
     """
-    address family not supported
+    Address family not supported.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_AGAIN = lib.UV_EAI_AGAIN
     """
-    temporary failure
+    Temporary failure.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_BADFLAGS = lib.UV_EAI_BADFLAGS
     """
-    bad ai_flags value
+    Bad address flags value.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_BADHINTS = lib.UV_EAI_BADHINTS
     """
-    invalid value for hints
+    Invalid value for hints.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_CANCELED = lib.UV_EAI_CANCELED
     """
-    request canceled
+    Request canceled.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_FAIL = lib.UV_EAI_FAIL
     """
-    permanent failure
+    Permanent failure.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_FAMILY = lib.UV_EAI_FAMILY
     """
-    ai_family not supported
+    Address family not supported.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_MEMORY = lib.UV_EAI_MEMORY
     """
-    out of memory
+    Out of memory.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_NODATA = lib.UV_EAI_NODATA
     """
-    no address
+    No address.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_NONAME = lib.UV_EAI_NONAME
     """
-    unknown node or service
+    Unknown node or service.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_OVERFLOW = lib.UV_EAI_OVERFLOW
     """
-    argument buffer overflow
+    Argument buffer overflow.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_PROTOCOL = lib.UV_EAI_PROTOCOL
     """
-    resolved protocol is unknown
+    Resolved protocol is unknown.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_SERVICE = lib.UV_EAI_SERVICE
     """
-    service not available for socket type
+    Service not available for socket type.
+
+    :type:
+        uv.StatusCodes
     """
+
     EAI_SOCKTYPE = lib.UV_EAI_SOCKTYPE
     """
-    socket type not supported
+    Socket type not supported.
+
+    :type:
+        uv.StatusCodes
     """
+
     EALREADY = lib.UV_EALREADY
     """
-    connection already in progress
+    Connection already in progress.
+
+    :type:
+        uv.StatusCodes
     """
+
     EBADF = lib.UV_EBADF
     """
-    bad file descriptor
+    Bad file descriptor.
+
+    :type:
+        uv.StatusCodes
     """
+
     EBUSY = lib.UV_EBUSY
     """
-    resource busy or locked
+    Resource busy or locked.
+
+    :type:
+        uv.StatusCodes
     """
+
     ECANCELED = lib.UV_ECANCELED
     """
-    operation canceled
+    Operation canceled.
+
+    :type:
+        uv.StatusCodes
     """
+
     ECHARSET = lib.UV_ECHARSET
     """
-    invalid Unicode character
+    Invalid Unicode character.
+
+    :type:
+        uv.StatusCodes
     """
+
     ECONNABORTED = lib.UV_ECONNABORTED
     """
-    software caused connection abort
+    Software caused connection abort.
+
+    :type:
+        uv.StatusCodes
     """
+
     ECONNREFUSED = lib.UV_ECONNREFUSED
     """
-    connection refused
+    Connection refused.
+
+    :type:
+        uv.StatusCodes
     """
+
     ECONNRESET = lib.UV_ECONNRESET
     """
-    connection reset by peer
+    Connection reset by peer.
+
+    :type:
+        uv.StatusCodes
     """
+
     EDESTADDRREQ = lib.UV_EDESTADDRREQ
     """
-    destination address required
+    Destination address required.
+
+    :type:
+        uv.StatusCodes
     """
+
     EEXIST = lib.UV_EEXIST
     """
-    file already exists
+    File already exists.
+
+    :type:
+        uv.StatusCodes
     """
+
     EFAULT = lib.UV_EFAULT
     """
-    bad address in system call argument
+    Bad address in system call argument.
+
+    :type:
+        uv.StatusCodes
     """
+
     EFBIG = lib.UV_EFBIG
     """
-    file too large
+    File too large.
+
+    :type:
+        uv.StatusCodes
     """
+
     EHOSTUNREACH = lib.UV_EHOSTUNREACH
     """
-    host is unreachable
+    Host is unreachable.
+
+    :type:
+        uv.StatusCodes
     """
+
     EINTR = lib.UV_EINTR
     """
-    interrupted system call
+    Interrupted system call.
+
+    :type:
+        uv.StatusCodes
     """
+
     EINVAL = lib.UV_EINVAL
     """
-    invalid argument
+    Invalid argument.
+
+    :type:
+        uv.StatusCodes
     """
+
     EIO = lib.UV_EIO
     """
-    io error
+    Io error.
+
+    :type:
+        uv.StatusCodes
     """
+
     EISCONN = lib.UV_EISCONN
     """
-    socket is already connected
+    Socket is already connected.
+
+    :type:
+        uv.StatusCodes
     """
+
     EISDIR = lib.UV_EISDIR
     """
-    illegal operation on a directory
+    Illegal operation on a directory.
+
+    :type:
+        uv.StatusCodes
     """
+
     ELOOP = lib.UV_ELOOP
     """
-    too many symbolic links encountered
+    Too many symbolic links encountered.
+
+    :type:
+        uv.StatusCodes
     """
+
     EMFILE = lib.UV_EMFILE
     """
-    too many open files
+    Too many open files.
+
+    :type:
+        uv.StatusCodes
     """
+
     EMSGSIZE = lib.UV_EMSGSIZE
     """
-    message too long
+    Message too long.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENAMETOOLONG = lib.UV_ENAMETOOLONG
     """
-    name too long
+    Name too long.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENETDOWN = lib.UV_ENETDOWN
     """
-    network is down
+    Network is down.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENETUNREACH = lib.UV_ENETUNREACH
     """
-    network is unreachable
+    Network is unreachable.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENFILE = lib.UV_ENFILE
     """
-    file table overflow
+    File table overflow.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOBUFS = lib.UV_ENOBUFS
     """
-    no buffer space available
+    No buffer space available.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENODEV = lib.UV_ENODEV
     """
-    no such device
+    No such device.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOENT = lib.UV_ENOENT
     """
-    no such file or directory
+    No such file or directory.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOMEM = lib.UV_ENOMEM
     """
-    not enough memory
+    Not enough memory.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENONET = lib.UV_ENONET
     """
-    machine is not on the network
+    Machine is not on the network.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOPROTOOPT = lib.UV_ENOPROTOOPT
     """
-    protocol not available
+    Protocol not available.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOSPC = lib.UV_ENOSPC
     """
-    no space left on device
+    No space left on device.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOSYS = lib.UV_ENOSYS
     """
-    function not implemented
+    Function not implemented.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOTCONN = lib.UV_ENOTCONN
     """
-    socket is not connected
+    Socket is not connected.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOTDIR = lib.UV_ENOTDIR
     """
-    not a directory
+    Not a directory.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOTEMPTY = lib.UV_ENOTEMPTY
     """
-    directory not empty
+    Directory not empty.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOTSOCK = lib.UV_ENOTSOCK
     """
-    socket operation on non-socket
+    Socket operation on non-socket.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENOTSUP = lib.UV_ENOTSUP
     """
-    operation not supported on socket
+    Operation not supported on socket.
+
+    :type:
+        uv.StatusCodes
     """
+
     EPERM = lib.UV_EPERM
     """
-    operation not permitted
+    Operation not permitted.
+
+    :type:
+        uv.StatusCodes
     """
+
     EPIPE = lib.UV_EPIPE
     """
-    broken pipe
+    Broken pipe.
+
+    :type:
+        uv.StatusCodes
     """
+
     EPROTO = lib.UV_EPROTO
     """
-    protocol error
+    Protocol error.
+
+    :type:
+        uv.StatusCodes
     """
+
     EPROTONOSUPPORT = lib.UV_EPROTONOSUPPORT
     """
-    protocol not supported
+    Protocol not supported.
+
+    :type:
+        uv.StatusCodes
     """
+
     EPROTOTYPE = lib.UV_EPROTOTYPE
     """
-    protocol wrong type for socket
+    Protocol wrong type for socket.
+
+    :type:
+        uv.StatusCodes
     """
+
     ERANGE = lib.UV_ERANGE
     """
-    result too large
+    Result too large.
+
+    :type:
+        uv.StatusCodes
     """
+
     EROFS = lib.UV_EROFS
     """
-    read-only file system
+    Read-only file system.
+
+    :type:
+        uv.StatusCodes
     """
+
     ESHUTDOWN = lib.UV_ESHUTDOWN
     """
-    cannot send after transport endpoint shutdown
+    Cannot send after transport endpoint shutdown.
+
+    :type:
+        uv.StatusCodes
     """
+
     ESPIPE = lib.UV_ESPIPE
     """
-    invalid seek
+    Invalid seek.
+
+    :type:
+        uv.StatusCodes
     """
+
     ESRCH = lib.UV_ESRCH
     """
-    no such process
+    No such process.
+
+    :type:
+        uv.StatusCodes
     """
+
     ETIMEDOUT = lib.UV_ETIMEDOUT
     """
-    connection timed out
+    Connection timed out.
+
+    :type:
+        uv.StatusCodes
     """
+
     ETXTBSY = lib.UV_ETXTBSY
     """
-    text file is busy
+    Text file is busy.
+
+    :type:
+        uv.StatusCodes
     """
+
     EXDEV = lib.UV_EXDEV
     """
-    cross-device link not permitted
+    Cross-device link not permitted.
+
+    :type:
+        uv.StatusCodes
     """
+
     UNKNOWN = lib.UV_UNKNOWN
     """
-    unknown error
+    Unknown error.
+
+    :type:
+        uv.StatusCodes
     """
+
     EOF = lib.UV_EOF
     """
-    end of file
+    End of file.
+
+    :type:
+        uv.StatusCodes
     """
+
     ENXIO = lib.UV_ENXIO
     """
-    no such device or address
+    No such device or address.
+
+    :type:
+        uv.StatusCodes
     """
     EMLINK = lib.UV_EMLINK
     """
-    too many links
+    Too many links.
+
+    :type:
+        uv.StatusCodes
     """
+
     EHOSTDOWN = lib.UV_EHOSTDOWN
     """
-    host is down
+    Host is down.
+
+    :type:
+        uv.StatusCodes
     """
 
+    def __call__(self, exception):
+        assert self._exception is UVError
+        self._exception = exception
+        self._exception.code = self
+        return self._exception
 
-def get_status_code(code):
-    if not code: return StatusCode.SUCCESS
-    try: return StatusCode(code)
-    except ValueError: return code
+    @property
+    def exception(self):
+        """
+        Corresponding exception (subclass of :class:`Exception`).
+
+        :readonly:
+            True
+        :rtype:
+            Subclass[Exception]
+        """
+        return self._exception
+
+    @property
+    def name(self):
+        """
+        Human readable error name.
+
+        :readonly:
+            True
+        :rtype:
+            unicode
+        """
+        return ffi.string(lib.uv_err_name(self)).decode()
+
+    @property
+    def message(self):
+        """
+        Human readable error message.
+
+        :readonly:
+            True
+        :rtype:
+            unicode
+        """
+        return ffi.string(lib.uv_strerror(self)).decode()
+
+    @classmethod
+    def get(cls, code):
+        """
+        Look up the given status code und return the corresponding
+        instance of :class:`StatusCodes` or the original integer if
+        there is no such status code.
+
+        :param code:
+            potential status code
+
+        :type code:
+            uv.StatusCodes | int | None
+
+        :return:
+            status code instance or original code integer
+        :rtype:
+            uv.StatusCodes | int
+        """
+        if not code:
+            # for reasons of performance
+            return StatusCodes.SUCCESS
+        try:
+            return StatusCodes(code)
+        except ValueError:
+            return code
 
 
 class UVError(OSError):
-    def __init__(self, code, message=None):
+    """ Base class of all uv-related exceptions. """
+
+    code = None
+
+    def __new__(cls, code=None, message=''):
+        if cls is UVError:
+            try:
+                # replace generic uv error with a specialized one
+                exception = StatusCodes(code).exception
+                if exception is not UVError:
+                    return exception(code, message)
+            except ValueError:
+                pass
+        return super(UVError, cls).__new__(cls, code, message)
+
+    def __init__(self, code=None, message=''):
+        """
+        :param code:
+            Error-Code
+        :param message:
+            Error-Message
+
+        :type code:
+            uv.StatusCodes | int | None
+        :type message:
+            unicode
+        """
         try:
-            self.code = StatusCode(code)
-            self.name = ffi.string(lib.uv_err_name(code)).decode()
-            message = message or ffi.string(lib.uv_strerror(code)).decode()
+            code = StatusCodes(code or self.code)
+            name = code.name
+            message = message or code.message
         except ValueError:
-            self.code = code
-            self.name = 'UNKNOWN'
-            message = 'some unknown error occoured'
-        super(UVError, self).__init__(code, '[%s] %s' % (self.name, message))
+            code = code
+            name = 'UNKNOWN'
+            message = message or 'some unknown error occoured'
+        self.code = code
+        """
+        Error-Code
+
+        :readonly:
+            True
+        :type:
+            uv.StatusCodes | int | None
+        """
+        self.name = name
+        """
+        Error-Name
+
+        :readonly:
+            True
+        :type:
+            unicode
+        """
+        self.message = message
+        """
+        Error-Message
+
+        :readonly:
+            True
+        :type:
+            unicode
+        """
+        super(UVError, self).__init__(self.code, '[%s] %s' % (self.name, self.message))
 
 
-class ClosedError(UVError):
+def _get_builtin(name, default=None):
+    return getattr(builtins, name, default)
+
+
+# support for PEP 3151
+_ConnectionError = _get_builtin('ConnectionError', builtins.IOError)
+_BrokenPipeError = _get_builtin('BrokenPipeError', builtins.IOError)
+_ConnectionAbortedError = _get_builtin('ConnectionAbortedError', socket.error)
+_ConnectionRefusedError = _get_builtin('ConnectionRefusedError', socket.error)
+_ConnectionResetError = _get_builtin('ConnectionResetError', socket.error)
+_FileExistsError = _get_builtin('FileExistsError', builtins.IOError)
+_FileNotFoundError = _get_builtin('FileNotFoundError', builtins.IOError)
+_InterruptedError = _get_builtin('InterruptedError', UVError)
+_IsADirectoryError = _get_builtin('IsADirectoryError', builtins.IOError)
+_NotADirectoryError = _get_builtin('NotADirectoryError', builtins.IOError)
+_PermissionError = _get_builtin('PermissionError', builtins.IOError)
+_ProcessLookupError = _get_builtin('ProcessLookupError', UVError)
+_TimeoutError = _get_builtin('TimeoutError', socket.timeout)
+
+# assign default exception
+StatusCodes._exception = UVError
+
+
+@StatusCodes.EINVAL
+@StatusCodes.E2BIG
+@StatusCodes.EAI_OVERFLOW
+@StatusCodes.EFAULT
+class ArgumentError(UVError, ValueError):
+    """ Invalid argument. """
+
+
+@StatusCodes.EAGAIN
+@StatusCodes.EAI_AGAIN
+class TemporaryUnavailableError(UVError, io.BlockingIOError):
+    """ Resource temporary unavailable. """
+
+
+@StatusCodes.ECANCELED
+@StatusCodes.EAI_CANCELED
+class CanceledError(UVError):
+    """ Request canceled. """
+
+
+@StatusCodes.EAI_FAIL
+class PermanentError(UVError):
+    """ Permanent failure. """
+
+
+@StatusCodes.EACCES
+@StatusCodes.EPERM
+@StatusCodes.EROFS
+class PermissionError(UVError, _PermissionError):
+    """ Permission denied. """
+
+
+@StatusCodes.EBADF
+class BadFileDescriptorError(UVError, builtins.IOError):
+    """ Bad file descriptor. """
+
+
+@StatusCodes.EBUSY
+@StatusCodes.ETXTBSY
+class ResourceBusyError(UVError, builtins.IOError):
+    """ Resource busy or locked. """
+
+
+@StatusCodes.ECHARSET
+class CharsetError(UVError, UnicodeError):
+    """ Invalid unicode character. """
+
+
+@StatusCodes.EEXIST
+class FileExistsError(UVError, _FileExistsError):
+    """ File already exists. """
+
+
+@StatusCodes.EFBIG
+class FileTooLargeError(UVError):
+    """ File too large. """
+
+
+@StatusCodes.EINTR
+class InterruptedError(UVError, _InterruptedError):
+    """ Interrupted system call. """
+
+
+@StatusCodes.EIO
+class IOError(UVError, builtins.IOError):
+    """ Generic IO related error. """
+
+
+@StatusCodes.EISCONN
+class IsConnectedError(ArgumentError):
+    """ Socket is already connected. """
+
+
+@StatusCodes.EISDIR
+class IsADirectoryError(UVError, _IsADirectoryError):
+    """ Illegal operation on a directory. """
+
+
+@StatusCodes.ENOTDIR
+class NotADirectoryError(UVError, _NotADirectoryError):
+    """ Not a directory. """
+
+
+@StatusCodes.ENOTEMPTY
+class NotEmptyError(UVError):
+    """ Directory is not empty. """
+
+
+@StatusCodes.EMSGSIZE
+class MassageTooLongError(UVError):
+    """ Message too long. """
+
+
+@StatusCodes.ENAMETOOLONG
+class NameTooLongError(UVError):
+    """ Name too long. """
+
+
+@StatusCodes.ENOBUFS
+class BufferSpaceError(UVError):
+    """ No buffer space available. """
+
+
+@StatusCodes.ENOSPC
+class NoSpaceError(UVError):
+    """ No space left on the device. """
+
+
+@StatusCodes.ENOSYS
+class NotImplementedError(UVError, builtins.NotImplementedError):
+    """ Function not implemented. """
+
+
+@StatusCodes.ENOTCONN
+class NotConnectedError(UVError):
+    """ Socket is not connected. """
+
+
+@StatusCodes.EHOSTUNREACH
+class HostUnreachableError(UVError):
+    """ Host is unreachable. """
+
+
+@StatusCodes.ERANGE
+class ResultTooLargeError(UVError):
+    """ Result too large. """
+
+
+@StatusCodes.ESPIPE
+class SeekError(UVError):
+    """ Invalid seek. """
+
+
+@StatusCodes.ESRCH
+class ProcessLookupError(UVError, _ProcessLookupError):
+    """ No such progress. """
+
+
+@StatusCodes.ETIMEDOUT
+class TimeoutError(UVError, _TimeoutError):
+    """ Operation timed out. """
+
+
+@StatusCodes.EXDEV
+class CrossDeviceError(UVError):
+    """ Cross device link not permitted. """
+
+
+@StatusCodes.EOF
+class EOFError(UVError, builtins.EOFError):
+    """ End of file error. """
+
+
+class UnsupportedOperation(UVError):
+    """ Base class of all unsupported operation related errors. """
+
+
+class ClosedStructureError(UnsupportedOperation):
+    """ Invalid operation on closed structure. """
+
     def __init__(self):
         message = 'invalid operation on closed structure'
-        super(ClosedError, self).__init__(StatusCode.EINVAL, message)
+        super(ClosedStructureError, self).__init__(StatusCodes.EINVAL, message)
 
 
-class HandleClosedError(ClosedError): pass
+class ClosedHandleError(ClosedStructureError):
+    """ Invalid operation on closed handle. """
 
 
-class LoopClosedError(ClosedError): pass
+class ClosedLoopError(ClosedStructureError):
+    """ Invalid operation on closed loop. """
+
+
+@StatusCodes.ENOTSOCK
+class NotSocketError(UnsupportedOperation):
+    """ Socket operation on non-socket. """
+
+
+@StatusCodes.ENOTSUP
+class NotSupportedError(UnsupportedOperation):
+    """ Operation not supported on socket. """
+
+
+@StatusCodes.EPROTO
+class ProtocolError(UVError):
+    """ Protocol error. """
+
+
+@StatusCodes.ENOPROTOOPT
+class ProtocolNoOptionError(UVError):
+    """ Protocol option unavailable. """
+
+
+@StatusCodes.EPROTONOSUPPORT
+class ProtocolNotSupportedError(UVError):
+    """ Protocol not supported. """
+
+
+@StatusCodes.EPROTOTYPE
+class ProtocolTypeError(UVError):
+    """ Protocol wrong type for socket. """
+
+
+class AddressError(UVError):
+    """ Base class of all address related errors. """
+
+
+@StatusCodes.EADDRNOTAVAIL
+class AddressUnavailableError(AddressError):
+    """ Address not available. """
+
+
+@StatusCodes.EADDRINUSE
+class AddressInUseError(AddressUnavailableError):
+    """ Address already in use. """
+
+
+@StatusCodes.EAFNOSUPPORT
+@StatusCodes.EAI_ADDRFAMILY
+@StatusCodes.EAI_FAMILY
+class AddressFamilyError(AddressError, socket.gaierror):
+    """ Address family not supported. """
+
+
+@StatusCodes.EAI_BADFLAGS
+class AddressFlagsError(ArgumentError, AddressError, socket.gaierror):
+    """ Bad address flags value. """
+
+
+@StatusCodes.EAI_BADHINTS
+class AddressHintsError(ArgumentError, AddressError, socket.gaierror):
+    """ Bad address hints value. """
+
+
+@StatusCodes.EAI_NODATA
+class AddressDataError(ArgumentError, AddressError, socket.gaierror):
+    """ No address given. """
+
+
+@StatusCodes.EAI_NONAME
+class AddressNameError(AddressError, socket.gaierror):
+    """ Unknown node or service. """
+
+
+@StatusCodes.EAI_PROTOCOL
+class AddressProtocolError(AddressError, ProtocolError, socket.gaierror):
+    """ Resolved protocol is unknown. """
+
+
+@StatusCodes.EAI_SERVICE
+class AddressServiceError(AddressError, socket.gaierror):
+    """ Service not available for socket type. """
+
+
+@StatusCodes.EAI_SOCKTYPE
+class AddressSocketTypeError(AddressError, socket.gaierror):
+    """ Socket type not supported. """
+
+
+@StatusCodes.EDESTADDRREQ
+class DestinationAddressError(AddressError):
+    """ Destination address required. """
+
+
+class ConnectionError(UVError):
+    """ Base class of all connection related errors. """
+
+
+@StatusCodes.EPIPE
+@StatusCodes.ESHUTDOWN
+class BrokenPipeError(ConnectionError, _BrokenPipeError):
+    """ Broken pipe. """
+
+
+@StatusCodes.ECONNABORTED
+class ConnectionAbortedError(ConnectionError, _ConnectionAbortedError):
+    """ Software caused connection abort. """
+
+
+@StatusCodes.ECONNREFUSED
+class ConnectionRefusedError(ConnectionError, _ConnectionRefusedError):
+    """ Connection refused. """
+
+
+@StatusCodes.ECONNRESET
+class ConnectionResetError(ConnectionError, _ConnectionResetError):
+    """ Connection reset by peer. """
+
+
+@StatusCodes.EALREADY
+class ConnectionInProgressError(ConnectionError, io.BlockingIOError):
+    """ Connection already in progress. """
+
+
+class NotFoundError(UVError):
+    """ Base class of all not found related errors. """
+
+
+@StatusCodes.ENODEV
+@StatusCodes.ENXIO
+class DeviceNotFoundError(NotFoundError):
+    """ No such device or address. """
+
+
+@StatusCodes.ENOENT
+class FileNotFoundError(NotFoundError, _FileNotFoundError):
+    """ No such file or directory. """
+
+
+class NetworkError(UVError):
+    """ Base class of all network related errors. """
+
+
+@StatusCodes.ENETDOWN
+class NetworkDownError(NetworkError):
+    """ Network is down. """
+
+
+@StatusCodes.ENETUNREACH
+class NetworkUnreachableError(NetworkError):
+    """ Network is unreachable. """
+
+
+@StatusCodes.ENONET
+class NoNetworkError(NetworkError):
+    """ Machine is not on the network. """
+
+
+class SystemFailureError(UVError):
+    """ Base class of all system related errors. """
+
+
+@StatusCodes.ENOMEM
+@StatusCodes.EAI_MEMORY
+class MemoryError(SystemFailureError, builtins.MemoryError):
+    """ Not enough memory. """
+
+
+@StatusCodes.EMLINK
+class TooManyLinksError(SystemFailureError):
+    """ Too many links encountered. """
+
+
+@StatusCodes.ELOOP
+class TooManySymbolicLinksError(TooManyLinksError):
+    """ Too many symbolic links encountered. """
+
+
+@StatusCodes.EMFILE
+class TooManyOpenFilesError(SystemFailureError):
+    """ Too many open files. """
+
+
+@StatusCodes.ENFILE
+class FileTableOverflowError(SystemFailureError):
+    """ File table overflow. """

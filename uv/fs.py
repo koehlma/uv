@@ -128,7 +128,7 @@ class FSRequest(request.Request):
 
 @FSType.CLOSE
 def post_close(request):
-    status = error.get_status_code(request.result)
+    status = error.StatusCodes.get(request.result)
     return [status]
 
 
@@ -137,7 +137,7 @@ def post_close(request):
 
 @FSType.STAT
 def post_stat(request):
-    status = error.get_status_code(request.result)
+    status = error.StatusCodes.get(request.result)
     return [status, request.stat]
 
 
@@ -162,8 +162,8 @@ def close(fd, callback=None, loop=None):
 
 @FSType.OPEN
 def post_open(request):
-    if request.result < 0: status, fd = error.get_status_code(request.result), None
-    else: status, fd = error.StatusCode.SUCCESS, request.result
+    if request.result < 0: status, fd = error.StatusCodes.get(request.result), None
+    else: status, fd = error.StatusCodes.SUCCESS, request.result
     return [status, fd]
 
 

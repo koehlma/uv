@@ -135,6 +135,6 @@ class TTY(stream.Stream):
         :param mode: mode to set
         :type mode: uv.TTYMode
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         code = lib.uv_tty_set_mode(self.uv_tty, mode)
         if code < 0: raise error.UVError(code)

@@ -76,7 +76,7 @@ class Request(object):
         """
         if self.loop.closed:
             self.finished = True
-            raise error.LoopClosedError()
+            raise error.ClosedLoopError()
         self.loop.requests.add(self)
 
     @property

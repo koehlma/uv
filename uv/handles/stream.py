@@ -51,7 +51,7 @@ class ShutdownRequest(request.Request):
     __slots__ = ['uv_shutdown', 'stream', 'on_shutdown']
 
     def __init__(self, stream, on_shutdown=None):
-        if stream.closing: raise error.HandleClosedError()
+        if stream.closing: raise error.ClosedHandleError()
         self.uv_shutdown = ffi.new('uv_shutdown_t*')
         super(ShutdownRequest, self).__init__(self.uv_shutdown, stream.loop)
         self.stream = stream
@@ -111,7 +111,7 @@ class WriteRequest(request.Request):
     __slots__ = ['uv_write', 'buffers', 'stream', 'send_stream', 'on_write']
 
     def __init__(self, stream, buffers, send_stream=None, on_write=None):
-        if stream.closing: raise error.HandleClosedError()
+        if stream.closing: raise error.ClosedHandleError()
         self.uv_write = ffi.new('uv_write_t*')
         super(WriteRequest, self).__init__(self.uv_write, stream.loop)
         self.buffers = common.Buffers(buffers)
@@ -220,7 +220,7 @@ def uv_read_cb(uv_stream, length, uv_buf):
     stream = library.detach(uv_stream)
     """ :type: uv.Stream """
     data = stream.loop.allocator.finalize(uv_stream, length, uv_buf)
-    length, status = (0, length) if length < 0 else (length, error.StatusCode.SUCCESS)
+    length, status = (0, length) if length < 0 else (length, error.StatusCodes.SUCCESS)
     try:
         stream.on_read(stream, status, length, data)
     except:
@@ -339,7 +339,7 @@ class Stream(handle.Handle):
         :type on_connection: ((uv.Stream, uv.StatusCode) -> None) |
                              ((Any, uv.Stream, uv.StatusCode) -> None
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.on_connection = on_connection or self.on_connection
         code = lib.uv_listen(self.uv_stream, backlog, uv_connection_cb)
         if code < 0: raise error.UVError(code)
@@ -366,7 +366,7 @@ class Stream(handle.Handle):
 
         :return: new stream connection of type `cls`
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         connection = (cls or type(self))(*args, **kwargs)
         code = lib.uv_accept(self.uv_stream, connection.uv_stream)
         if code < 0: raise error.UVError(code)
@@ -385,7 +385,7 @@ class Stream(handle.Handle):
         :type on_read: ((uv.Stream, uv.StatusCode, int, bytes) -> None) |
                        ((Any, uv.Stream, uv.StatusCode, int, bytes) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.on_read = on_read or self.on_read
         uv_alloc_cb = self.loop.allocator.uv_alloc_cb
         code = lib.uv_read_start(self.uv_stream, uv_alloc_cb, uv_read_cb)
@@ -442,7 +442,7 @@ class Stream(handle.Handle):
         :return: number of bytes written
         :rtype: int
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         buffers = Buffers(buffers)
         code = lib.uv_try_write(self.uv_stream, buffers.uv_buffers, len(buffers))
         if code < 0: raise error.UVError(code)

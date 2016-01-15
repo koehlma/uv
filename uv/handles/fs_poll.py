@@ -117,7 +117,7 @@ class FSPoll(handle.Handle):
         :type on_change: ((uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None) |
                          ((Any, uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.path = path or self.path
         self.interval = interval or self.interval
         self.on_change = on_change or self.on_change

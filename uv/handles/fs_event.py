@@ -173,7 +173,7 @@ class FSEvent(handle.Handle):
         :type on_event: ((uv.FSMonitor, uv.StatusCode, unicode, int) -> None) |
                         ((Any, uv.FSMonitor, uv.StatusCode, unicode, int) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.path = path or self.path
         self.flags = flags or self.flags
         self.on_event = on_event or self.on_event

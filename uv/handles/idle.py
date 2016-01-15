@@ -83,7 +83,7 @@ class Idle(handle.Handle):
         :param on_idle: callback called before prepare handles
         :type on_idle: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.on_idle = on_idle or self.on_idle
         code = lib.uv_idle_start(self.uv_idle, uv_idle_cb)
         if code < 0: raise error.UVError(code)

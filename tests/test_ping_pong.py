@@ -25,7 +25,7 @@ class TestPingPong(common.TestCase):
         request.stream.close()
 
     def on_read(self, stream, status, length, data):
-        if status is not uv.StatusCode.SUCCESS:
+        if status is not uv.StatusCodes.SUCCESS:
             stream.shutdown(on_shutdown=self.on_shutdown)
             return
         self.buffer.append(data)
@@ -44,11 +44,11 @@ class TestPingPong(common.TestCase):
                 self.server.close()
 
     def on_connect(self, request, status):
-        self.assert_equal(status, uv.StatusCode.SUCCESS)
+        self.assert_equal(status, uv.StatusCodes.SUCCESS)
         request.stream.read_start(on_read=self.on_read)
 
     def on_connection(self, stream, status):
-        self.assert_equal(status, uv.StatusCode.SUCCESS)
+        self.assert_equal(status, uv.StatusCodes.SUCCESS)
         connection = stream.accept()
         connection.read_start(on_read=self.on_read)
         connection.write(b'PING')

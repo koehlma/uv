@@ -313,6 +313,6 @@ class Process(handle.Handle):
         :param signum: signal number
         :type signum: int
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         code = lib.uv_process_kill(self.process, signum)
         if code < 0: raise error.UVError(code)

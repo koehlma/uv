@@ -141,7 +141,7 @@ class Poll(handle.Handle):
         :type on_event: ((uv.Poll, uv.StatusCode, int) -> None) |
                         ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.on_event = on_event or self.on_event
         code = lib.uv_poll_start(self.uv_poll, events, poll_callback)
         if code < 0: raise error.UVError(code)

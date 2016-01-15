@@ -123,7 +123,7 @@ class Signal(handle.Handle):
         :readonly: True
         :rtype: int
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         return self.uv_signal.signum
 
     def start(self, signum, on_signal=None):
@@ -139,7 +139,7 @@ class Signal(handle.Handle):
         :type signum: int
         :type on_signal: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.on_signal = on_signal or self.on_signal
         code = lib.uv_signal_start(self.uv_signal, uv_signal_cb, signum)
         if code < 0: raise error.UVError(code)

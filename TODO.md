@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] better error handling (exceptions for every status code)
+- [x] better error handling (exceptions for every status code)
 - [ ] auto destroy on exception in constructor
 - [x] rename FSMonitor to FSEvent (FSEvent → FSEvents)
 - [ ] better docstrings

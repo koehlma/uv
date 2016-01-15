@@ -5,15 +5,5 @@
 Errors -- exceptions and error handling
 =======================================
 
-.. autoclass:: uv.StatusCode
-    :members:
-
-
-.. autoclass:: uv.UVError
-    :members:
-
-.. autoclass:: uv.HandleClosedError
-    :members:
-
-.. autoclass:: uv.LoopClosedError
+.. automodule:: uv.error
     :members:

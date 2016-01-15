@@ -75,7 +75,7 @@ class Check(handle.Handle):
         :param on_check: callback called right after polling for IO
         :type on_check: ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.on_check = on_check or self.on_check
         code = lib.uv_check_start(self.uv_check, uv_check_cb)
         if code < 0: raise error.UVError(code)

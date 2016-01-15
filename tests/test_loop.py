@@ -128,18 +128,18 @@ class TestLoop(TestCase):
 
         self.loop.close()
 
-        self.assert_raises(uv.LoopClosedError, uv.Async, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.Check, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.Idle, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.Pipe, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.Poll, 0, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.Prepare, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.Process, ['python'], loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.Signal, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.TCP, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.Timer, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.TTY, 0, loop=self.loop)
-        self.assert_raises(uv.LoopClosedError, uv.UDP, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Async, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Check, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Idle, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Pipe, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Poll, 0, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Prepare, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Process, ['python'], loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Signal, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.TCP, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.Timer, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.TTY, 0, loop=self.loop)
+        self.assert_raises(uv.ClosedLoopError, uv.UDP, loop=self.loop)
 
     def test_update_time(self):
         def on_prepare(prepare):

@@ -78,7 +78,7 @@ class Async(handle.Handle):
         :param on_wakeup: callback called from within the event loop's thread
         :type on_wakeup: ((uv.Async) -> None) | ((Any, uv.Async) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.on_wakeup = on_wakeup or self.on_wakeup
         code = lib.uv_async_send(self.uv_async)
         if code < 0: raise error.UVError(code)

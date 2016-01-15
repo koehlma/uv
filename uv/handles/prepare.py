@@ -74,7 +74,7 @@ class Prepare(handle.Handle):
         :param on_prepare: callback called before polling for IO
         :type on_prepare: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         self.on_prepare = on_prepare or self.on_prepare
         code = lib.uv_prepare_start(self.uv_prepare, uv_prepare_cb)
         if code < 0: raise error.UVError(code)

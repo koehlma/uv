@@ -193,10 +193,10 @@ def unpack_sockaddr(c_sockaddr):
 def uv_getaddrinfo_cb(uv_getaddrinfo, status, _):
     addrinfo_request = library.detach(uv_getaddrinfo)
     """ :type: uv.dns.GetAddrInfo """
-    if status == error.StatusCode.SUCCESS:
+    if status == error.StatusCodes.SUCCESS:
         addrinfo_request.populate()
     try:
-        addrinfo_request.callback(addrinfo_request, error.get_status_code(status),
+        addrinfo_request.callback(addrinfo_request, error.StatusCodes.get(status),
                                   addrinfo_request.addrinfo)
     except:
         addrinfo_request.loop.handle_exception()

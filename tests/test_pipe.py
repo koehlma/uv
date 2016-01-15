@@ -23,7 +23,7 @@ import uv
 class TestPipe(common.TestCase):
     def test_connect_bad(self):
         def on_connect(request, status):
-            self.assert_not_equal(status, uv.StatusCode.SUCCESS)
+            self.assert_not_equal(status, uv.StatusCodes.SUCCESS)
             request.stream.close()
 
         self.pipe = uv.Pipe()

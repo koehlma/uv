@@ -228,26 +228,26 @@ class Loop(object):
 
     @property
     def now(self):
-        if self.closed: raise error.LoopClosedError()
+        if self.closed: raise error.ClosedLoopError()
         return lib.uv_now(self.uv_loop)
 
     def fileno(self):
-        if self.closed: raise error.LoopClosedError()
+        if self.closed: raise error.ClosedLoopError()
         return lib.uv_backend_fd(self.uv_loop)
 
     def make_current(self):
         Loop._thread_locals.loop = self
 
     def update_time(self):
-        if self.closed: raise error.LoopClosedError()
+        if self.closed: raise error.ClosedLoopError()
         return lib.uv_update_time(self.uv_loop)
 
     def get_timeout(self):
-        if self.closed: raise error.LoopClosedError()
+        if self.closed: raise error.ClosedLoopError()
         return lib.uv_backend_timeout(self.uv_loop)
 
     def run(self, mode=RunModes.DEFAULT):
-        if self.closed: raise error.LoopClosedError()
+        if self.closed: raise error.ClosedLoopError()
         self.make_current()
         result = bool(lib.uv_run(self.uv_loop, mode))
         return result

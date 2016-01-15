@@ -70,7 +70,7 @@ class TCP(stream.Stream):
         :param fd: file descriptor
         :type fd: int
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         code = lib.cross_uv_tcp_open(self.uv_tcp, fd)
         if code < 0: raise error.UVError(code)
 
@@ -84,7 +84,7 @@ class TCP(stream.Stream):
         :param enable: enable / disable
         :type enable: bool
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         code = lib.uv_tcp_nodelay(self.uv_tcp, int(enable))
         if code < 0: raise error.UVError(code)
 
@@ -101,7 +101,7 @@ class TCP(stream.Stream):
         :type enable: bool
         :type delay: int
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         code = lib.uv_tcp_keepalive(self.uv_tcp, int(enable), delay)
         if code < 0: raise error.UVError(code)
 
@@ -121,7 +121,7 @@ class TCP(stream.Stream):
         :param enable: enable / disable
         :type enable: bool
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         code = lib.uv_tcp_simultaneous_accepts(self.uv_tcp, int(enable))
         if code < 0: raise error.UVError(code)
 
@@ -140,7 +140,7 @@ class TCP(stream.Stream):
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
@@ -159,7 +159,7 @@ class TCP(stream.Stream):
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
@@ -184,7 +184,7 @@ class TCP(stream.Stream):
         :type address: tuple | uv.Address
         :type flags: int
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         self._family = c_sockaddr.sa_family
@@ -208,7 +208,7 @@ class TCP(stream.Stream):
         :returns: connect request
         :rtype: uv.ConnectRequest
         """
-        if self.closing: raise error.HandleClosedError()
+        if self.closing: raise error.ClosedHandleError()
         request = stream.ConnectRequest(self, on_connect)
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
