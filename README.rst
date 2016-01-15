@@ -24,6 +24,8 @@ Features
    - **CPython**: 3.3, 3.4, 3.5
    - **PyPy**: 4.0 (Windows and Linux)
    - **PyPy3**: 2.4.0, 2.7.0-alpha0 (Linux Only)
+- PyCharm type hinting support
+- PEP 3151 compatible exceptions
 
 
 .. |pypi| image:: https://img.shields.io/pypi/v/uv.svg?style=flat-square&label=latest%20version
