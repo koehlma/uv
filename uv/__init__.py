@@ -70,5 +70,6 @@ from .dns import Address, Address4, Address6, AddrInfo
 from .fs import Stat
 
 from . import dns
+from . import error
 from . import fs
 from . import misc

@@ -36,10 +36,6 @@ except ImportError:
     else:
         builtins = __builtins__
 
-__all__ = ['StatusCodes', 'UVError', 'ClosedStructureError', 'ClosedHandleError',
-           'ClosedLoopError', 'AddressNotAvailableError',
-           'AddressFamilyNotSupportedError']
-
 
 class StatusCodes(common.Enumeration):
     """
@@ -50,7 +46,7 @@ class StatusCodes(common.Enumeration):
 
     SUCCESS = 0
     """
-    Success.
+    Success — no error occoured.
 
     :type:
         uv.StatusCodes
@@ -672,12 +668,12 @@ class StatusCodes(common.Enumeration):
     @property
     def exception(self):
         """
-        Corresponding exception (subclass of :class:`Exception`).
+        Corresponding exception (subclass of :class:`uv.error.UVError`).
 
         :readonly:
             True
         :rtype:
-            Subclass[Exception]
+            Subclass[uv.error.UVError]
         """
         return self._exception
 
