@@ -15,12 +15,26 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import builtins
 import io
 import socket
 
 from . import common
 from .library import ffi, lib
+
+try:
+    import builtins
+except ImportError:
+    if isinstance(__builtins__, dict):
+        class _Builtins(object):
+            def __getattr__(self, item):
+                try:
+                    return __builtins__[item]
+                except KeyError:
+                    raise AttributeError()
+
+        builtins = _Builtins()
+    else:
+        builtins = __builtins__
 
 __all__ = ['StatusCodes', 'UVError', 'ClosedStructureError', 'ClosedHandleError',
            'ClosedLoopError', 'AddressNotAvailableError',
@@ -788,6 +802,10 @@ def _get_builtin(name, default=None):
     return getattr(builtins, name, default)
 
 
+class _DummyClass(object):
+    pass
+
+
 # support for PEP 3151
 _ConnectionError = _get_builtin('ConnectionError', builtins.IOError)
 _BrokenPipeError = _get_builtin('BrokenPipeError', builtins.IOError)
@@ -796,11 +814,11 @@ _ConnectionRefusedError = _get_builtin('ConnectionRefusedError', socket.error)
 _ConnectionResetError = _get_builtin('ConnectionResetError', socket.error)
 _FileExistsError = _get_builtin('FileExistsError', builtins.IOError)
 _FileNotFoundError = _get_builtin('FileNotFoundError', builtins.IOError)
-_InterruptedError = _get_builtin('InterruptedError', UVError)
+_InterruptedError = _get_builtin('InterruptedError', _DummyClass)
 _IsADirectoryError = _get_builtin('IsADirectoryError', builtins.IOError)
 _NotADirectoryError = _get_builtin('NotADirectoryError', builtins.IOError)
 _PermissionError = _get_builtin('PermissionError', builtins.IOError)
-_ProcessLookupError = _get_builtin('ProcessLookupError', UVError)
+_ProcessLookupError = _get_builtin('ProcessLookupError', _DummyClass)
 _TimeoutError = _get_builtin('TimeoutError', socket.timeout)
 
 # assign default exception
