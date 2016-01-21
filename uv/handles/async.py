@@ -18,8 +18,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from .. import common, error, handle, library
 from ..library import ffi, lib
 
-__all__ = ['Async']
-
 
 @ffi.callback('uv_async_cb')
 def uv_async_cb(uv_async):
@@ -34,32 +32,51 @@ def uv_async_cb(uv_async):
 @handle.HandleType.ASYNC
 class Async(handle.Handle):
     """
-    Async handles will wakeup the event loop from an other thread and
-    run the given callback within the event loop's thread. They are the
-    only thread-safe handles.
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param loop: event loop the handle should run on
-    :param on_wakeup: callback called from within the event loop's thread
-
-    :type loop: uv.Loop
-    :type on_wakeup: ((uv.Async) -> None) | ((Any, uv.Async) -> None)
+    Async handles are able to wakeup the event loop of another thread
+    and run the given callback in the event loop's thread. They are the
+    only thread-safe handles. Operations on other handles can be safely
+    executed in the `on_wakeup` callback.
     """
 
     __slots__ = ['uv_async', 'on_wakeup']
 
     def __init__(self, loop=None, on_wakeup=None):
+        """
+        :raises uv.UVError:
+            error while initializing the handle
+
+        :param loop:
+            event loop the handle should run on
+        :param on_wakeup:
+            callback which should run in the event loop's thread after
+            the event loop has been woken up
+
+        :type loop:
+            uv.Loop
+        :type on_wakeup:
+            ((uv.Async) -> None) | ((Any, uv.Async) -> None)
+        """
         self.uv_async = ffi.new('uv_async_t*')
         super(Async, self).__init__(self.uv_async, loop)
         self.on_wakeup = on_wakeup or common.dummy_callback
         """
-        Callback called from within the event loop's thread after wakeup.
+        Callback which should run in the event loop's thread after the
+        event loop has been woken up.
 
-        .. function:: on_wakeup(Async)
 
-        :readonly: False
-        :type: ((uv.Async) -> None) | ((Any, uv.Async) -> None)
+        .. function:: on_wakeup(async)
+
+            :param async:
+                handle the call originates from
+
+            :type async:
+                uv.Async
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Async) -> None) | ((Any, uv.Async) -> None)
         """
         code = lib.uv_async_init(self.loop.uv_loop, self.uv_async, uv_async_cb)
         if code < 0:
@@ -68,15 +85,23 @@ class Async(handle.Handle):
 
     def send(self, on_wakeup=None):
         """
-        Wakeup the event loop and execute the callback afterwards. Multiple calls
-        to this method are coalesced if they happen before the callback has been
-        called. This means not every call will yield a execution of the callback.
+        Wakeup the event loop and run the callback afterwards. Multiple
+        calls to this method are coalesced if they happen before the
+        callback has been called. This means not every call will yield
+        an execution of the callback.
 
-        :raises uv.UVError: error while trying to wakeup the event loop
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while trying to wakeup the event loop
+        :raises uv.HandleClosedError:
+            handle has already been closed or is closing
 
-        :param on_wakeup: callback called from within the event loop's thread
-        :type on_wakeup: ((uv.Async) -> None) | ((Any, uv.Async) -> None)
+        :param on_wakeup:
+            callback which should run in the event loop's thread after
+            the event loop has been woken up (overrides the current
+            callback if specified)
+
+        :type on_wakeup:
+            ((uv.Async) -> None) | ((Any, uv.Async) -> None)
         """
         if self.closing: raise error.ClosedHandleError()
         self.on_wakeup = on_wakeup or self.on_wakeup

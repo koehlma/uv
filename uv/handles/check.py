@@ -18,8 +18,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from .. import common, error, handle, library
 from ..library import ffi, lib
 
-__all__ = ['Check']
-
 
 @ffi.callback('uv_check_cb')
 def uv_check_cb(uv_check):
@@ -35,30 +33,46 @@ def uv_check_cb(uv_check):
 class Check(handle.Handle):
     """
     Check handles will run the given callback once per loop iteration,
-    right after polling for IO.
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param loop: event loop the handle should run on
-    :param on_check: callback called right after polling for IO
-
-    :type loop: uv.Loop
-    :type on_check: ((uv.Check) -> None) | ((Any, uv.Check) -> None)
+    right after polling for IO after they have been started.
     """
 
     __slots__ = ['uv_check', 'on_check']
 
     def __init__(self, loop=None, on_check=None):
+        """
+        :raises uv.UVError:
+            error while initializing the handle
+
+        :param loop:
+            event loop the handle should run on
+        :param on_check:
+            callback which should run right after polling for IO
+
+        :type loop:
+            uv.Loop
+        :type on_check:
+            ((uv.Check) -> None) | ((Any, uv.Check) -> None)
+        """
         self.uv_check = ffi.new('uv_check_t*')
         super(Check, self).__init__(self.uv_check, loop)
         self.on_check = on_check or common.dummy_callback
         """
-        Callback called right after polling for IO once per loop iteration.
+        Callback which should run right after polling for IO if the
+        handle has been started.
 
-        .. function:: on_check(Check)
 
-        :readonly: False
-        :type: ((uv.Check) -> None) | ((Any, uv.Check) -> None)
+        .. function:: on_check(check)
+            :param check:
+                handle the call originates from
+
+            :type check:
+                uv.Check
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
         code = lib.uv_check_init(self.loop.uv_loop, self.uv_check)
         if code < 0:
@@ -67,13 +81,20 @@ class Check(handle.Handle):
 
     def start(self, on_check=None):
         """
-        Starts the handle.
+        Start the handle. The callback will be called once per loop
+        iteration right after polling for IO from now on.
 
-        :raises uv.UVError: error while starting the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while starting the handle
+        :raises uv.HandleClosedError:
+            handle has already been closed or is closing
 
-        :param on_check: callback called right after polling for IO
-        :type on_check: ((uv.Check) -> None) | ((Any, uv.Check) -> None)
+        :param on_check:
+            callback which should run right after polling for IO
+            (overrides the current callback if specified)
+
+        :type on_check:
+            ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
         if self.closing: raise error.ClosedHandleError()
         self.on_check = on_check or self.on_check
@@ -82,9 +103,10 @@ class Check(handle.Handle):
 
     def stop(self):
         """
-        Stops the handle, the callback will no longer be called.
+        Stop the handle. The callback will no longer be called.
 
-        :raises uv.UVError: error while stopping the handle
+        :raises uv.UVError:
+            error while stopping the handle
         """
         if self.closing: return
         code = lib.uv_check_stop(self.uv_check)
