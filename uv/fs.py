@@ -200,6 +200,6 @@ def stat(path, callback=None, loop=None):
     return request
 
 
-@handle.HandleType.FILE
+@handle.HandleTypes.FILE
 class File(object):
     pass

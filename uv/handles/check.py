@@ -29,7 +29,7 @@ def uv_check_cb(uv_check):
         check.loop.handle_exception()
 
 
-@handle.HandleType.CHECK
+@handle.HandleTypes.CHECK
 class Check(handle.Handle):
     """
     Check handles will run the given callback once per loop iteration,

@@ -170,7 +170,7 @@ def populate_stdio_container(uv_stdio, file_base=None):
     return fileobj
 
 
-@handle.HandleType.PROCESS
+@handle.HandleTypes.PROCESS
 class Process(handle.Handle):
     """
     Process handles will spawn a new process and allow the user to control

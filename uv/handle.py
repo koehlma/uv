@@ -22,7 +22,7 @@ from .loop import Loop
 __all__ = ['Handle']
 
 
-class HandleType(common.Enumeration):
+class HandleTypes(common.Enumeration):
     """
     Internal handle types enumeration. Handle types are exposed as
     subclasses of :class:`uv.Handle` to user code. This enumeration
@@ -70,8 +70,8 @@ def uv_close_cb(uv_handle):
     handle.destroy()
 
 
-@HandleType.UNKNOWN
-@HandleType.HANDLE
+@HandleTypes.UNKNOWN
+@HandleTypes.HANDLE
 class Handle(object):
     """
     Handles represent long-lived objects capable of performing certain
@@ -343,4 +343,4 @@ class Handle(object):
         self.loop.handles.remove(self)
 
 
-HandleType.cls = Handle
+HandleTypes.cls = Handle

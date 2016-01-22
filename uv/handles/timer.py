@@ -31,7 +31,7 @@ def uv_timer_cb(uv_timer):
         timer.loop.handle_exception()
 
 
-@handle.HandleType.TIMER
+@handle.HandleTypes.TIMER
 class Timer(handle.Handle):
     """
     Timer handles are used to schedule callbacks to be called in the future.

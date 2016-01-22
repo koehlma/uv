@@ -105,7 +105,7 @@ def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
         fs_event.loop.handle_exception()
 
 
-@handle.HandleType.FS_EVENT
+@handle.HandleTypes.FS_EVENT
 class FSEvent(handle.Handle):
     """
     FS event handles monitor a given filesystem path for changes

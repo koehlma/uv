@@ -33,7 +33,7 @@ def uv_fs_poll_cb(uv_fs_poll, status, uv_previous_stat, uv_current_stat):
         fs_poll.loop.handle_exception()
 
 
-@handle.HandleType.FS_POLL
+@handle.HandleTypes.FS_POLL
 class FSPoll(handle.Handle):
     """
     FS poll handles monitor a given path for changes. Unlike :class:`uv.FSMonitor`

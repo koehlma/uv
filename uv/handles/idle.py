@@ -30,7 +30,7 @@ def uv_idle_cb(uv_idle):
         idle.loop.handle_exception()
 
 
-@handle.HandleType.IDLE
+@handle.HandleTypes.IDLE
 class Idle(handle.Handle):
     """
     Idle handles will run the given callback once per loop iteration,

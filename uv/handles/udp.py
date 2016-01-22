@@ -140,7 +140,7 @@ def uv_udp_recv_cb(uv_udp, length, uv_buf, c_sockaddr, flags):
         udp.loop.handle_exception()
 
 
-@handle.HandleType.UDP
+@handle.HandleTypes.UDP
 class UDP(handle.Handle):
     """
     UDP handles encapsulate UDP communication for both clients and servers.

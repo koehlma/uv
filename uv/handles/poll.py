@@ -49,7 +49,7 @@ def poll_callback(uv_poll, status, events):
         poll.loop.handle_exception()
 
 
-@handle.HandleType.POLL
+@handle.HandleTypes.POLL
 class Poll(handle.Handle):
     """
     Poll handles are used to watch file descriptors for readability and

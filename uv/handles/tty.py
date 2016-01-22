@@ -82,7 +82,7 @@ class TTYMode(common.Enumeration):
     """
 
 
-@handle.HandleType.TTY
+@handle.HandleTypes.TTY
 class TTY(stream.Stream):
     """
     TTY handles represent a stream for the console.

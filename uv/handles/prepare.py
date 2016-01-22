@@ -30,7 +30,7 @@ def uv_prepare_cb(uv_prepare):
         prepare.loop.handle_exception()
 
 
-@handle.HandleType.PREPARE
+@handle.HandleTypes.PREPARE
 class Prepare(handle.Handle):
     """
     Prepare handles will run the given callback once per loop iteration,

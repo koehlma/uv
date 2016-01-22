@@ -70,7 +70,7 @@ def uv_signal_cb(uv_signal, signum):
         signal.loop.handle_exception()
 
 
-@handle.HandleType.SIGNAL
+@handle.HandleTypes.SIGNAL
 class Signal(handle.Handle):
     """
     Signal handles implement Unix style signal handling on a per-event

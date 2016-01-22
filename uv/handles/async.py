@@ -29,7 +29,7 @@ def uv_async_cb(uv_async):
         async.loop.handle_exception()
 
 
-@handle.HandleType.ASYNC
+@handle.HandleTypes.ASYNC
 class Async(handle.Handle):
     """
     Async handles are able to wakeup the event loop of another thread

@@ -23,7 +23,7 @@ from . import stream
 __all__ = ['Pipe']
 
 
-@handle.HandleType.PIPE
+@handle.HandleTypes.PIPE
 class Pipe(stream.Stream):
     """
     Pipe handles provide an abstraction over local domain sockets
@@ -84,7 +84,7 @@ class Pipe(stream.Stream):
         :rtype: type
         """
         if self.closing: raise error.ClosedHandleError()
-        return handle.HandleType(lib.uv_pipe_pending_type(self.uv_pipe)).cls
+        return handle.HandleTypes(lib.uv_pipe_pending_type(self.uv_pipe)).cls
 
     def pending_accept(self):
         """

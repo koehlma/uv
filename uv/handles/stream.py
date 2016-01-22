@@ -227,7 +227,7 @@ def uv_read_cb(uv_stream, length, uv_buf):
         stream.loop.handle_exception()
 
 
-@handle.HandleType.STREAM
+@handle.HandleTypes.STREAM
 class Stream(handle.Handle):
     """
     Stream handles provide a duplex communication channel. This is

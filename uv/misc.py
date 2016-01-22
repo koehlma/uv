@@ -55,7 +55,7 @@ def unpack_cpu_info(uv_cpu_info):
 
 def guess_handle(fd):
     uv_handle = lib.cross_uv_guess_handle(fd)
-    return handle.HandleType(uv_handle).cls
+    return handle.HandleTypes(uv_handle).cls
 
 
 def kill(pid, signum):

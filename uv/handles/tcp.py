@@ -35,7 +35,7 @@ class TCPFlags(common.Enumeration):
     """
 
 
-@handle.HandleType.TCP
+@handle.HandleTypes.TCP
 class TCP(stream.Stream):
     """
     TCP handles are used to represent both TCP clients and servers.
