@@ -645,13 +645,13 @@ class UVError(OSError):
         if cls is UVError:
             try:
                 # replace generic uv error with a specialized one if possible
-                exception = StatusCodes(code).exception
-                if exception is not UVError:
-                    return exception(code, message)
+                code = StatusCodes(code)
+                if code.exception is not UVError:
+                    return code.exception(code, message or code.message)
             except ValueError:
                 pass
         return super(UVError, cls).__new__(cls, code, message)
-
+    
     def __init__(self, code=None, message=''):
         """
         :param code:
