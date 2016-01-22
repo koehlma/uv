@@ -15,7 +15,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from . import common, error, library, request
+from . import common, error, library
 from .library import ffi, lib
 from .loop import Loop
 
@@ -23,6 +23,12 @@ __all__ = ['Handle']
 
 
 class HandleType(common.Enumeration):
+    """
+    Internal handle types enumeration. Handle types are exposed as
+    subclasses of :class:`uv.Handle` to user code. This enumeration
+    is only used for internal purposes.
+    """
+
     UNKNOWN = lib.UV_UNKNOWN_HANDLE
     HANDLE = lib.UV_HANDLE
     ASYNC = lib.UV_ASYNC
@@ -44,6 +50,11 @@ class HandleType(common.Enumeration):
     FS_POLL = lib.UV_FS_POLL
 
     def __call__(self, cls):
+        """
+        Associate the class which implements the handle type with
+        the corresponding enumeration object. Allows the usage of
+        enumeration fields as class decorators.
+        """
         self.cls = cls
         return cls
 
