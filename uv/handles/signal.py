@@ -65,7 +65,7 @@ def uv_signal_cb(uv_signal, signum):
     signal = library.detach(uv_signal)
     """ :type: uv.Signal """
     try:
-        signal.on_signal(sigal, signum)
+        signal.on_signal(signal, signum)
     except:
         signal.loop.handle_exception()
 
