@@ -72,6 +72,22 @@ except ImportError:
     class Enumeration(with_metaclass(_EnumerationMeta, int)): pass
 
 
+try:
+    import builtins
+except ImportError:
+    if isinstance(__builtins__, dict):
+        class _Builtins(object):
+            def __getattr__(self, item):
+                try:
+                    return __builtins__[item]
+                except KeyError:
+                    raise AttributeError()
+
+        builtins = _Builtins()
+    else:
+        builtins = __builtins__
+
+
 is_posix = os.name == 'posix'
 is_nt = os.name == 'nt'
 is_linux = sys.platform.startswith('linux')

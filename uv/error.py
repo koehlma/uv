@@ -21,21 +21,6 @@ import socket
 from . import common
 from .library import ffi, lib
 
-try:
-    import builtins
-except ImportError:
-    if isinstance(__builtins__, dict):
-        class _Builtins(object):
-            def __getattr__(self, item):
-                try:
-                    return __builtins__[item]
-                except KeyError:
-                    raise AttributeError()
-
-        builtins = _Builtins()
-    else:
-        builtins = __builtins__
-
 
 class StatusCodes(common.Enumeration):
     """
@@ -48,615 +33,538 @@ class StatusCodes(common.Enumeration):
     """
     Success — no error occoured.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     E2BIG = lib.UV_E2BIG
     """
     Argument list too long.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EACCES = lib.UV_EACCES
     """
     Permission denied.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EADDRINUSE = lib.UV_EADDRINUSE
     """
     Address already in use.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EADDRNOTAVAIL = lib.UV_EADDRNOTAVAIL
     """
     Address not available.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAFNOSUPPORT = lib.UV_EAFNOSUPPORT
     """
     Address family not supported.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAGAIN = lib.UV_EAGAIN
     """
     Resource temporarily unavailable.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_ADDRFAMILY = lib.UV_EAI_ADDRFAMILY
     """
     Address family not supported.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_AGAIN = lib.UV_EAI_AGAIN
     """
     Temporary failure.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_BADFLAGS = lib.UV_EAI_BADFLAGS
     """
     Bad address flags value.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_BADHINTS = lib.UV_EAI_BADHINTS
     """
     Invalid value for hints.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_CANCELED = lib.UV_EAI_CANCELED
     """
     Request canceled.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_FAIL = lib.UV_EAI_FAIL
     """
     Permanent failure.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_FAMILY = lib.UV_EAI_FAMILY
     """
     Address family not supported.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_MEMORY = lib.UV_EAI_MEMORY
     """
     Out of memory.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_NODATA = lib.UV_EAI_NODATA
     """
     No address.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_NONAME = lib.UV_EAI_NONAME
     """
     Unknown node or service.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_OVERFLOW = lib.UV_EAI_OVERFLOW
     """
     Argument buffer overflow.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_PROTOCOL = lib.UV_EAI_PROTOCOL
     """
     Resolved protocol is unknown.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_SERVICE = lib.UV_EAI_SERVICE
     """
     Service not available for socket type.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EAI_SOCKTYPE = lib.UV_EAI_SOCKTYPE
     """
     Socket type not supported.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EALREADY = lib.UV_EALREADY
     """
     Connection already in progress.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EBADF = lib.UV_EBADF
     """
     Bad file descriptor.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EBUSY = lib.UV_EBUSY
     """
     Resource busy or locked.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ECANCELED = lib.UV_ECANCELED
     """
     Operation canceled.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ECHARSET = lib.UV_ECHARSET
     """
     Invalid Unicode character.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ECONNABORTED = lib.UV_ECONNABORTED
     """
     Software caused connection abort.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ECONNREFUSED = lib.UV_ECONNREFUSED
     """
     Connection refused.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ECONNRESET = lib.UV_ECONNRESET
     """
     Connection reset by peer.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EDESTADDRREQ = lib.UV_EDESTADDRREQ
     """
     Destination address required.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EEXIST = lib.UV_EEXIST
     """
     File already exists.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EFAULT = lib.UV_EFAULT
     """
     Bad address in system call argument.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EFBIG = lib.UV_EFBIG
     """
     File too large.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EHOSTUNREACH = lib.UV_EHOSTUNREACH
     """
     Host is unreachable.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EINTR = lib.UV_EINTR
     """
     Interrupted system call.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EINVAL = lib.UV_EINVAL
     """
     Invalid argument.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EIO = lib.UV_EIO
     """
-    Io error.
+    IO error.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EISCONN = lib.UV_EISCONN
     """
     Socket is already connected.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EISDIR = lib.UV_EISDIR
     """
     Illegal operation on a directory.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ELOOP = lib.UV_ELOOP
     """
     Too many symbolic links encountered.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EMFILE = lib.UV_EMFILE
     """
     Too many open files.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EMSGSIZE = lib.UV_EMSGSIZE
     """
     Message too long.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENAMETOOLONG = lib.UV_ENAMETOOLONG
     """
     Name too long.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENETDOWN = lib.UV_ENETDOWN
     """
     Network is down.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENETUNREACH = lib.UV_ENETUNREACH
     """
     Network is unreachable.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENFILE = lib.UV_ENFILE
     """
     File table overflow.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOBUFS = lib.UV_ENOBUFS
     """
     No buffer space available.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENODEV = lib.UV_ENODEV
     """
     No such device.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOENT = lib.UV_ENOENT
     """
     No such file or directory.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOMEM = lib.UV_ENOMEM
     """
     Not enough memory.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENONET = lib.UV_ENONET
     """
     Machine is not on the network.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOPROTOOPT = lib.UV_ENOPROTOOPT
     """
     Protocol not available.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOSPC = lib.UV_ENOSPC
     """
     No space left on device.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOSYS = lib.UV_ENOSYS
     """
     Function not implemented.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOTCONN = lib.UV_ENOTCONN
     """
     Socket is not connected.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOTDIR = lib.UV_ENOTDIR
     """
     Not a directory.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOTEMPTY = lib.UV_ENOTEMPTY
     """
     Directory not empty.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOTSOCK = lib.UV_ENOTSOCK
     """
     Socket operation on non-socket.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENOTSUP = lib.UV_ENOTSUP
     """
     Operation not supported on socket.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EPERM = lib.UV_EPERM
     """
     Operation not permitted.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EPIPE = lib.UV_EPIPE
     """
     Broken pipe.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EPROTO = lib.UV_EPROTO
     """
     Protocol error.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EPROTONOSUPPORT = lib.UV_EPROTONOSUPPORT
     """
     Protocol not supported.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EPROTOTYPE = lib.UV_EPROTOTYPE
     """
     Protocol wrong type for socket.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ERANGE = lib.UV_ERANGE
     """
     Result too large.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EROFS = lib.UV_EROFS
     """
     Read-only file system.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ESHUTDOWN = lib.UV_ESHUTDOWN
     """
     Cannot send after transport endpoint shutdown.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ESPIPE = lib.UV_ESPIPE
     """
     Invalid seek.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ESRCH = lib.UV_ESRCH
     """
     No such process.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ETIMEDOUT = lib.UV_ETIMEDOUT
     """
     Connection timed out.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ETXTBSY = lib.UV_ETXTBSY
     """
     Text file is busy.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EXDEV = lib.UV_EXDEV
     """
     Cross-device link not permitted.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     UNKNOWN = lib.UV_UNKNOWN
     """
     Unknown error.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EOF = lib.UV_EOF
     """
     End of file.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     ENXIO = lib.UV_ENXIO
     """
     No such device or address.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
     EMLINK = lib.UV_EMLINK
     """
     Too many links.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     EHOSTDOWN = lib.UV_EHOSTDOWN
     """
     Host is down.
 
-    :type:
-        uv.StatusCodes
+    :type: uv.StatusCodes
     """
 
     def __call__(self, exception):
@@ -705,8 +613,8 @@ class StatusCodes(common.Enumeration):
     def get(cls, code):
         """
         Look up the given status code und return the corresponding
-        instance of :class:`StatusCodes` or the original integer if
-        there is no such status code.
+        instance of :class:`uv.StatusCodes` or the original integer
+        if there is no such status code.
 
         :param code:
             potential status code
@@ -715,12 +623,12 @@ class StatusCodes(common.Enumeration):
             uv.StatusCodes | int | None
 
         :return:
-            status code instance or original code integer
+            status code instance or original status code integer
         :rtype:
             uv.StatusCodes | int
         """
         if not code:
-            # for reasons of performance
+            # for performance
             return StatusCodes.SUCCESS
         try:
             return StatusCodes(code)
@@ -736,7 +644,7 @@ class UVError(OSError):
     def __new__(cls, code=None, message=''):
         if cls is UVError:
             try:
-                # replace generic uv error with a specialized one
+                # replace generic uv error with a specialized one if possible
                 exception = StatusCodes(code).exception
                 if exception is not UVError:
                     return exception(code, message)
@@ -795,25 +703,25 @@ class UVError(OSError):
 
 
 def _get_builtin(name, default=None):
-    return getattr(builtins, name, default)
+    return getattr(common.builtins, name, default)
 
 
 class _DummyClass(object):
     pass
 
 
-# support for PEP 3151
-_ConnectionError = _get_builtin('ConnectionError', builtins.IOError)
-_BrokenPipeError = _get_builtin('BrokenPipeError', builtins.IOError)
+# support for PEP 3151 exception hierarchy
+_ConnectionError = _get_builtin('ConnectionError', common.builtins.IOError)
+_BrokenPipeError = _get_builtin('BrokenPipeError', common.builtins.IOError)
 _ConnectionAbortedError = _get_builtin('ConnectionAbortedError', socket.error)
 _ConnectionRefusedError = _get_builtin('ConnectionRefusedError', socket.error)
 _ConnectionResetError = _get_builtin('ConnectionResetError', socket.error)
-_FileExistsError = _get_builtin('FileExistsError', builtins.IOError)
-_FileNotFoundError = _get_builtin('FileNotFoundError', builtins.IOError)
+_FileExistsError = _get_builtin('FileExistsError', common.builtins.IOError)
+_FileNotFoundError = _get_builtin('FileNotFoundError', common.builtins.IOError)
 _InterruptedError = _get_builtin('InterruptedError', _DummyClass)
-_IsADirectoryError = _get_builtin('IsADirectoryError', builtins.IOError)
-_NotADirectoryError = _get_builtin('NotADirectoryError', builtins.IOError)
-_PermissionError = _get_builtin('PermissionError', builtins.IOError)
+_IsADirectoryError = _get_builtin('IsADirectoryError', common.builtins.IOError)
+_NotADirectoryError = _get_builtin('NotADirectoryError', common.builtins.IOError)
+_PermissionError = _get_builtin('PermissionError', common.builtins.IOError)
 _ProcessLookupError = _get_builtin('ProcessLookupError', _DummyClass)
 _TimeoutError = _get_builtin('TimeoutError', socket.timeout)
 
@@ -854,13 +762,13 @@ class PermissionError(UVError, _PermissionError):
 
 
 @StatusCodes.EBADF
-class BadFileDescriptorError(UVError, builtins.IOError):
+class BadFileDescriptorError(UVError, common.builtins.IOError):
     """ Bad file descriptor. """
 
 
 @StatusCodes.EBUSY
 @StatusCodes.ETXTBSY
-class ResourceBusyError(UVError, builtins.IOError):
+class ResourceBusyError(UVError, common.builtins.IOError):
     """ Resource busy or locked. """
 
 
@@ -885,7 +793,7 @@ class InterruptedError(UVError, _InterruptedError):
 
 
 @StatusCodes.EIO
-class IOError(UVError, builtins.IOError):
+class IOError(UVError, common.builtins.IOError):
     """ Generic IO related error. """
 
 
@@ -930,7 +838,7 @@ class NoSpaceError(UVError):
 
 
 @StatusCodes.ENOSYS
-class NotImplementedError(UVError, builtins.NotImplementedError):
+class NotImplementedError(UVError, common.builtins.NotImplementedError):
     """ Function not implemented. """
 
 
@@ -970,7 +878,7 @@ class CrossDeviceError(UVError):
 
 
 @StatusCodes.EOF
-class EOFError(UVError, builtins.EOFError):
+class EOFError(UVError, common.builtins.EOFError):
     """ End of file error. """
 
 
@@ -1155,7 +1063,7 @@ class SystemFailureError(UVError):
 
 @StatusCodes.ENOMEM
 @StatusCodes.EAI_MEMORY
-class MemoryError(SystemFailureError, builtins.MemoryError):
+class MemoryError(SystemFailureError, common.builtins.MemoryError):
     """ Not enough memory. """
 
 
