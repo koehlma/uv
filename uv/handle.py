@@ -123,10 +123,6 @@ class Handle(object):
 
     def __init__(self, uv_handle, loop=None):
         self.loop = loop or Loop.get_current()
-        if self.loop.closed:
-            raise error.ClosedLoopError()
-        self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
-        self.attachment = library.attach(self.uv_handle, self)
         """
         Loop the handle is running on.
 
@@ -135,6 +131,10 @@ class Handle(object):
         :type:
             uv.Loop
         """
+        if self.loop.closed:
+            raise error.ClosedLoopError()
+        self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
+        self.attachment = library.attach(self.uv_handle, self)
         self.on_closed = common.dummy_callback
         """
         Callback which should run after the handle has been closed.
