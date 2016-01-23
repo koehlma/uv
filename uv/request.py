@@ -55,11 +55,11 @@ class Request(object):
     :type loop: Loop
     """
 
-    __slots__ = ['uv_request', 'attachment', 'finished', 'loop']
+    __slots__ = ['uv_request', '_c_reference', 'finished', 'loop']
 
     def __init__(self, uv_request, loop=None):
         self.uv_request = ffi.cast('uv_req_t*', uv_request)
-        self.attachment = library.attach(self.uv_request, self)
+        self._c_reference = library.attach(self.uv_request, self)
         self.loop = loop or Loop.get_current()
         """
         Loop where the handle is running on.

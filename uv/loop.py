@@ -308,7 +308,7 @@ class Loop(object):
 
         common.attach_finalizer(self, loop_finalizer, self.uv_loop)
 
-        self.attachment = library.attach(self.uv_loop, self)
+        self._c_reference = library.attach(self.uv_loop, self)
 
         self.allocator = allocator or DefaultAllocator(buffer_size)
 

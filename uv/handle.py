@@ -118,7 +118,7 @@ class Handle(object):
         uv.Loop
     """
 
-    __slots__ = ['__weakref__', 'loop', 'uv_handle', 'attachment', 'on_closed',
+    __slots__ = ['__weakref__', 'loop', 'uv_handle', '_c_reference', 'on_closed',
                  'closed', 'closing', 'data', 'allocator']
 
     def __init__(self, uv_handle, loop=None):
@@ -134,7 +134,7 @@ class Handle(object):
         if self.loop.closed:
             raise error.ClosedLoopError()
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
-        self.attachment = library.attach(self.uv_handle, self)
+        self._c_reference = library.attach(self.uv_handle, self)
         self.on_closed = common.dummy_callback
         """
         Callback which should run after the handle has been closed.

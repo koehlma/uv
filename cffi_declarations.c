@@ -755,16 +755,6 @@ const char* uv_err_name(int);
 /* Python */
 const char* PYTHON_UV_CFFI_VERSION;
 
-typedef struct {
-    void* magic;
-    void* object;
-} py_data;
-
-void* py_attach(py_data* data, void* object);
-py_data* py_detach(void* pointer);
-
-
-
 /* Cross-Platform */
 typedef struct {
     uint64_t flowinfo;

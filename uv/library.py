@@ -17,6 +17,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os
 import sys
+
 from collections import namedtuple
 
 from . import __version__
@@ -67,16 +68,54 @@ version = Version(version_string, version_major, version_minor, version_patch)
 Attachment = namedtuple('Attachment', ['c_data', 'c_reference'])
 
 
-def attach(structure, instance):
-    attachment = Attachment(ffi.new('py_data*'), ffi.new_handle(instance))
-    lib.py_attach(attachment.c_data, attachment.c_reference)
-    structure.data = attachment.c_data
-    return attachment
+def attach(c_structure, instance):
+    """
+    Attach a python object to a C data structure's `data` field using
+    :func:`ffi.new_handle`. The returned reference must be stored in
+    order to receive the original object with :func:`detach`.
+
+    :param c_structure:
+        C structure with data field of type `void*`
+    :param instance:
+        python instance to attach
+
+    :type c_structure:
+        ffi.CData
+    :type instance:
+        object
+
+    :return:
+        reference of type `void*` (needs to be stored)
+    :rtype:
+        ffi.CData[void*]
+    """
+    c_reference = ffi.new_handle(instance)
+    c_structure.data = c_reference
+    return c_reference
 
 
-def detach(structure):
-    data = lib.py_detach(structure.data)
-    if data: return ffi.from_handle(data.object)
+def detach(c_structure):
+    """
+    Detach a python object from a C data structure's data field using
+    :func:`ffi.from_handle`. This might segfault on CPython if the
+    referenced python object or the reference itself has been garbage
+    collected. On PyPy it returns `None` in these cases.
+
+    :param c_structure:
+        C structure with data field of type `void*`
+
+    :return:
+        attached python instance if found
+    :rtype:
+        Optional[object]
+    """
+    if c_structure.data:
+        try:
+            # NOTE: on CPython this might segfault if the pointer is not valid
+            instance = ffi.from_handle(c_structure.data)
+            return instance
+        except SystemError:
+            pass
 
 
 def mutable_c_string(string):

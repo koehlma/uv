@@ -15,28 +15,9 @@
 
 #include <uv.h>
 
-const char* PYTHON_UV_CFFI_VERSION = "__version__";
-
 
 /* Python */
-typedef struct {
-    void* magic;
-    void* object;
-} py_data;
-
-void* py_attach(py_data* data, void* object) {
-    data->magic = &py_attach;
-    data->object = object;
-    return (void*) data;
-}
-
-py_data* py_detach(void* pointer) {
-    if (pointer != NULL && ((py_data*) pointer)->magic == &py_attach) {
-        return (py_data*) pointer;
-    }
-    return NULL;
-}
-
+const char* PYTHON_UV_CFFI_VERSION = "__version__";
 
 
 /* Cross-Platform */
