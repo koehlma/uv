@@ -62,6 +62,7 @@ class Check(handle.Handle):
 
 
         .. function:: on_check(check)
+
             :param check:
                 handle the call originates from
 
