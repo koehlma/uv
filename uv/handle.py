@@ -203,15 +203,15 @@ class Handle(object):
         Handle is active or not. What "active" means depends on the
         handle type:
 
-        - :class:`uv.Async`:
+        :class:`uv.Async`:
             is always active and cannot be deactivated
 
-        - :class:`uv.Pipe`, :class:`uv.TCP`, :class:`uv.UDP`, …:
+        :class:`uv.Pipe`, :class:`uv.TCP`, :class:`uv.UDP`, …:
             basically any handle dealing with IO is active when it is
             doing something involves IO like reading, writing,
             connecting or listening
 
-        - :class:`uv.Check`, :class:`uv.Idle`, :class:`uv.Timer`, …:
+        :class:`uv.Check`, :class:`uv.Idle`, :class:`uv.Timer`, …:
             handle is active when it has been started and not yet
             stopped
 
