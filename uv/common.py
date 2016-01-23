@@ -133,15 +133,15 @@ class Buffers(tuple):
         return self[1]
 
 
+# the following code is considered free of data races because of the
+# GIL; if we introduce locking here this might deadlock because the
+# GC could perform a collection cycle within the with statement
+# TODO: this is a really nasty and ugly hack of course
 _finalizers = {}
-_finalizers_lock = threading.RLock()
 
 
 def _callback(reference):
-    # FIXME: this might deadlock
-    with _finalizers_lock:
-        finalizer, arguments, keywords = _finalizers[reference]
-        del _finalizers[reference]
+    finalizer, arguments, keywords = _finalizers.pop(reference)
     finalizer(*arguments, **keywords)
 
 
@@ -170,8 +170,7 @@ def attach_finalizer(instance, finalizer, *arguments, **keywords):
         dict
     """
     reference = weakref.ref(instance, _callback)
-    with _finalizers_lock:
-        _finalizers[reference] = (finalizer, arguments, keywords)
+    _finalizers[reference] = (finalizer, arguments, keywords)
 
 
 def detach_finalizer(instance):
@@ -184,5 +183,4 @@ def detach_finalizer(instance):
     :type instance:
         object
     """
-    with _finalizers_lock:
-        del _finalizers[weakref.ref(instance)]
+    del _finalizers[weakref.ref(instance)]
