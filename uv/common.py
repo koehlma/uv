@@ -18,6 +18,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import platform
 import sys
+import threading
+import weakref
 
 from collections import OrderedDict
 
@@ -129,3 +131,25 @@ class Buffers(tuple):
         :rtype: ffi.CData
         """
         return self[1]
+
+
+_finalizers = {}
+_finalizers_lock = threading.RLock()
+
+
+def _callback(reference):
+    with _finalizers_lock:
+        finalizer, arguments, keywords = _finalizers[reference]
+        del _finalizers[reference]
+    finalizer(*arguments, **keywords)
+
+
+def attach_finalizer(instance, finalizer, *arguments, **keywords):
+    reference = weakref.ref(instance, _callback)
+    with _finalizers_lock:
+        _finalizers[reference] = (finalizer, arguments, keywords)
+
+
+def detach_finalizer(instance):
+    with _finalizers_lock:
+        del _finalizers[weakref.ref(instance)]

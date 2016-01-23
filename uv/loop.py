@@ -197,6 +197,10 @@ def uv_alloc_cb(uv_handle, suggested_size, uv_buf):
         library.uv_buffer_set(uv_buf, ffi.NULL, 0)
 
 
+def loop_finalizer(uv_loop):
+    lib.uv_loop_close(uv_loop)
+
+
 class Loop(object):
     """
     The event loop is the central part of this library. It takes care
@@ -204,15 +208,17 @@ class Loop(object):
     different sources of events.
 
     .. note::
-        Event loops are not garbage collected until they are explicitly
-        closed. Please close all loops you do not need anymore so
-        resources could be freed.
+        Event loops are garbage collected if there are no more handles
+        running on the loop and there are no strong references within
+        python. All default loops (global and current) are excluded
+        from garbage collection.
     """
 
     _global_lock = threading.Lock()
     _thread_locals = threading.local()
     _default = None
-    # we keep track of all loops here to prevent them from being garbage collected
+    # we keep track of all loops with active handles here to prevent them
+    # form being garbage collected
     _loops = set()
 
     @classmethod
@@ -254,7 +260,7 @@ class Loop(object):
             bool
 
         :return:
-            current threads default loop
+            current thread's default loop
         :rtype:
             Loop
         """
@@ -262,20 +268,6 @@ class Loop(object):
         if loop is None and instantiate:
             return cls(**arguments)
         return loop
-
-    @classmethod
-    def get_loops(cls):
-        """
-        Get a set of all instantiated loops which have not been closed
-        until the time of calling.
-
-        :return:
-            instantiated loops which have not been closed
-        :rtype:
-            frozenset[Loop]
-        """
-        with cls._global_lock:
-            return frozenset(cls._loops)
 
     def __init__(self, allocator=None, default=False, buffer_size=2**16):
         """
@@ -305,6 +297,8 @@ class Loop(object):
             code = lib.uv_loop_init(self.uv_loop)
             if code < 0:
                 raise error.UVError(code)
+
+        common.attach_finalizer(self, loop_finalizer, self.uv_loop)
 
         self.attachment = library.attach(self.uv_loop, self)
 
@@ -380,7 +374,7 @@ class Loop(object):
         :type:
             traceback
         """
-        self.handles = set()
+        self._handles = set()
         """
         Contains all handles running on this loop which have not already
         been closed. We have to keep references to every single handle in
@@ -410,7 +404,6 @@ class Loop(object):
         :readonly: True
         :type: bool
         """
-        with Loop._global_lock: Loop._loops.add(self)
         self.make_current()
 
     @property
@@ -422,6 +415,10 @@ class Loop(object):
     def now(self):
         if self.closed: raise error.ClosedLoopError()
         return lib.uv_now(self.uv_loop)
+
+    @property
+    def handles(self):
+        return frozenset(self._handles)
 
     def fileno(self):
         if self.closed: raise error.ClosedLoopError()
@@ -459,11 +456,11 @@ class Loop(object):
         if code < 0: raise error.UVError(code)
         self.uv_loop = None
         self.closed = True
-        with Loop._global_lock: Loop._loops.remove(self)
         if Loop._thread_locals.loop is self: Loop._thread_locals.loop = None
+        common.detach_finalizer(self)
 
     def close_all_handles(self, callback=None):
-        for handle in self.handles: handle.close(callback)
+        for handle in self._handles: handle.close(callback)
 
     def handle_exception(self):
         self.exc_type, self.exc_value, self.exc_traceback = sys.exc_info()
@@ -477,3 +474,15 @@ class Loop(object):
                 traceback.print_exc()
             finally:
                 sys.exit(1)
+
+    def activate_handle(self, handle):
+        if not self._handles:
+            with Loop._global_lock:
+                Loop._loops.add(self)
+        self._handles.add(handle)
+
+    def deactivate_handle(self, handle):
+        self._handles.remove(handle)
+        if not self._handles:
+            with Loop._global_lock:
+                Loop._loops.remove(self)

@@ -87,7 +87,7 @@ class Handle(object):
     :type loop: Loop
     """
 
-    __slots__ = ['uv_handle', 'attachment', 'loop', 'on_closed',
+    __slots__ = ['__weakref__', 'uv_handle', 'attachment', 'loop', 'on_closed',
                  'closed', 'closing', 'data', 'allocator']
 
     def __init__(self, uv_handle, loop=None):
@@ -134,7 +134,7 @@ class Handle(object):
         :readonly: False
         """
         if self.loop.closed: raise error.ClosedLoopError()
-        self.loop.handles.add(self)
+        self.loop.activate_handle(self)
         self.allocator = self.loop.allocator
 
     @property
@@ -341,7 +341,7 @@ class Handle(object):
         """
         self.closing = True
         self.closed = True
-        self.loop.handles.remove(self)
+        self.loop.deactivate_handle(self)
 
 
 HandleTypes.cls = Handle
