@@ -27,12 +27,64 @@ __all__ = ['RunModes', 'Loop']
 
 
 class RunModes(common.Enumeration):
+    """
+    Run modes to control the behavior of :func:`uv.Loop.run`.
+    """
+
     DEFAULT = lib.UV_RUN_DEFAULT
+    """
+    Run the event loop until there are no more active and referenced
+    handles or requests. :func:`uv.Loop.run` returns `True` if
+    :func:`uv.Loop.stop` was called and there are still active
+    handles or requests and `False` otherwise.
+
+    :type: uv.RunModes
+    """
+
     ONCE = lib.UV_RUN_ONCE
+    """
+    Poll for IO once. Note that :func:`uv.Loop.run` will block if there
+    are no pending callbacks. :func:`uv.Loop.run` returns `True` if
+    there are still active handles or requests which means the event
+    loop should run again sometime in the future.
+
+    :type: uv.RunModes
+    """
+
     NOWAIT = lib.UV_RUN_NOWAIT
+    """
+    Poll for IO once but do not block if there are no pending
+    callbacks. :func:`uv.Loop.run` returns `True` if there are still
+    active handles or requests which means the event loop should run
+    again sometime in the future.
+
+    :type: uv.RunModes
+    """
 
 
 def default_excepthook(loop, exc_type, exc_value, exc_traceback):
+    """
+    Default excepthook. Prints a traceback and stops the event loop to
+    prevent deadlocks or livelocks.
+
+    :param loop:
+        event loop the callback belongs to
+    :param exc_type:
+        exception class of the thrown exception
+    :param exc_value:
+        exception instance of the thrown exception
+    :param exc_traceback:
+        traceback to the stack frame where the exception occoured
+
+    :type loop:
+        uv.Loop
+    :type exc_type:
+        Subclass[Exception]
+    :type exc_value:
+        Exception
+    :type exc_traceback:
+        traceback
+    """
     print('Exception happened during callback execution!', file=sys.stderr)
     traceback.print_exception(exc_type, exc_value, exc_traceback)
     loop.stop()
@@ -247,6 +299,11 @@ class Loop(object):
         return lib.uv_backend_timeout(self.uv_loop)
 
     def run(self, mode=RunModes.DEFAULT):
+        """
+        Run loop
+        :param mode:
+        :return:
+        """
         if self.closed: raise error.ClosedLoopError()
         self.make_current()
         result = bool(lib.uv_run(self.uv_loop, mode))

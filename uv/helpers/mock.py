@@ -16,6 +16,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 MOCK_CONSTANTS = {
+    'UV_RUN_DEFAULT': 0,
+    'UV_RUN_ONCE': 1,
+    'UV_RUN_NOWAIT': 2,
+
     'UV_READABLE': 1,
     'UV_WRITABLE': 2,
 
