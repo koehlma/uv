@@ -70,7 +70,7 @@ class Idle(handle.Handle):
         """
         code = lib.uv_idle_init(self.loop.uv_loop, self.uv_idle)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     def start(self, on_idle=None):
@@ -87,6 +87,7 @@ class Idle(handle.Handle):
         self.on_idle = on_idle or self.on_idle
         code = lib.uv_idle_start(self.uv_idle, uv_idle_cb)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def stop(self):
         """
@@ -97,5 +98,6 @@ class Idle(handle.Handle):
         if self.closing: return
         code = lib.uv_idle_stop(self.uv_idle)
         if code < 0: raise error.UVError(code)
+        self.gc_include()
 
     __call__ = start

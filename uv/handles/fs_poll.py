@@ -95,7 +95,7 @@ class FSPoll(handle.Handle):
         """
         code = lib.uv_fs_poll_init(self.loop.uv_loop, self.uv_fs_poll)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     def start(self, path=None, interval=None, on_change=None):
@@ -124,6 +124,7 @@ class FSPoll(handle.Handle):
         c_path = self.path.encode()
         code = lib.uv_fs_poll_start(self.uv_fs_poll, uv_fs_poll_cb, c_path, self.interval)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def stop(self):
         """
@@ -134,5 +135,6 @@ class FSPoll(handle.Handle):
         if self.closing: return
         code = lib.uv_fs_poll_stop(self.uv_fs_poll)
         if code < 0: raise error.UVError(code)
+        self.gc_include()
 
     __call__ = start

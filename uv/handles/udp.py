@@ -174,7 +174,7 @@ class UDP(handle.Handle):
         """
         code = lib.uv_udp_init_ex(self.loop.uv_loop, self.uv_udp, flags)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     def open(self, fd):
@@ -391,6 +391,7 @@ class UDP(handle.Handle):
         self.on_receive = on_receive or self.on_receive
         code = lib.uv_udp_recv_start(self.uv_udp, loop.uv_alloc_cb, uv_udp_recv_cb)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def receive_stop(self):
         """
@@ -401,3 +402,4 @@ class UDP(handle.Handle):
         if self.closing: return
         code = lib.uv_udp_recv_stop(self.uv_udp)
         if code < 0: raise error.UVError(code)
+        self.gc_include()

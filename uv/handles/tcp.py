@@ -56,7 +56,7 @@ class TCP(stream.Stream):
         super(TCP, self).__init__(self.uv_tcp, False, loop)
         code = lib.uv_tcp_init_ex(self.loop.uv_loop, self.uv_tcp, flags)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
         self._family = socket.AF_INET
 

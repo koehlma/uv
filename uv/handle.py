@@ -15,18 +15,18 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import threading
+
 from . import common, error, library
 from .library import ffi, lib
 from .loop import Loop
-
-__all__ = ['Handle']
 
 
 class HandleTypes(common.Enumeration):
     """
     Internal handle types enumeration. Handle types are exposed as
     subclasses of :class:`uv.Handle` to user code. This enumeration
-    is only used for internal purposes.
+    is only for internal purposes.
     """
 
     UNKNOWN = lib.UV_UNKNOWN_HANDLE
@@ -67,7 +67,24 @@ def uv_close_cb(uv_handle):
         handle.on_closed(handle)
     except:
         handle.loop.handle_exception()
-    handle.destroy()
+    handle.set_closed()
+
+
+_finalizing = set()
+_finalizing_lock = threading.RLock()
+
+
+@ffi.callback('uv_close_cb')
+def uv_close_cb_finalize(uv_handle):
+    with _finalizing_lock:
+        _finalizing.remove(uv_handle)
+
+
+def handle_finalizer(uv_handle):
+    with _finalizing_lock:
+        # do not garbage collect the handle until it has been closed
+        _finalizing.add(uv_handle)
+    lib.uv_close(ffi.cast('uv_handle_t*', uv_handle), uv_close_cb_finalize)
 
 
 @HandleTypes.UNKNOWN
@@ -77,6 +94,13 @@ class Handle(object):
     Handles represent long-lived objects capable of performing certain
     operations while active. This is the base class of all handles except
     the file and SSL handle, which are pure Python.
+
+    .. note::
+        Handles underlie a special garbage collection strategy which
+        means they are not garbage collected as other objects. If a
+        handle is able to do anything in the program for example
+        calling a callback it is excluded from garbage collection as
+        well as the corresponding event loop.
 
     :raises uv.LoopClosedError: loop has already been closed
 
@@ -91,6 +115,7 @@ class Handle(object):
                  'closed', 'closing', 'data', 'allocator']
 
     def __init__(self, uv_handle, loop=None):
+        common.attach_finalizer(self, handle_finalizer, uv_handle)
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
         self.attachment = library.attach(self.uv_handle, self)
         self.loop = loop or Loop.get_current()
@@ -134,7 +159,6 @@ class Handle(object):
         :readonly: False
         """
         if self.loop.closed: raise error.ClosedLoopError()
-        self.loop.activate_handle(self)
         self.allocator = self.loop.allocator
 
     @property
@@ -257,9 +281,10 @@ class Handle(object):
 
     def fileno(self):
         """
-        Gets the platform dependent file descriptor equivalent. The following
-        handles are supported: TCP, UDP, TTY, Pipes and Poll. On all other
-        handles this will raise :class:`uv.UVError` with `StatusCode.EINVAL`.
+        Gets the platform dependent file descriptor equivalent. The
+        following handles are supported: TCP, UDP, TTY, Pipes and Poll.
+        On all other handles this will raise :class:`uv.UVError` with
+        error code `EINVAL`.
 
         If a handle does not have an attached file descriptor yet this method
         will raise :class:`uv.UVError` with `StatusCode.EBADF`.
@@ -283,65 +308,99 @@ class Handle(object):
 
     def reference(self):
         """
-        References the handle. If the event loop runs in default mode it will
-        exit when there are no more active and referenced handles left. This
-        has nothing to do with CPython's reference counting. References are
-        idempotent, that is, if a handle is already referenced calling this
-        method again will have not effect.
+        Reference the handle. If the event loop runs in default mode
+        it will exit when there are no more active and referenced
+        handles left. This has nothing to do with CPython's reference
+        counting. References are idempotent, that is, if a handle is
+        referenced calling this method again will have not effect.
 
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.HandleClosedError:
+            handle has already been closed or is closing
         """
         if self.closing: raise error.ClosedHandleError()
         lib.uv_ref(self.uv_handle)
 
     def dereference(self):
         """
-        Dereferences the handle. If the event loop runs in default mode it
-        will exit when there are no more active and referenced handles left.
-        This has nothing to do with CPython's reference counting. References
-        are idempotent, that is, if a handle is not referenced calling this
-        method again will have not effect.
+        Dereference the handle. If the event loop runs in default mode
+        it will exit when there are no more active and referenced
+        handles left. This has nothing to do with CPython's reference
+        counting. References are idempotent, that is, if a handle is
+        not referenced calling this method again will have not effect.
 
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.HandleClosedError:
+            handle has already been closed or is closing
         """
         if self.closing: raise error.ClosedHandleError()
         lib.uv_unref(self.uv_handle)
 
     def close(self, on_closed=None):
         """
-        Closes the handle and frees all resources afterwards. Please make sure
-        to call this method on any handle you do not need anymore. Handles do
-        not close automatically and are also not garbage collected unless you
-        have closed them exlicitly (explicit is better than implicit). This
-        method is idempotent, that is, if the handle is already closed or is
-        closing calling this method will have no effect.
+        Close the handle. Please make sure to call this method on any
+        handle you do not need anymore. This method is idempotent, that
+        is, if the handle is already closed or is closing calling this
+        method will have no effect at all.
 
-        In-progress requests, like :class:`uv.ConnectRequest` or
-        :class:`uv.WriteRequest`, are cancelled and have their callbacks
-        called asynchronously with :class:`StatusCode.ECANCELED`
+        In-progress requests, like connect or write requests, are
+        cancelled and have their callbacks called asynchronously with
+        :class:`StatusCode.ECANCELED`.
 
-        After this method has been called on a handle no other operations can be
-        performed on it, they will raise :class:`uv.HandleClosedError`.
+        After this method has been called on a handle no operations can
+        be performed on it (they raise :class:`uv.HandleClosedError`).
 
-        :param on_closed: callback called after the handle has been closed
-        :type on_closed: (Handle) -> None
+        .. note::
+            Handles are automatically closed when they are garbage
+            collected. However because the exact time this happens is
+            non-deterministic you should close all handles explicitly.
+            Especially if they handle external resources.
+
+        :param on_closed:
+            callback which should run after the handle has been closed
+            (overrides the current callback if specified)
+
+        :type on_closed:
+            ((uv.Handle) -> None) | ((Any, uv.Handle) -> None)
         """
         if self.closing: return
         self.closing = True
         self.on_closed = on_closed or self.on_closed
+        # exclude the handle form garbage collection until it is closed
+        self.gc_exclude()
+        # the garbage collection does not have to close the handle anymore
+        common.detach_finalizer(self)
         lib.uv_close(self.uv_handle, uv_close_cb)
 
-    def destroy(self):
+    def set_closed(self):
         """
         .. warning::
-
-            This method is used internally to free all allocated C resources and
-            make sure there are no references from Python anymore to those objects
-            after the handle has been closed. You should never call it directly!
+            This method is only for internal purposes and is not part
+            of the official API. It sets the handles state to closed
+            and activates garbage collection for the handle. You should
+            never call it directly!
         """
         self.closing = True
         self.closed = True
-        self.loop.deactivate_handle(self)
+        self.gc_include()
+
+    def gc_exclude(self):
+        """
+        .. warning::
+            This method is only for internal purposes and is not part
+            of the official API. It deactivates the garbage collection
+            for the handle which means the handle and the corresponding
+            loop are excluded form garbage collection. You should never
+            call it directly!
+        """
+        self.loop.gc_exclude_handle(self)
+
+    def gc_include(self):
+        """
+        .. warning::
+            This method is only for internal purposes and is not part
+            of the official API. It reactivates the garbage collection
+            for the handle. You should never call it directly!
+        """
+        self.loop.gc_include_handle(self)
 
 
 HandleTypes.cls = Handle

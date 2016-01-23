@@ -45,7 +45,7 @@ class Pipe(stream.Stream):
         super(Pipe, self).__init__(self.uv_pipe, ipc, loop)
         code = lib.uv_pipe_init(self.loop.uv_loop, self.uv_pipe, int(ipc))
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     def open(self, fd):
@@ -188,4 +188,5 @@ class Pipe(stream.Stream):
         c_path = path.encode()
         lib.uv_pipe_connect(request.uv_connect, self.uv_pipe, c_path,
                             stream.uv_connect_cb)
+        self.gc_exclude()
         return request

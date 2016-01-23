@@ -77,6 +77,7 @@ class Request(object):
         if self.loop.closed:
             self.finished = True
             raise error.ClosedLoopError()
+        # TODO: add garbage collection for requests
         self.loop.requests.add(self)
 
     @property

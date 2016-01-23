@@ -204,7 +204,7 @@ class FSEvent(handle.Handle):
         """
         code = lib.uv_fs_event_init(self.loop.uv_loop, self.uv_fs_event)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     def start(self, path=None, flags=None, on_event=None):
@@ -242,6 +242,7 @@ class FSEvent(handle.Handle):
         c_path = self.path.encode()
         code = lib.uv_fs_event_start(self.uv_fs_event, uv_fs_event_cb, c_path, self.flags)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def stop(self):
         """
@@ -253,5 +254,6 @@ class FSEvent(handle.Handle):
         if self.closing: return
         code = lib.uv_fs_event_stop(self.uv_fs_event)
         if code < 0: raise error.UVError(code)
+        self.gc_include()
 
     __call__ = start

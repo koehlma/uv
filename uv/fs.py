@@ -150,7 +150,7 @@ def fs_callback(uv_request):
     except:
         fs_request.loop.handle_exception()
     lib.uv_fs_req_cleanup(uv_request)
-    fs_request.destroy()
+    fs_request.set_closed()
 
 
 def close(fd, callback=None, loop=None):

@@ -61,7 +61,7 @@ class Prepare(handle.Handle):
         """
         code = lib.uv_prepare_init(self.loop.uv_loop, self.uv_prepare)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     def start(self, on_prepare=None):
@@ -78,6 +78,7 @@ class Prepare(handle.Handle):
         self.on_prepare = on_prepare or self.on_prepare
         code = lib.uv_prepare_start(self.uv_prepare, uv_prepare_cb)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def stop(self):
         """
@@ -88,5 +89,6 @@ class Prepare(handle.Handle):
         if self.closing: return
         code = lib.uv_prepare_stop(self.uv_prepare)
         if code < 0: raise error.UVError(code)
+        self.gc_include()
 
     __call__ = start

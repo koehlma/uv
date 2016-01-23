@@ -110,7 +110,7 @@ class Signal(handle.Handle):
         """
         code = lib.uv_signal_init(self.loop.uv_loop, self.uv_signal)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     @property
@@ -143,6 +143,7 @@ class Signal(handle.Handle):
         self.on_signal = on_signal or self.on_signal
         code = lib.uv_signal_start(self.uv_signal, uv_signal_cb, signum)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def stop(self):
         """
@@ -153,5 +154,6 @@ class Signal(handle.Handle):
         if self.closing: return
         code = lib.uv_signal_stop(self.uv_signal)
         if code < 0: raise error.UVError(code)
+        self.gc_include()
 
     __call__ = start

@@ -107,7 +107,7 @@ class TTY(stream.Stream):
         super(TTY, self).__init__(self.uv_tty, ipc, loop)
         code = lib.cross_uv_tty_init(self.loop.uv_loop, self.uv_tty, fd, int(readable))
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     @property

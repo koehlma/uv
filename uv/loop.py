@@ -475,14 +475,17 @@ class Loop(object):
             finally:
                 sys.exit(1)
 
-    def activate_handle(self, handle):
+    def gc_exclude_handle(self, handle):
         if not self._handles:
             with Loop._global_lock:
                 Loop._loops.add(self)
         self._handles.add(handle)
 
-    def deactivate_handle(self, handle):
-        self._handles.remove(handle)
-        if not self._handles:
-            with Loop._global_lock:
-                Loop._loops.remove(self)
+    def gc_include_handle(self, handle):
+        try:
+            self._handles.remove(handle)
+            if not self._handles:
+                with Loop._global_lock:
+                    Loop._loops.remove(self)
+        except KeyError:
+            pass

@@ -29,6 +29,7 @@ def uv_timer_cb(uv_timer):
         timer.on_timeout(timer)
     except:
         timer.loop.handle_exception()
+    # TODO: include / exclude from garbage collection based on repeat value
 
 
 @handle.HandleTypes.TIMER
@@ -61,7 +62,7 @@ class Timer(handle.Handle):
         """
         code = lib.uv_timer_init(self.loop.uv_loop, self.uv_timer)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     @property
@@ -140,6 +141,7 @@ class Timer(handle.Handle):
         self.on_timeout = on_timeout or self.on_timeout
         code = lib.uv_timer_start(self.uv_timer, uv_timer_cb, timeout, repeat)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def stop(self):
         """
@@ -150,3 +152,4 @@ class Timer(handle.Handle):
         if self.closing: return
         code = lib.uv_timer_stop(self.uv_timer)
         if code < 0: raise error.UVError(code)
+        self.gc_include()

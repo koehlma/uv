@@ -270,7 +270,7 @@ class Stream(handle.Handle):
         self.ipc = ipc
         """
         Stream supports inter process communication or not.
-0
+
         :readonly: True
         :type: bool
         """
@@ -389,6 +389,7 @@ class Stream(handle.Handle):
         self.on_read = on_read or self.on_read
         code = lib.uv_read_start(self.uv_stream, loop.uv_alloc_cb, uv_read_cb)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def read_stop(self):
         """
@@ -401,6 +402,7 @@ class Stream(handle.Handle):
         if self.closing: return
         code = lib.uv_read_stop(self.uv_stream)
         if code < 0: raise error.UVError(code)
+        self.gc_include()
 
     def write(self, buffers, send_stream=None, on_write=None):
         """

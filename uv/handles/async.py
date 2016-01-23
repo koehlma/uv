@@ -22,6 +22,7 @@ from ..library import ffi, lib
 @ffi.callback('uv_async_cb')
 def uv_async_cb(uv_async):
     async = library.detach(uv_async)
+    async.gc_include()
     """ :type: uv.Async """
     try:
         async.on_wakeup(async)
@@ -80,7 +81,7 @@ class Async(handle.Handle):
         """
         code = lib.uv_async_init(self.loop.uv_loop, self.uv_async, uv_async_cb)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     def send(self, on_wakeup=None):
@@ -107,5 +108,6 @@ class Async(handle.Handle):
         self.on_wakeup = on_wakeup or self.on_wakeup
         code = lib.uv_async_send(self.uv_async)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     __call__ = send

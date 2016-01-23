@@ -140,6 +140,7 @@ class ProcessFlags(common.Enumeration):
 @ffi.callback('uv_exit_cb')
 def uv_exit_cb(uv_process, exit_status, term_signum):
     process = library.detach(uv_process)
+    process.gc_include()
     """ :type: uv.Process """
     try:
         process.on_exit(process, exit_status, term_signum)
@@ -293,8 +294,9 @@ class Process(handle.Handle):
 
         code = lib.uv_spawn(self.loop.uv_loop, self.process, self.uv_options)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
+        self.gc_exclude()
 
     @property
     def pid(self):

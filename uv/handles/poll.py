@@ -116,7 +116,7 @@ class Poll(handle.Handle):
         """
         code = lib.cross_uv_poll_init_socket(self.loop.uv_loop, self.uv_poll, fd)
         if code < 0:
-            self.destroy()
+            self.set_closed()
             raise error.UVError(code)
 
     def start(self, events=PollEvent.READABLE, on_event=None):
@@ -145,6 +145,7 @@ class Poll(handle.Handle):
         self.on_event = on_event or self.on_event
         code = lib.uv_poll_start(self.uv_poll, events, poll_callback)
         if code < 0: raise error.UVError(code)
+        self.gc_exclude()
 
     def stop(self):
         """
@@ -155,5 +156,6 @@ class Poll(handle.Handle):
         if self.closing: return
         code = lib.uv_poll_stop(self.uv_poll)
         if code < 0: raise error.UVError(code)
+        self.gc_include()
 
     __call__ = start
