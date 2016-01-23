@@ -70,10 +70,11 @@ int cross_uv_fs_close(uv_loop_t* loop, uv_fs_t* request, int fd, uv_fs_cb callba
     return uv_fs_close(loop, request, (uv_file) fd, callback);
 }
 
-void cross_uv_buf_set(uv_buf_t* buffer, char* base, unsigned int length) {
+void py_uv_buf_set(uv_buf_t* buffer, char* base, unsigned long length) {
     buffer->base = base;
     buffer->len = length;
 }
-char* cross_uv_buf_get_base(uv_buf_t* buffer) {
+char* py_uv_buf_get(uv_buf_t* buffer, unsigned long* length) {
+    *length = buffer->len;
     return buffer->base;
 }

@@ -34,12 +34,18 @@ if os.environ.get('PYTHON_MOCK_LIBUV', None) == 'True':
     uvcffi.lib = Mock()
 
     sys.modules['uvcffi'] = uvcffi
+
+    c_library_version = __version__
 else:
     import uvcffi
 
+    c_library_version = uvcffi.ffi.string(uvcffi.lib.PYTHON_UV_CFFI_VERSION).decode()
 
 if uvcffi.__version__ != __version__:
     raise RuntimeError('incompatible cffi base library (%s)' % uvcffi.__version__)
+
+if c_library_version != __version__:
+    raise RuntimeError('incompatible cffi c library (%s)' % c_library_version)
 
 
 trace_uvcffi = os.environ.get('PYTHON_TRACE_LIBUV', None) == 'True'

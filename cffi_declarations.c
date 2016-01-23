@@ -94,7 +94,6 @@ typedef struct {void* data; uv_loop_t* loop; ...;} uv_fs_poll_t;
 
 typedef struct {
     char* base;
-    size_t len;
     ...;
 } uv_buf_t;
 
@@ -775,5 +774,5 @@ void cross_set_process_uid_gid(uv_process_options_t*, int, int);
 
 int cross_uv_fs_close(uv_loop_t*, uv_fs_t*, int, uv_fs_cb);
 
-void cross_uv_buf_set(uv_buf_t*, char*, unsigned int);
-char* cross_uv_buf_get_base(uv_buf_t*);
+void py_uv_buf_set(uv_buf_t*, char*, unsigned long);
+char* py_uv_buf_get(uv_buf_t*, unsigned long*);
