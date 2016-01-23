@@ -60,6 +60,7 @@ class HandleTypes(common.Enumeration):
 @ffi.callback('uv_close_cb')
 def uv_close_cb(uv_handle):
     handle = library.detach(uv_handle)
+    handle.loop.deregister_structure(handle)
     """ :type: uv.Handle """
     try:
         handle.on_closed(handle)
@@ -78,6 +79,7 @@ _finalizing = set()
 @ffi.callback('uv_close_cb')
 def uv_close_cb_finalize(uv_handle):
     _finalizing.remove(uv_handle)
+    library.detach(uv_handle.loop).deregister_structure(handle)
 
 
 def handle_finalizer(uv_handle):
@@ -196,6 +198,7 @@ class Handle(object):
             uv.loop.Allocator
         """
         common.attach_finalizer(self, handle_finalizer, uv_handle)
+        self.loop.register_structure(self)
 
     @property
     def active(self):

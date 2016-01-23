@@ -20,6 +20,7 @@ import sys
 import threading
 import traceback
 import warnings
+import weakref
 
 from . import common, error, library
 from .library import ffi, lib
@@ -225,7 +226,7 @@ class Loop(object):
     _global_lock = threading.Lock()
     _thread_locals = threading.local()
     _default = None
-    # we keep track of all loops with active handles here to prevent them
+    # we keep track of all loops with open handles here to prevent them
     # form being garbage collected
     _loops = set()
 
@@ -394,7 +395,8 @@ class Loop(object):
         """
         self.make_current()
 
-        self._references = set()
+        self._strong_references = set()
+        self._weak_references = weakref.WeakSet()
 
     @property
     def alive(self):
@@ -468,16 +470,26 @@ class Loop(object):
                 sys.exit(1)
 
     def gc_exclude_structure(self, handle):
-        if not self._references:
-            with Loop._global_lock:
-                Loop._loops.add(self)
-        self._references.add(handle)
+        self._strong_references.add(handle)
 
     def gc_include_structure(self, handle):
         try:
-            self._references.remove(handle)
-            if not self._references:
+            self._strong_references.remove(handle)
+        except KeyError:
+            pass
+
+    def register_structure(self, structure):
+        if not self._weak_references:
+            with Loop._global_lock:
+                Loop._loops.add(self)
+        self._weak_references.add(structure)
+
+    def deregister_structure(self, structure):
+        try:
+            self._weak_references.remove(structure)
+            if not self._weak_references:
                 with Loop._global_lock:
                     Loop._loops.remove(self)
         except KeyError:
             pass
+
