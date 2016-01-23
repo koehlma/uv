@@ -91,7 +91,8 @@ def default_excepthook(loop, exc_type, exc_value, exc_traceback):
 
 
 class Allocator(common.with_metaclass(abc.ABCMeta)):
-    uv_alloc_cb = None
+    @abc.abstractclassmethod
+    def allocate(self, handle, suggested_size, uv_buf): pass
 
     @abc.abstractmethod
     def finalize(self, uv_handle, length, uv_buf): pass
@@ -102,9 +103,8 @@ class DefaultAllocator(Allocator):
         self.buffer_size = buffer_size
         self.buffer_in_use = False
         self.c_buffer = ffi.new('char[]', self.buffer_size)
-        self.uv_alloc_cb = ffi.callback('uv_alloc_cb', self._allocate)
 
-    def _allocate(self, uv_handle, suggested_size, uv_buf):
+    def allocate(self, handle, suggested_size, uv_buf):
         if self.buffer_in_use:
             library.uv_buffer_set(uv_buf, ffi.NULL, 0)
         else:
@@ -115,6 +115,15 @@ class DefaultAllocator(Allocator):
         self.buffer_in_use = False
         c_base = library.uv_buffer_get_base(uv_buf)
         return bytes(ffi.buffer(c_base, length)) if length > 0 else b''
+
+
+@ffi.callback('uv_alloc_cb')
+def uv_alloc_cb(uv_handle, suggested_size, uv_buf):
+    handle = library.detach(uv_handle)
+    try:
+        handle.loop.allocator.allocate(handle, suggested_size, uv_buf)
+    except:
+        library.uv_buffer_set(uv_buf, ffi.NULL, 0)
 
 
 class Loop(object):

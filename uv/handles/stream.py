@@ -15,7 +15,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, error, handle, library, request
+from .. import common, error, handle, library, loop, request
 from ..library import ffi, lib
 
 __all__ = ['ShutdownRequest', 'ConnectRequest', 'WriteRequest', 'Stream']
@@ -219,7 +219,7 @@ def uv_connection_cb(uv_stream, status):
 def uv_read_cb(uv_stream, length, uv_buf):
     stream = library.detach(uv_stream)
     """ :type: uv.Stream """
-    data = stream.loop.allocator.finalize(uv_stream, length, uv_buf)
+    data = stream.loop.allocator.finalize(stream, length, uv_buf)
     length, status = (0, length) if length < 0 else (length, error.StatusCodes.SUCCESS)
     try:
         stream.on_read(stream, status, length, data)
@@ -387,8 +387,7 @@ class Stream(handle.Handle):
         """
         if self.closing: raise error.ClosedHandleError()
         self.on_read = on_read or self.on_read
-        uv_alloc_cb = self.loop.allocator.uv_alloc_cb
-        code = lib.uv_read_start(self.uv_stream, uv_alloc_cb, uv_read_cb)
+        code = lib.uv_read_start(self.uv_stream, loop.uv_alloc_cb, uv_read_cb)
         if code < 0: raise error.UVError(code)
 
     def read_stop(self):

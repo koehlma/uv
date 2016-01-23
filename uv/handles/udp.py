@@ -15,7 +15,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, dns, error, handle, library, request
+from .. import common, dns, error, handle, library, loop, request
 from ..library import ffi, lib
 
 __all__ = ['UDPFlags', 'UDPMembership', 'UDP', 'SendRequest']
@@ -131,7 +131,7 @@ class SendRequest(request.Request):
 def uv_udp_recv_cb(uv_udp, length, uv_buf, c_sockaddr, flags):
     udp = library.detach(uv_udp)
     """ :type: uv.UDP """
-    data = udp.loop.allocator.finalize(uv_udp, length, uv_buf)
+    data = udp.loop.allocator.finalize(udp, length, uv_buf)
     length, status = (0, length) if length < 0 else (length, error.StatusCodes.SUCCESS)
     address = dns.unpack_sockaddr(c_sockaddr)
     try:
@@ -389,8 +389,7 @@ class UDP(handle.Handle):
         """
         if self.closing: raise error.ClosedHandleError()
         self.on_receive = on_receive or self.on_receive
-        uv_alloc_cb = self.loop.allocator.uv_alloc_cb
-        code = lib.uv_udp_recv_start(self.uv_udp, uv_alloc_cb, uv_udp_recv_cb)
+        code = lib.uv_udp_recv_start(self.uv_udp, loop.uv_alloc_cb, uv_udp_recv_cb)
         if code < 0: raise error.UVError(code)
 
     def receive_stop(self):
