@@ -86,6 +86,7 @@ def handle_finalizer(uv_handle):
         _finalizing.add(uv_handle)
     # remove attached garbage collected handle
     uv_handle.data = ffi.NULL
+    # TODO: this might lead to data races
     lib.uv_close(ffi.cast('uv_handle_t*', uv_handle), uv_close_cb_finalize)
 
 
