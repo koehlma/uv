@@ -374,26 +374,6 @@ class Loop(object):
         """
         self.exc_traceback = None
         """
-        Traceback which encapsulates the call stack at the point where
-        the last exception handled by excepthook originally occurred.
-
-        :readonly:
-            True
-        :type:
-            traceback
-        """
-        self._handles = set()
-        """
-        Contains all handles running on this loop which have not already
-        been closed. We have to keep references to every single handle in
-        this set because otherwise they are garbage collected before they
-        have been closed which leads to segmentation faults.
-
-        :readonly: True
-        :type: set[Handle]
-        """
-        self.requests = set()
-        """
         Contains all requests running on this loop which are not already
         finished. We have to keep references to every single request in
         this set because otherwise they are garbage collected before they
@@ -413,6 +393,8 @@ class Loop(object):
         :type: bool
         """
         self.make_current()
+
+        self._references = set()
 
     @property
     def alive(self):
@@ -470,7 +452,7 @@ class Loop(object):
         common.detach_finalizer(self)
 
     def close_all_handles(self, callback=None):
-        for handle in self._handles: handle.close(callback)
+        for handle in self.handles: handle.close(callback)
 
     def handle_exception(self):
         self.exc_type, self.exc_value, self.exc_traceback = sys.exc_info()
@@ -485,16 +467,16 @@ class Loop(object):
             finally:
                 sys.exit(1)
 
-    def gc_exclude_handle(self, handle):
-        if not self._handles:
+    def gc_exclude_structure(self, handle):
+        if not self._references:
             with Loop._global_lock:
                 Loop._loops.add(self)
-        self._handles.add(handle)
+        self._references.add(handle)
 
-    def gc_include_handle(self, handle):
+    def gc_include_structure(self, handle):
         try:
-            self._handles.remove(handle)
-            if not self._handles:
+            self._references.remove(handle)
+            if not self._references:
                 with Loop._global_lock:
                     Loop._loops.remove(self)
         except KeyError:

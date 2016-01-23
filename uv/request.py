@@ -78,7 +78,7 @@ class Request(object):
             self.finished = True
             raise error.ClosedLoopError()
         # TODO: add garbage collection for requests
-        self.loop.requests.add(self)
+        self.gc_exclude()
 
     @property
     def type(self):
@@ -107,8 +107,27 @@ class Request(object):
             resources. You should never call it directly!
         """
         if not self.finished:
-            self.loop.requests.remove(self)
             self.finished = True
+
+    def gc_exclude(self):
+        """
+        .. warning::
+            This method is only for internal purposes and is not part
+            of the official API. It deactivates the garbage collection
+            for the request which means the request and the associated
+            loop are excluded form garbage collection. You should never
+            call it directly!
+        """
+        self.loop.gc_exclude_structure(self)
+
+    def gc_include(self):
+        """
+        .. warning::
+            This method is only for internal purposes and is not part
+            of the official API. It reactivates the garbage collection
+            for the request. You should never call it directly!
+        """
+        self.loop.gc_include_structure(self)
 
 
 RequestType.cls = Request

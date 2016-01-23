@@ -393,7 +393,7 @@ class Handle(object):
             loop are excluded form garbage collection. You should never
             call it directly!
         """
-        self.loop.gc_exclude_handle(self)
+        self.loop.gc_exclude_structure(self)
 
     def gc_include(self):
         """
@@ -402,7 +402,7 @@ class Handle(object):
             of the official API. It reactivates the garbage collection
             for the handle. You should never call it directly!
         """
-        self.loop.gc_include_handle(self)
+        self.loop.gc_include_structure(self)
 
 
 HandleTypes.cls = Handle
