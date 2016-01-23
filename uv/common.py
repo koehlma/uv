@@ -138,6 +138,7 @@ _finalizers_lock = threading.RLock()
 
 
 def _callback(reference):
+    # FIXME: this might deadlock
     with _finalizers_lock:
         finalizer, arguments, keywords = _finalizers[reference]
         del _finalizers[reference]
@@ -145,11 +146,43 @@ def _callback(reference):
 
 
 def attach_finalizer(instance, finalizer, *arguments, **keywords):
+    """
+    Attach a finalizer to a given instance. After the instance has been
+    garbage collected the finalizer is called with the given arguments
+    and keyword arguments.
+
+    :param instance:
+        instance to attach the finalizer to
+    :param finalizer:
+        finalizer to attach
+    :param arguments:
+        arguments passed to the finalizer
+    :param keywords:
+        keyword arguments passed to the finalizer
+
+    :param instance:
+        object
+    :param finalizer:
+        callable
+    :param arguments:
+        tuple
+    :param keywords:
+        dict
+    """
     reference = weakref.ref(instance, _callback)
     with _finalizers_lock:
         _finalizers[reference] = (finalizer, arguments, keywords)
 
 
 def detach_finalizer(instance):
+    """
+    Detach a finalizer from a given instance.
+
+    :param instance:
+        instance to detach the finalizer from
+
+    :type instance:
+        object
+    """
     with _finalizers_lock:
         del _finalizers[weakref.ref(instance)]
