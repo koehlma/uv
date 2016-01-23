@@ -730,11 +730,15 @@ StatusCodes._exception = UVError
 
 
 @StatusCodes.EINVAL
+class InvalidTypeError(UVError, TypeError):
+    """ Invalid argument type. """
+
+
 @StatusCodes.E2BIG
 @StatusCodes.EAI_OVERFLOW
 @StatusCodes.EFAULT
 class ArgumentError(UVError, ValueError):
-    """ Invalid argument. """
+    """ Invalid arguments. """
 
 
 @StatusCodes.EAGAIN
