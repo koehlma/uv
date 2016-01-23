@@ -19,11 +19,10 @@ import abc
 import sys
 import threading
 import traceback
+import warnings
 
 from . import common, error, library
 from .library import ffi, lib
-
-__all__ = ['RunModes', 'Loop']
 
 
 class RunModes(common.Enumeration):
@@ -91,54 +90,150 @@ def default_excepthook(loop, exc_type, exc_value, exc_traceback):
 
 
 class Allocator(common.with_metaclass(abc.ABCMeta)):
-    @abc.abstractclassmethod
-    def allocate(self, handle, suggested_size, uv_buf): pass
+    """
+    Abstract base class for read buffer allocators. Allows swappable
+    allocation strategies and custom read result types.
+
+    .. warning::
+        This class exposes some details of the underlying CFFI based
+        wrapper — use it with caution. Any errors in the allocator
+        might lead to unpredictable behavior.
+    """
 
     @abc.abstractmethod
-    def finalize(self, uv_handle, length, uv_buf): pass
+    def allocate(self, handle, suggested_size, uv_buffer):
+        """
+        Called if libuv needs a new read buffer. The allocated chunk of
+        memory has to be assigned to `uv_buf.base` and the length of
+        the chunk to `uv_buf.len` use :func:`library.uv_buffer_set()`
+        for assigning. Base might be `NULL` which triggers an `ENOBUFS`
+        error in the read callback.
+
+        :param handle:
+            handle caused the read
+        :param suggested_size:
+            suggested buffer size
+        :param uv_buffer:
+            uv target buffer
+
+        :type handle:
+            uv.Handle
+        :type suggested_size:
+            int
+        :type uv_buffer:
+            ffi.CData[uv_buf_t]
+        """
+
+    @abc.abstractmethod
+    def finalize(self, handle, length, uv_buffer):
+        """
+        Called in the read callback to access the read buffer's data.
+        The result of this call is directly passed to the user's read
+        callback which allows to use a custom read result type.
+
+        :param handle:
+            handle caused the read
+        :param length:
+            length of bytes read
+        :param uv_buffer:
+            uv buffer used for reading
+
+        :type handle:
+            uv.Handle
+        :type length:
+            int
+        :type uv_buffer:
+            ffi.CData[uv_buf_t]
+
+        :return:
+            buffer's data (default type is :class:`bytes`)
+        :rtype:
+            Any | bytes
+        """
 
 
 class DefaultAllocator(Allocator):
+    """
+    Default read buffer allocator which only uses one buffer and copies
+    the data to a python :class:`bytes` object after reading.
+    """
+
     def __init__(self, buffer_size=2**16):
+        """
+        :param buffer_size:
+            size of the internal buffer
+
+        :type buffer_size:
+            int
+        """
         self.buffer_size = buffer_size
         self.buffer_in_use = False
         self.c_buffer = ffi.new('char[]', self.buffer_size)
 
-    def allocate(self, handle, suggested_size, uv_buf):
+    def allocate(self, handle, suggested_size, uv_buffer):
         if self.buffer_in_use:
-            library.uv_buffer_set(uv_buf, ffi.NULL, 0)
+            # this should never happen because lib uv reads the data right
+            # before the execution of the read callback even if there are
+            # multiple sockets ready for reading
+            library.uv_buffer_set(uv_buffer, ffi.NULL, 0)
         else:
-            library.uv_buffer_set(uv_buf, self.c_buffer, self.buffer_size)
+            library.uv_buffer_set(uv_buffer, self.c_buffer, self.buffer_size)
         self.buffer_in_use = True
 
-    def finalize(self, uv_handle, length, uv_buf):
+    def finalize(self, uv_handle, length, uv_buffer):
         self.buffer_in_use = False
-        c_base = library.uv_buffer_get_base(uv_buf)
+        c_base = library.uv_buffer_get_base(uv_buffer)
         return bytes(ffi.buffer(c_base, length)) if length > 0 else b''
 
 
 @ffi.callback('uv_alloc_cb')
 def uv_alloc_cb(uv_handle, suggested_size, uv_buf):
     handle = library.detach(uv_handle)
+    """ :type: uv.Handle """
     try:
-        handle.loop.allocator.allocate(handle, suggested_size, uv_buf)
+        handle.allocator.allocate(handle, suggested_size, uv_buf)
     except:
+        warnings.warn('exception in lib uv allocator')
         library.uv_buffer_set(uv_buf, ffi.NULL, 0)
 
 
 class Loop(object):
+    """
+    The event loop is the central part of this library. It takes care
+    of polling for IO and scheduling callbacks to be run based on
+    different sources of events.
+
+    .. note::
+        Event loops are not garbage collected until they are explicitly
+        closed. Please close all loops you do not need anymore so
+        resources could be freed.
+    """
+
     _global_lock = threading.Lock()
     _thread_locals = threading.local()
     _default = None
+    # we keep track of all loops here to prevent them from being garbage collected
     _loops = set()
 
     @classmethod
     def get_default(cls, instantiate=True, **arguments):
         """
+        Get the default (across multiple threads) event loop. Note that
+        although this returns the same loop across multiple threads
+        loops are not thread safe. Normally there is one thread running
+        the default loop and others interfering with it trough
+        :class:`uv.Async` handles.
+
         :param instantiate:
-        :type instantiate: bool
-        :return: global default loop
-        :rtype: Loop
+            instantiate the default event loop if it does not exist
+
+        :type instantiate:
+            bool
+
+        :return:
+            global default loop
+        :rtype:
+            Loop
         """
         with cls._global_lock:
             if cls._default is None and instantiate:
@@ -148,32 +243,68 @@ class Loop(object):
     @classmethod
     def get_current(cls, instantiate=True, **arguments):
         """
+        Get the current (thread local) default event loop. Loops
+        register themselves as current loop on instantiation and in
+        their :func:`uv.Loop.run` method.
+
         :param instantiate:
-        :type instantiate: bool
-        :return: current threads default loop
-        :rtype: Loop
+            instantiate a new loop if there is no current loop
+
+        :type instantiate:
+            bool
+
+        :return:
+            current threads default loop
+        :rtype:
+            Loop
         """
         loop = getattr(cls._thread_locals, 'loop', None)
-        if loop is None and instantiate: return cls(**arguments)
+        if loop is None and instantiate:
+            return cls(**arguments)
         return loop
 
     @classmethod
     def get_loops(cls):
         """
+        Get a set of all instantiated loops which have not been closed
+        until the time of calling.
+
         :return:
-        :rtype: frozenset[Loop]
+            instantiated loops which have not been closed
+        :rtype:
+            frozenset[Loop]
         """
-        with cls._global_lock: return frozenset(cls._loops)
+        with cls._global_lock:
+            return frozenset(cls._loops)
 
     def __init__(self, allocator=None, default=False, buffer_size=2**16):
+        """
+        :param allocator:
+            read buffer allocator
+        :param default:
+            use the lib uv default loop
+        :param buffer_size:
+            size of the default allocators read buffer
+
+        :type allocator:
+            uv.loop.Allocator
+        :type default:
+            bool
+        :type buffer_size:
+            int
+        """
         if default:
-            assert Loop._default is None
-            self.uv_loop = lib.uv_default_loop()
-            if not self.uv_loop: raise RuntimeError('error initializing default loop')
+            with Loop._global_lock:
+                if Loop._default:
+                    raise RuntimeError('global default loop already instantiated')
+                self.uv_loop = lib.uv_default_loop()
+                if not self.uv_loop:
+                    raise RuntimeError('error initializing default loop')
         else:
             self.uv_loop = ffi.new('uv_loop_t*')
             code = lib.uv_loop_init(self.uv_loop)
-            if code < 0: raise error.UVError(code)
+            if code < 0:
+                raise error.UVError(code)
 
         self.attachment = library.attach(self.uv_loop, self)
 

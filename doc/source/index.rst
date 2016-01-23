@@ -12,6 +12,8 @@ Contents:
 
     error
 
+    loop
+
     handle
 
     handles/async

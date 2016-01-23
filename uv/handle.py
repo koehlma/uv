@@ -88,7 +88,7 @@ class Handle(object):
     """
 
     __slots__ = ['uv_handle', 'attachment', 'loop', 'on_closed',
-                 'closed', 'closing', 'data']
+                 'closed', 'closing', 'data', 'allocator']
 
     def __init__(self, uv_handle, loop=None):
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
@@ -135,6 +135,7 @@ class Handle(object):
         """
         if self.loop.closed: raise error.ClosedLoopError()
         self.loop.handles.add(self)
+        self.allocator = self.loop.allocator
 
     @property
     def active(self):
