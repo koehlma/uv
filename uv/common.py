@@ -136,7 +136,7 @@ class Buffers(tuple):
 # the following code is considered free of data races because of the
 # GIL; if we introduce locking here this might deadlock because the
 # GC could perform a collection cycle within the with statement
-# TODO: this is a really nasty and ugly hack of course
+# HACK: this is a really nasty and ugly hack of course
 _finalizers = {}
 
 
