@@ -753,7 +753,7 @@ const char* uv_err_name(int);
 
 
 /* Python */
-const char* python_cffi_uv_version;
+const char* PYTHON_UV_CFFI_VERSION;
 
 typedef struct {
     void* magic;
