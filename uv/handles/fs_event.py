@@ -98,7 +98,7 @@ class FSEvents(common.Enumeration):
 def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
     fs_event = library.detach(uv_fs_event)
     """ :type: uv.FSEvent """
-    filename = library.str_c2py(c_filename)
+    filename = ffi.string(c_filename).decode()
     try:
         fs_event.on_event(fs_event, status, filename, events)
     except:

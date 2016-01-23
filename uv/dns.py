@@ -155,7 +155,10 @@ def unpack_addrinfo(c_addrinfo):
         family = c_next.ai_family
         socktype = c_next.ai_socktype
         protocol = c_next.ai_protocol
-        canonname = library.str_c2py(c_next.ai_canonname) if c_next.ai_canonname else None
+        if c_next.ai_canonname:
+            canonname = ffi.string(c_next.ai_canonname).decode()
+        else:
+            canonname = None
         address = unpack_sockaddr(c_next.ai_addr) if c_next.ai_addr else None
         items.append(AddrInfo(family, socktype, protocol, canonname, address))
         c_next = c_next.ai_next
@@ -173,7 +176,7 @@ def unpack_sockaddr(c_sockaddr):
         port = socket.ntohs(c_sockaddr_in.sin_port)
         lib.uv_ip4_name(c_sockaddr_in, c_host, 16)
 
-        return Address4(library.str_c2py(c_host), port)
+        return Address4(ffi.string(c_host).decode(), port)
     elif c_sockaddr.sa_family == socket.AF_INET6:
         c_sockaddr_in6 = ffi.cast('struct sockaddr_in6*', c_sockaddr)
         c_additional = lib.cross_get_ipv6_additional(c_sockaddr_in6)
@@ -184,7 +187,7 @@ def unpack_sockaddr(c_sockaddr):
         scope_id = c_additional.scope_id
         lib.uv_ip6_name(c_sockaddr_in6, c_host, 40)
 
-        return Address6(library.str_c2py(c_host), port, flowinfo, scope_id)
+        return Address6(ffi.string(c_host).decode(), port, flowinfo, scope_id)
     warnings.warn('unable to unpack sockaddr - unknown family')
     return None
 
@@ -252,8 +255,9 @@ def uv_getnameinfo_cb(uv_getnameinfo, status, c_hostname, c_service):
     nameinfo_request = library.detach(uv_getnameinfo)
     """ :type: uv.dns.GetNameInfo """
     try:
-        nameinfo_request.callback(nameinfo_request, status, library.str_c2py(c_hostname),
-                                  library.str_c2py(c_service))
+        nameinfo_request.callback(nameinfo_request, status,
+                                  ffi.string(c_hostname).decode(),
+                                  ffi.string(c_service).decode())
     except:
         nameinfo_request.loop.handle_exception()
     nameinfo_request.destroy()

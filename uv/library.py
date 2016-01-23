@@ -22,8 +22,6 @@ from collections import namedtuple
 
 from . import __version__
 
-__all__ = ['lib', 'ffi', 'version', ]
-
 
 if os.environ.get('PYTHON_MOCK_LIBUV', None) == 'True':
     from types import ModuleType
@@ -63,9 +61,6 @@ version_major = (version_hex >> 16) & 0xff
 version_minor = (version_hex >> 8) & 0xff
 version_patch = version_hex & 0xff
 version = Version(version_string, version_major, version_minor, version_patch)
-
-
-Attachment = namedtuple('Attachment', ['c_data', 'c_reference'])
 
 
 def attach(c_structure, instance):
@@ -118,17 +113,44 @@ def detach(c_structure):
             pass
 
 
-def mutable_c_string(string):
-    return ffi.new('char[]', str(string).encode())
-
-
-def str_c2py(c_string):
-    return ffi.string(c_string).decode()
-
-
 def uv_buffer_set(uv_buffer, c_base, length):
-    lib.cross_uv_buf_set(uv_buffer, c_base, length)
+    """
+    Set libuv buffer information.
+
+    :param uv_buffer:
+        libuv buffer
+    :param c_base:
+        buffer base which should be set
+    :param length:
+        buffer length which should be set
+
+    :type uv_buffer:
+        ffi.CData[uv_buf_t]
+    :type c_base:
+        ffi.CData[char*]
+    :type length:
+        int
+    """
+    lib.py_uv_buf_set(uv_buffer, c_base, length)
 
 
-def uv_buffer_get_base(uv_buffer):
-    return lib.cross_uv_buf_get_base(uv_buffer)
+UVBuffer = namedtuple('UVBuffer', ['base', 'length'])
+
+
+def uv_buffer_get(uv_buffer):
+    """
+    Get libuv buffer information.
+
+    :param uv_buffer:
+        libuv buffer
+
+    :type uv_buffer:
+        ffi.CData[uv_buf_t]
+
+    :return:
+        buffer information `(base, len)`
+    :rtype:
+        UVBuffer[ffi.CData[char*], int]
+    """
+    length_pointer = ffi.new('unsigned long*')
+    return UVBuffer(lib.py_uv_buf_get(uv_buffer, length_pointer), length_pointer[0])

@@ -182,7 +182,7 @@ class DefaultAllocator(Allocator):
 
     def finalize(self, uv_handle, length, uv_buffer):
         self.buffer_in_use = False
-        c_base = library.uv_buffer_get_base(uv_buffer)
+        c_base = library.uv_buffer_get(uv_buffer).base
         return bytes(ffi.buffer(c_base, length)) if length > 0 else b''
 
 

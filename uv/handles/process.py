@@ -215,10 +215,11 @@ class Process(handle.Handle):
 
         self.uv_options = ffi.new('uv_process_options_t*')
 
-        self.c_file = library.mutable_c_string(arguments[0])
+        self.c_file = ffi.new('char[]', arguments[0].encode())
         self.uv_options.file = self.c_file
 
-        self.c_args_list = list(map(mutable_c_string, arguments))
+        self.c_args_list = [ffi.new('char[]', argument.encode())
+                            for argument in arguments]
         self.c_args_list.append(ffi.NULL)
         self.c_args = ffi.new('char*[]', self.c_args_list)
         self.uv_options.args = self.c_args
@@ -264,11 +265,11 @@ class Process(handle.Handle):
         self.uv_options.stdio = self.c_stdio_containers
 
         if cwd is not None:
-            self.c_cwd = library.mutable_c_string(cwd)
+            self.c_cwd = ffi.new('char[]', cwd.encode())
             self.uv_options.cwd = self.c_cwd
 
         if env is not None:
-            self.c_env_list = [library.mutable_c_string('%s=%s' % item)
+            self.c_env_list = [library.new('char[]', ('%s=%s' % item).encode())
                                for item in env.items()]
             self.c_env_list.append(ffi.NULL)
             self.c_env = ffi.new('char*[]', self.c_env_list)
