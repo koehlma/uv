@@ -117,7 +117,6 @@ class Handle(object):
                  'closed', 'closing', 'data', 'allocator']
 
     def __init__(self, uv_handle, loop=None):
-        common.attach_finalizer(self, handle_finalizer, uv_handle)
         self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
         self.attachment = library.attach(self.uv_handle, self)
         self.loop = loop or Loop.get_current()
@@ -162,6 +161,7 @@ class Handle(object):
         """
         if self.loop.closed: raise error.ClosedLoopError()
         self.allocator = self.loop.allocator
+        common.attach_finalizer(self, handle_finalizer, uv_handle)
 
     @property
     def active(self):
