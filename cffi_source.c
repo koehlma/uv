@@ -15,7 +15,7 @@
 
 #include <uv.h>
 
-const char* python_cffi_uv_version = "0.0.3.dev0";
+const char* PYTHON_UV_CFFI_VERSION = "__version__";
 
 
 /* Python */

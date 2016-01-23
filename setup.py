@@ -71,7 +71,7 @@ with open(os.path.join(__dir__, 'README.rst'), 'rb') as readme_file:
     long_description = readme_file.read().decode('utf-8')
 
 with open(os.path.join(__dir__, 'cffi_source.c'), 'rb') as cffi_source:
-    source = cffi_source.read().decode('utf-8')
+    source = cffi_source.read().decode('utf-8').replace('__version__', version)
 
 with open(os.path.join(__dir__, 'cffi_declarations.c'), 'rb') as cffi_declarations:
     declarations = cffi_declarations.read().decode('utf-8')
