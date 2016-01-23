@@ -41,6 +41,7 @@ else:
 
     c_library_version = uvcffi.ffi.string(uvcffi.lib.PYTHON_UV_CFFI_VERSION).decode()
 
+
 if uvcffi.__version__ != __version__:
     raise RuntimeError('incompatible cffi base library (%s)' % uvcffi.__version__)
 
