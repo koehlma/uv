@@ -197,6 +197,14 @@ def uv_alloc_cb(uv_handle, suggested_size, uv_buf):
         library.uv_buffer_set(uv_buf, ffi.NULL, 0)
 
 
+@ffi.callback('uv_walk_cb')
+def uv_walk_cb(uv_handle, c_handles_set):
+    handle = library.detach(uv_handle)
+    if handle:
+        handles = ffi.from_handle(c_handles_set)
+        handles.add(handle)
+
+
 def loop_finalizer(uv_loop):
     lib.uv_loop_close(uv_loop)
 
@@ -418,7 +426,9 @@ class Loop(object):
 
     @property
     def handles(self):
-        return frozenset(self._handles)
+        handles = set()
+        lib.uv_walk(self.uv_loop, uv_walk_cb, ffi.new_handle(handles))
+        return handles
 
     def fileno(self):
         if self.closed: raise error.ClosedLoopError()

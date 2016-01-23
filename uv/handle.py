@@ -84,6 +84,8 @@ def handle_finalizer(uv_handle):
     with _finalizing_lock:
         # do not garbage collect the handle until it has been closed
         _finalizing.add(uv_handle)
+    # remove attached garbage collected handle
+    uv_handle.data = ffi.NULL
     lib.uv_close(ffi.cast('uv_handle_t*', uv_handle), uv_close_cb_finalize)
 
 

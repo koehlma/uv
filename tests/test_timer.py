@@ -37,7 +37,7 @@ class TestTimer(TestCase):
 
         def on_timeout(t):
             self.timer_called += 1
-            if self.timer_called == 3: t.stop()
+            if self.timer_called == 3: t.close()
 
         timer = uv.Timer(on_timeout=on_timeout)
         timer.start(50, repeat=50)
