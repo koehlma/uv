@@ -65,11 +65,12 @@ class UDPMembership(common.Enumeration):
 def uv_udp_send_cb(uv_request, status):
     send_request = library.detach(uv_request)
     """ :type: uv.SendRequest """
-    try:
-        send_request.on_send(send_request, status)
-    except:
-        send_request.loop.handle_exception()
-    send_request.destroy()
+    if send_request is not None:
+        try:
+            send_request.on_send(send_request, status)
+        except:
+            send_request.loop.handle_exception()
+        send_request.destroy()
 
 
 @request.RequestType.SEND
@@ -131,13 +132,17 @@ class SendRequest(request.Request):
 def uv_udp_recv_cb(uv_udp, length, uv_buf, c_sockaddr, flags):
     udp = library.detach(uv_udp)
     """ :type: uv.UDP """
-    data = udp.loop.allocator.finalize(udp, length, uv_buf)
-    length, status = (0, length) if length < 0 else (length, error.StatusCodes.SUCCESS)
-    address = dns.unpack_sockaddr(c_sockaddr)
-    try:
-        udp.on_receive(udp, status, address, length, data, flags)
-    except:
-        udp.loop.handle_exception()
+    if udp is not None:
+        data = udp.loop.allocator.finalize(udp, length, uv_buf)
+        if length < 0:
+            length, status = 0, length
+        else:
+            status = error.StatusCodes.SUCCESS
+        address = dns.unpack_sockaddr(c_sockaddr)
+        try:
+            udp.on_receive(udp, status, address, length, data, flags)
+        except:
+            udp.loop.handle_exception()
 
 
 @handle.HandleTypes.UDP
@@ -391,7 +396,7 @@ class UDP(handle.Handle):
         self.on_receive = on_receive or self.on_receive
         code = lib.uv_udp_recv_start(self.uv_udp, loop.uv_alloc_cb, uv_udp_recv_cb)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def receive_stop(self):
         """
@@ -402,4 +407,4 @@ class UDP(handle.Handle):
         if self.closing: return
         code = lib.uv_udp_recv_stop(self.uv_udp)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()

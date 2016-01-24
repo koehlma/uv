@@ -61,33 +61,13 @@ class HandleTypes(common.Enumeration):
 def uv_close_cb(uv_handle):
     handle = library.detach(uv_handle)
     """ :type: uv.Handle """
+    if not handle:
+        return
     try:
         handle.on_closed(handle)
     except:
         handle.loop.handle_exception()
     handle.set_closed()
-
-
-# the following code is considered free of data races because of the
-# GIL; if we introduce locking here this might deadlock because the
-# GC could perform a collection cycle within the with statement
-# HACK: this is a really nasty and ugly hack of course
-_finalizing = set()
-
-
-@ffi.callback('uv_close_cb')
-def uv_close_cb_finalize(uv_handle):
-    _finalizing.remove(uv_handle)
-
-
-def handle_finalizer(uv_handle, loop):
-    # do not garbage collect the handle until it has been closed
-    _finalizing.add(uv_handle)
-    # remove attached garbage collected handle
-    uv_handle.data = ffi.NULL
-    # TODO: this might lead to data races
-    lib.uv_close(ffi.cast('uv_handle_t*', uv_handle), uv_close_cb_finalize)
-    del loop
 
 
 @HandleTypes.UNKNOWN
@@ -196,9 +176,7 @@ class Handle(object):
         :type:
             uv.loop.Allocator
         """
-        # keep references to the handle and the loop to prevent them
-        # from being garbage collected
-        common.attach_finalizer(self, handle_finalizer, uv_handle, self.loop)
+        self.loop.register_handle(self)
 
     @property
     def active(self):
@@ -461,9 +439,9 @@ class Handle(object):
         self.closing = True
         self.on_closed = on_closed or self.on_closed
         # exclude the handle from garbage collection until it is closed
-        self.gc_exclude()
+        self.set_pending()
         # the finalizer does not have to close the handle anymore
-        common.detach_finalizer(self)
+        #common.detach_finalizer(self)
         lib.uv_close(self.uv_handle, uv_close_cb)
 
     def set_closed(self):
@@ -476,9 +454,10 @@ class Handle(object):
         """
         self.closing = True
         self.closed = True
-        self.gc_include()
+        self.clear_pending()
+        self.loop.handle_set_closed(self)
 
-    def gc_exclude(self):
+    def set_pending(self):
         """
         .. warning::
             This method is only for internal purposes and is not part
@@ -487,16 +466,16 @@ class Handle(object):
             loop are excluded from garbage collection. You should never
             call it directly!
         """
-        self.loop.gc_exclude_structure(self)
+        self.loop.structure_set_pending(self)
 
-    def gc_include(self):
+    def clear_pending(self):
         """
         .. warning::
             This method is only for internal purposes and is not part
             of the official API. It reactivates the garbage collection
             for the handle. You should never call it directly!
         """
-        self.loop.gc_include_structure(self)
+        self.loop.structure_clear_pending(self)
 
 
 HandleTypes.cls = Handle

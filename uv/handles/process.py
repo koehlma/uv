@@ -140,12 +140,13 @@ class ProcessFlags(common.Enumeration):
 @ffi.callback('uv_exit_cb')
 def uv_exit_cb(uv_process, exit_status, term_signum):
     process = library.detach(uv_process)
-    process.gc_include()
     """ :type: uv.Process """
-    try:
-        process.on_exit(process, exit_status, term_signum)
-    except:
-        process.loop.handle_exception()
+    if process is not None:
+        process.clear_pending()
+        try:
+            process.on_exit(process, exit_status, term_signum)
+        except:
+            process.loop.handle_exception()
 
 
 def populate_stdio_container(uv_stdio, file_base=None):
@@ -297,7 +298,7 @@ class Process(handle.Handle):
         if code < 0:
             self.set_closed()
             raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     @property
     def pid(self):

@@ -24,10 +24,12 @@ __all__ = ['Idle']
 @ffi.callback('uv_idle_cb')
 def uv_idle_cb(uv_idle):
     idle = library.detach(uv_idle)
-    try:
-        idle.on_idle(idle)
-    except:
-        idle.loop.handle_exception()
+    """ :type: uv.Idle """
+    if idle is not None:
+        try:
+            idle.on_idle(idle)
+        except:
+            idle.loop.handle_exception()
 
 
 @handle.HandleTypes.IDLE
@@ -87,7 +89,7 @@ class Idle(handle.Handle):
         self.on_idle = on_idle or self.on_idle
         code = lib.uv_idle_start(self.uv_idle, uv_idle_cb)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def stop(self):
         """
@@ -98,6 +100,6 @@ class Idle(handle.Handle):
         if self.closing: return
         code = lib.uv_idle_stop(self.uv_idle)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()
 
     __call__ = start

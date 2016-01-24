@@ -43,10 +43,12 @@ class PollEvent(common.Enumeration):
 @ffi.callback('uv_poll_cb')
 def poll_callback(uv_poll, status, events):
     poll = library.detach(uv_poll)
-    try:
-        poll.on_event(poll, status, events)
-    except:
-        poll.loop.handle_exception()
+    """ :type: uv.Poll """
+    if poll is not None:
+        try:
+            poll.on_event(poll, status, events)
+        except:
+            poll.loop.handle_exception()
 
 
 @handle.HandleTypes.POLL
@@ -145,7 +147,7 @@ class Poll(handle.Handle):
         self.on_event = on_event or self.on_event
         code = lib.uv_poll_start(self.uv_poll, events, poll_callback)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def stop(self):
         """
@@ -156,6 +158,6 @@ class Poll(handle.Handle):
         if self.closing: return
         code = lib.uv_poll_stop(self.uv_poll)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()
 
     __call__ = start

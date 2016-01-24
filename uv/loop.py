@@ -20,6 +20,7 @@ import sys
 import threading
 import traceback
 import warnings
+import weakref
 
 from . import common, error, library
 from .library import ffi, lib
@@ -211,14 +212,103 @@ def uv_walk_cb_close(uv_handle, argument):
         lib.uv_close(uv_handle, ffi.NULL)
 
 
-def loop_finalizer(uv_loop):
-    # remove attached garbage collected loop
-    uv_loop.data = ffi.NULL
-    # close all handles and run their close callbacks
-    lib.uv_walk(uv_loop, uv_walk_cb_close, ffi.NULL)
-    while lib.uv_run(uv_loop, RunModes.NOWAIT):
-        pass
-    lib.uv_loop_close(uv_loop)
+_loops = set()
+
+
+class _Loop(object):
+    """
+    This is really complicated stuff and it took me a while to figure
+    it out. It basically does all memory management and implements the
+    garbage collection semantic of this library.
+
+    Handles and requests could be in two different states, normal and
+    pending. If a handle is pending it means some kind of operation is
+    going on and a user callback will be called sometime in the future.
+    Pending handles are only garbage collected together with the loop
+    which is ensured by a reference cycle. So pending handles are only
+    collected if the loop is not running (otherwise there would be a
+    reference to the loop) and there is no reference to the handle
+    itself. Under these exact circumstances the handle is clearly dead
+    because it is impossible to let the handle do something from user
+    code (the loop has to be started, but there is no reference). In
+    normal state handles are garbage collected if there is no strong
+    reference to them. If there are references to handles or requests
+    of a specific loop the loop is not garbage collected even if there
+    are no direct references to the loop itself.
+    """
+    def __init__(self, uv_loop, loop):
+        self.uv_loop = uv_loop
+        self.c_reference = ffi.new_handle(self)
+        self.weak_loop = weakref.ref(loop, self._finalize_loop)
+        self.weak_references = {}
+        self.closeable_handles = set()
+        self.cancelable_requests = set()
+        self.closed = False
+        _loops.add(self)
+
+    def _shutdown(self, close_all):
+        _loops.remove(self)
+        if self.closed:
+            return
+        if close_all:
+            for uv_request in self.cancelable_requests:
+                lib.uv_cancel(uv_request)
+            lib.uv_walk(self.uv_loop, uv_walk_cb_close, ffi.NULL)
+            while lib.uv_run(self.uv_loop, RunModes.NOWAIT):
+                pass
+        assert not lib.uv_loop_close(self.uv_loop)
+
+    def _finalize_loop(self, weak_loop):
+        """
+        Preconditions:
+        All handles have been garbage collected and there is no strong
+        reference to the loop itself or there are pending handles but
+        no strong references to the loop and the pending handles.
+        """
+        self.uv_loop.data = ffi.NULL
+        if not self.weak_references:
+            # there are no pending handles so shutdown the loop
+            self._shutdown(True)
+
+    def _finalize_handle(self, weak_handle):
+        uv_handle = self.weak_references.pop(weak_handle)
+        uv_handle.data = ffi.NULL
+        loop = self.weak_loop()
+        # store a reference so the handle can be closed in the loop's thread
+        self.closeable_handles.add(uv_handle)
+        if loop is None:
+            if not self.weak_references:
+                # there are no more pending handles left
+                self._shutdown(True)
+
+    def _finalize_request(self, weak_request):
+        uv_request = self.weak_references.pop(weak_request)
+        uv_request.data = ffi.NULL
+        loop = self.weak_loop()
+        # store a reference so the request can be cancelled in the loop's thread
+        self.cancelable_requests.add(uv_request)
+        if loop is None:
+            if not self.weak_references:
+                self._shutdown(True)
+
+    def register_handle(self, handle):
+        weak_handle = weakref.ref(handle, self._finalize_handle)
+        handle.uv_handle.loop = self.c_reference
+        self.weak_references[weak_handle] = handle.uv_handle
+
+    def register_request(self, request):
+        weak_request = weakref.ref(request, self._finalize_request)
+        self.weak_references[weak_request] = request.uv_request
+
+    def set_closed(self):
+        self.closed = True
+        self._shutdown(False)
+
+    def handle_set_closed(self, handle):
+        del self.weak_references[weakref.ref(handle)]
+
+    def request_set_closed(self, request):
+        del self.weak_references[weakref.ref(request)]
 
 
 class Loop(object):
@@ -237,9 +327,6 @@ class Loop(object):
     _global_lock = threading.Lock()
     _thread_locals = threading.local()
     _default = None
-    # we keep track of all loops with open handles here to prevent them
-    # form being garbage collected
-    _loops = set()
 
     @classmethod
     def get_default(cls, instantiate=True, **arguments):
@@ -318,8 +405,7 @@ class Loop(object):
             if code < 0:
                 raise error.UVError(code)
 
-        common.attach_finalizer(self, loop_finalizer, self.uv_loop)
-
+        self._loop = _Loop(self.uv_loop, self)
         self._c_reference = library.attach(self.uv_loop, self)
 
         self.allocator = allocator or DefaultAllocator(buffer_size)
@@ -406,7 +492,7 @@ class Loop(object):
         """
         self.make_current()
 
-        self._references = set()
+        self._pending_structures = set()
 
     @property
     def alive(self):
@@ -455,13 +541,15 @@ class Loop(object):
         lib.uv_stop(self.uv_loop)
 
     def close(self):
-        if self.closed: return
+        if self.closed:
+            return
         code = lib.uv_loop_close(self.uv_loop)
-        if code < 0: raise error.UVError(code)
-        self.uv_loop = None
+        if code < 0:
+            raise error.UVError(code)
+        self._loop.set_closed()
         self.closed = True
-        if Loop._thread_locals.loop is self: Loop._thread_locals.loop = None
-        common.detach_finalizer(self)
+        if Loop._thread_locals.loop is self:
+            Loop._thread_locals.loop = None
 
     def close_all_handles(self, callback=None):
         for handle in self.handles: handle.close(callback)
@@ -479,17 +567,20 @@ class Loop(object):
             finally:
                 sys.exit(1)
 
-    def gc_exclude_structure(self, handle):
-        if not self._references:
-            with Loop._global_lock:
-                Loop._loops.add(self)
-        self._references.add(handle)
+    def structure_set_pending(self, handle):
+        self._pending_structures.add(handle)
 
-    def gc_include_structure(self, handle):
-        try:
-            self._references.remove(handle)
-            if not self._references:
-                with Loop._global_lock:
-                    Loop._loops.remove(self)
-        except KeyError:
-            pass
+    def structure_clear_pending(self, handle):
+        self._pending_structures.remove(handle)
+
+    def register_handle(self, handle):
+        self._loop.register_handle(handle)
+
+    def register_request(self, request):
+        self._loop.register_request(request)
+
+    def handle_set_closed(self, handle):
+        self._loop.handle_set_closed(handle)
+
+    def request_set_closed(self, request):
+        self._loop.request_set_closed(request)

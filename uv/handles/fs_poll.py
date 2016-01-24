@@ -27,10 +27,11 @@ def uv_fs_poll_cb(uv_fs_poll, status, uv_previous_stat, uv_current_stat):
     current_stat = fs.unpack_stat(uv_current_stat) if uv_current_stat else None
     fs_poll = library.detach(uv_fs_poll)
     """ :type: uv.FSPoll """
-    try:
-        fs_poll.callback(fs_poll, status, previous_stat, current_stat)
-    except:
-        fs_poll.loop.handle_exception()
+    if fs_poll is not None:
+        try:
+            fs_poll.callback(fs_poll, status, previous_stat, current_stat)
+        except:
+            fs_poll.loop.handle_exception()
 
 
 @handle.HandleTypes.FS_POLL
@@ -124,7 +125,7 @@ class FSPoll(handle.Handle):
         c_path = self.path.encode()
         code = lib.uv_fs_poll_start(self.uv_fs_poll, uv_fs_poll_cb, c_path, self.interval)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def stop(self):
         """
@@ -135,6 +136,6 @@ class FSPoll(handle.Handle):
         if self.closing: return
         code = lib.uv_fs_poll_stop(self.uv_fs_poll)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()
 
     __call__ = start

@@ -25,11 +25,12 @@ __all__ = ['Timer']
 def uv_timer_cb(uv_timer):
     timer = library.detach(uv_timer)
     """ :type: uv.Timer """
-    try:
-        timer.on_timeout(timer)
-    except:
-        timer.loop.handle_exception()
-    # TODO: include / exclude from garbage collection based on repeat value
+    if timer is not None:
+        try:
+            timer.on_timeout(timer)
+        except:
+            timer.loop.handle_exception()
+        # TODO: set / clear pending based on repeat value
 
 
 @handle.HandleTypes.TIMER
@@ -141,7 +142,7 @@ class Timer(handle.Handle):
         self.on_timeout = on_timeout or self.on_timeout
         code = lib.uv_timer_start(self.uv_timer, uv_timer_cb, timeout, repeat)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def stop(self):
         """
@@ -152,4 +153,4 @@ class Timer(handle.Handle):
         if self.closing: return
         code = lib.uv_timer_stop(self.uv_timer)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()

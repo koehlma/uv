@@ -36,7 +36,7 @@ class AddrInfo(tuple):
         return tuple.__new__(cls, (family, socktype, protocol, canonname, address))
 
     def __init__(self, family, socktype, protocol, canonname, address):
-        tuple.__init__(self, (family, socktype, protocol, canonname, address))
+        tuple.__init__(self)
 
     @property
     def family(self):
@@ -92,7 +92,7 @@ class Address(tuple):
         return tuple.__new__(cls, (host, port))
 
     def __init__(self, host, port):
-        tuple.__init__(self, (host, port))
+        tuple.__init__(self)
 
     @property
     def host(self):
@@ -127,7 +127,7 @@ class Address6(Address):
         return tuple.__new__(cls, (host, port, flowinfo, scope_id))
 
     def __init__(self, host, port, flowinfo=0, scope_id=0):
-        tuple.__init__(self, (host, port, flowinfo, scope_id))
+        tuple.__init__(self,)
 
     @property
     def flowinfo(self):
@@ -196,6 +196,8 @@ def unpack_sockaddr(c_sockaddr):
 def uv_getaddrinfo_cb(uv_getaddrinfo, status, _):
     addrinfo_request = library.detach(uv_getaddrinfo)
     """ :type: uv.dns.GetAddrInfo """
+    if addrinfo_request is None:
+        return
     if status == error.StatusCodes.SUCCESS:
         addrinfo_request.populate()
     try:
@@ -254,6 +256,8 @@ def getaddrinfo(host, port, family=0, socktype=0, protocol=0,
 def uv_getnameinfo_cb(uv_getnameinfo, status, c_hostname, c_service):
     nameinfo_request = library.detach(uv_getnameinfo)
     """ :type: uv.dns.GetNameInfo """
+    if nameinfo_request is None:
+        return
     try:
         nameinfo_request.callback(nameinfo_request, status,
                                   ffi.string(c_hostname).decode(),

@@ -98,11 +98,12 @@ class FSEvents(common.Enumeration):
 def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
     fs_event = library.detach(uv_fs_event)
     """ :type: uv.FSEvent """
-    filename = ffi.string(c_filename).decode()
-    try:
-        fs_event.on_event(fs_event, status, filename, events)
-    except:
-        fs_event.loop.handle_exception()
+    if fs_event is not None:
+        filename = ffi.string(c_filename).decode()
+        try:
+            fs_event.on_event(fs_event, status, filename, events)
+        except:
+            fs_event.loop.handle_exception()
 
 
 @handle.HandleTypes.FS_EVENT
@@ -242,7 +243,7 @@ class FSEvent(handle.Handle):
         c_path = self.path.encode()
         code = lib.uv_fs_event_start(self.uv_fs_event, uv_fs_event_cb, c_path, self.flags)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def stop(self):
         """
@@ -254,6 +255,6 @@ class FSEvent(handle.Handle):
         if self.closing: return
         code = lib.uv_fs_event_stop(self.uv_fs_event)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()
 
     __call__ = start

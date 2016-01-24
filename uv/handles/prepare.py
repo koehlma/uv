@@ -24,10 +24,12 @@ __all__ = ['Prepare']
 @ffi.callback('uv_prepare_cb')
 def uv_prepare_cb(uv_prepare):
     prepare = library.detach(uv_prepare)
-    try:
-        prepare.on_prepare(prepare)
-    except:
-        prepare.loop.handle_exception()
+    """ :type: uv.Prepare """
+    if prepare is not None:
+        try:
+            prepare.on_prepare(prepare)
+        except:
+            prepare.loop.handle_exception()
 
 
 @handle.HandleTypes.PREPARE
@@ -78,7 +80,7 @@ class Prepare(handle.Handle):
         self.on_prepare = on_prepare or self.on_prepare
         code = lib.uv_prepare_start(self.uv_prepare, uv_prepare_cb)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def stop(self):
         """
@@ -89,6 +91,6 @@ class Prepare(handle.Handle):
         if self.closing: return
         code = lib.uv_prepare_stop(self.uv_prepare)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()
 
     __call__ = start

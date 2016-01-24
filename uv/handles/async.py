@@ -22,12 +22,13 @@ from ..library import ffi, lib
 @ffi.callback('uv_async_cb')
 def uv_async_cb(uv_async):
     async = library.detach(uv_async)
-    async.gc_include()
     """ :type: uv.Async """
-    try:
-        async.on_wakeup(async)
-    except:
-        async.loop.handle_exception()
+    if async is not None:
+        async.clear_pending()
+        try:
+            async.on_wakeup(async)
+        except:
+            async.loop.handle_exception()
 
 
 @handle.HandleTypes.ASYNC
@@ -108,6 +109,6 @@ class Async(handle.Handle):
         self.on_wakeup = on_wakeup or self.on_wakeup
         code = lib.uv_async_send(self.uv_async)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     __call__ = send

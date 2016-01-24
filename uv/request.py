@@ -55,7 +55,7 @@ class Request(object):
     :type loop: Loop
     """
 
-    __slots__ = ['uv_request', '_c_reference', 'finished', 'loop']
+    __slots__ = ['__weakref__', 'uv_request', '_c_reference', 'finished', 'loop']
 
     def __init__(self, uv_request, loop=None):
         self.uv_request = ffi.cast('uv_req_t*', uv_request)
@@ -78,7 +78,8 @@ class Request(object):
             self.finished = True
             raise error.ClosedLoopError()
         # TODO: add garbage collection for requests
-        self.gc_exclude()
+        self.loop.register_request(self)
+        self.set_pending()
 
     @property
     def type(self):
@@ -109,7 +110,7 @@ class Request(object):
         if not self.finished:
             self.finished = True
 
-    def gc_exclude(self):
+    def set_pending(self):
         """
         .. warning::
             This method is only for internal purposes and is not part
@@ -118,16 +119,16 @@ class Request(object):
             loop are excluded form garbage collection. You should never
             call it directly!
         """
-        self.loop.gc_exclude_structure(self)
+        self.loop.structure_set_pending(self)
 
-    def gc_include(self):
+    def clear_pending(self):
         """
         .. warning::
             This method is only for internal purposes and is not part
             of the official API. It reactivates the garbage collection
             for the request. You should never call it directly!
         """
-        self.loop.gc_include_structure(self)
+        self.loop.structure_clear_pending(self)
 
 
 RequestType.cls = Request

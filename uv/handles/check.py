@@ -23,10 +23,11 @@ from ..library import ffi, lib
 def uv_check_cb(uv_check):
     check = library.detach(uv_check)
     """ :type: uv.Check """
-    try:
-        check.on_check(check)
-    except:
-        check.loop.handle_exception()
+    if check is not None:
+        try:
+            check.on_check(check)
+        except:
+            check.loop.handle_exception()
 
 
 @handle.HandleTypes.CHECK
@@ -101,7 +102,7 @@ class Check(handle.Handle):
         self.on_check = on_check or self.on_check
         code = lib.uv_check_start(self.uv_check, uv_check_cb)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def stop(self):
         """
@@ -113,6 +114,6 @@ class Check(handle.Handle):
         if self.closing: return
         code = lib.uv_check_stop(self.uv_check)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()
 
     __call__ = start

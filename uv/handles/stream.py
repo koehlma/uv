@@ -25,11 +25,12 @@ __all__ = ['ShutdownRequest', 'ConnectRequest', 'WriteRequest', 'Stream']
 def uv_shutdown_cb(uv_request, status):
     shutdown_request = library.detach(uv_request)
     """ :type: uv.ShutdownRequest """
-    try:
-        shutdown_request.on_shutdown(shutdown_request, status)
-    except:
-        shutdown_request.loop.handle_exception()
-    shutdown_request.destroy()
+    if shutdown_request is not None:
+        try:
+            shutdown_request.on_shutdown(shutdown_request, status)
+        except:
+            shutdown_request.loop.handle_exception()
+        shutdown_request.destroy()
 
 
 @request.RequestType.SHUTDOWN
@@ -81,11 +82,12 @@ class ShutdownRequest(request.Request):
 def uv_write_cb(uv_request, status):
     write_request = library.detach(uv_request)
     """ :type: uv.WriteRequest """
-    try:
-        write_request.on_write(write_request, status)
-    except:
-        write_request.loop.handle_exception()
-    write_request.destroy()
+    if write_request is not None:
+        try:
+            write_request.on_write(write_request, status)
+        except:
+            write_request.loop.handle_exception()
+        write_request.destroy()
 
 
 @request.RequestType.WRITE
@@ -156,11 +158,12 @@ class WriteRequest(request.Request):
 def uv_connect_cb(uv_request, status):
     connect_request = library.detach(uv_request)
     """ :type: uv.ConnectRequest """
-    try:
-        connect_request.on_connect(connect_request, status)
-    except:
-        connect_request.loop.handle_exception()
-    connect_request.destroy()
+    if connect_request is not None:
+        try:
+            connect_request.on_connect(connect_request, status)
+        except:
+            connect_request.loop.handle_exception()
+        connect_request.destroy()
 
 
 @request.RequestType.CONNECT
@@ -209,22 +212,27 @@ class ConnectRequest(request.Request):
 def uv_connection_cb(uv_stream, status):
     stream = library.detach(uv_stream)
     """ :type: uv.Stream """
-    try:
-        stream.on_connection(stream, status)
-    except:
-        stream.loop.handle_exception()
+    if stream is not None:
+        try:
+            stream.on_connection(stream, status)
+        except:
+            stream.loop.handle_exception()
 
 
 @ffi.callback('uv_read_cb')
 def uv_read_cb(uv_stream, length, uv_buf):
     stream = library.detach(uv_stream)
     """ :type: uv.Stream """
-    data = stream.loop.allocator.finalize(stream, length, uv_buf)
-    length, status = (0, length) if length < 0 else (length, error.StatusCodes.SUCCESS)
-    try:
-        stream.on_read(stream, status, length, data)
-    except:
-        stream.loop.handle_exception()
+    if stream is not None:
+        data = stream.loop.allocator.finalize(stream, length, uv_buf)
+        if length < 0:
+            length, status = 0, length
+        else:
+            status = error.StatusCodes.SUCCESS
+        try:
+            stream.on_read(stream, status, length, data)
+        except:
+            stream.loop.handle_exception()
 
 
 @handle.HandleTypes.STREAM
@@ -389,7 +397,7 @@ class Stream(handle.Handle):
         self.on_read = on_read or self.on_read
         code = lib.uv_read_start(self.uv_stream, loop.uv_alloc_cb, uv_read_cb)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def read_stop(self):
         """
@@ -402,7 +410,7 @@ class Stream(handle.Handle):
         if self.closing: return
         code = lib.uv_read_stop(self.uv_stream)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()
 
     def write(self, buffers, send_stream=None, on_write=None):
         """

@@ -64,10 +64,11 @@ class Signals(common.Enumeration):
 def uv_signal_cb(uv_signal, signum):
     signal = library.detach(uv_signal)
     """ :type: uv.Signal """
-    try:
-        signal.on_signal(signal, signum)
-    except:
-        signal.loop.handle_exception()
+    if signal is not None:
+        try:
+            signal.on_signal(signal, signum)
+        except:
+            signal.loop.handle_exception()
 
 
 @handle.HandleTypes.SIGNAL
@@ -143,7 +144,7 @@ class Signal(handle.Handle):
         self.on_signal = on_signal or self.on_signal
         code = lib.uv_signal_start(self.uv_signal, uv_signal_cb, signum)
         if code < 0: raise error.UVError(code)
-        self.gc_exclude()
+        self.set_pending()
 
     def stop(self):
         """
@@ -154,6 +155,6 @@ class Signal(handle.Handle):
         if self.closing: return
         code = lib.uv_signal_stop(self.uv_signal)
         if code < 0: raise error.UVError(code)
-        self.gc_include()
+        self.clear_pending()
 
     __call__ = start

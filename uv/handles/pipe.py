@@ -188,5 +188,5 @@ class Pipe(stream.Stream):
         c_path = path.encode()
         lib.uv_pipe_connect(request.uv_connect, self.uv_pipe, c_path,
                             stream.uv_connect_cb)
-        self.gc_exclude()
+        self.set_pending()
         return request
