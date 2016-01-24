@@ -60,7 +60,6 @@ class HandleTypes(common.Enumeration):
 @ffi.callback('uv_close_cb')
 def uv_close_cb(uv_handle):
     handle = library.detach(uv_handle)
-    handle.loop.deregister_structure(handle)
     """ :type: uv.Handle """
     try:
         handle.on_closed(handle)
@@ -79,16 +78,16 @@ _finalizing = set()
 @ffi.callback('uv_close_cb')
 def uv_close_cb_finalize(uv_handle):
     _finalizing.remove(uv_handle)
-    library.detach(uv_handle.loop).deregister_structure(handle)
 
 
-def handle_finalizer(uv_handle):
+def handle_finalizer(uv_handle, loop):
     # do not garbage collect the handle until it has been closed
     _finalizing.add(uv_handle)
     # remove attached garbage collected handle
     uv_handle.data = ffi.NULL
     # TODO: this might lead to data races
     lib.uv_close(ffi.cast('uv_handle_t*', uv_handle), uv_close_cb_finalize)
+    del loop
 
 
 @HandleTypes.UNKNOWN
@@ -197,8 +196,9 @@ class Handle(object):
         :type:
             uv.loop.Allocator
         """
-        common.attach_finalizer(self, handle_finalizer, uv_handle)
-        self.loop.register_structure(self)
+        # keep references to the handle and the loop to prevent them
+        # from being garbage collected
+        common.attach_finalizer(self, handle_finalizer, uv_handle, self.loop)
 
     @property
     def active(self):

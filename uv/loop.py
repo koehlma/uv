@@ -20,7 +20,6 @@ import sys
 import threading
 import traceback
 import warnings
-import weakref
 
 from . import common, error, library
 from .library import ffi, lib
@@ -206,7 +205,19 @@ def uv_walk_cb(uv_handle, c_handles_set):
         handles.add(handle)
 
 
+@ffi.callback('uv_walk_cb')
+def uv_walk_cb_close(uv_handle, argument):
+    if not lib.uv_is_closing(uv_handle):
+        lib.uv_close(uv_handle, ffi.NULL)
+
+
 def loop_finalizer(uv_loop):
+    # remove attached garbage collected loop
+    uv_loop.data = ffi.NULL
+    # close all handles and run their close callbacks
+    lib.uv_walk(uv_loop, uv_walk_cb_close, ffi.NULL)
+    while lib.uv_run(uv_loop, RunModes.NOWAIT):
+        pass
     lib.uv_loop_close(uv_loop)
 
 
@@ -395,8 +406,7 @@ class Loop(object):
         """
         self.make_current()
 
-        self._strong_references = set()
-        self._weak_references = weakref.WeakSet()
+        self._references = set()
 
     @property
     def alive(self):
@@ -470,26 +480,16 @@ class Loop(object):
                 sys.exit(1)
 
     def gc_exclude_structure(self, handle):
-        self._strong_references.add(handle)
+        if not self._references:
+            with Loop._global_lock:
+                Loop._loops.add(self)
+        self._references.add(handle)
 
     def gc_include_structure(self, handle):
         try:
-            self._strong_references.remove(handle)
-        except KeyError:
-            pass
-
-    def register_structure(self, structure):
-        if not self._weak_references:
-            with Loop._global_lock:
-                Loop._loops.add(self)
-        self._weak_references.add(structure)
-
-    def deregister_structure(self, structure):
-        try:
-            self._weak_references.remove(structure)
-            if not self._weak_references:
+            self._references.remove(handle)
+            if not self._references:
                 with Loop._global_lock:
                     Loop._loops.remove(self)
         except KeyError:
             pass
-
