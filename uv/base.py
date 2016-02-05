@@ -341,7 +341,8 @@ class BaseHandle(object):
             uv.Handle | None
         """
         try:
-            return ffi.from_handle(uv_handle.data).user_handle
+            if uv_handle.data:
+                return ffi.from_handle(uv_handle.data).user_handle
         except AttributeError:
             return None
 
@@ -453,7 +454,8 @@ class BaseRequest(object):
             uv.Request | None
         """
         try:
-            return ffi.from_handle(uv_request.data).user_request
+            if uv_request.data:
+                return ffi.from_handle(uv_request.data).user_request
         except AttributeError:
             return None
 
