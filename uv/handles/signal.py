@@ -112,7 +112,7 @@ class Signal(handle.Handle):
         """
         Signal being monitored by this handle.
 
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: True
         :rtype: int
@@ -126,7 +126,7 @@ class Signal(handle.Handle):
         Starts the handle.
 
         :raises uv.UVError: error while starting the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param signum: signal number to be monitored
         :param on_signal: callback called on signal delivery

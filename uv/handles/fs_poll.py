@@ -147,7 +147,7 @@ class FSPoll(handle.Handle):
 
         :raises uv.UVError:
             error while starting the handle
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
 
         :param path:

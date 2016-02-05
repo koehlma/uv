@@ -71,7 +71,7 @@ class TCP(stream.Stream):
         Open an existing file descriptor as a tcp handle.
 
         :raises uv.UVError: error while opening the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param fd: file descriptor
         :type fd: int
@@ -87,7 +87,7 @@ class TCP(stream.Stream):
         Enable / disable Nagle’s algorithm.
 
         :raises uv.UVError: error enabling / disabling the algorithm
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param enable: enable / disable
         :type enable: bool
@@ -103,7 +103,7 @@ class TCP(stream.Stream):
         Enable / disable TCP keep-alive.
 
         :raises uv.UVError: error enabling / disabling tcp keep-alive
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param enable: enable / disable
         :param delay: initial delay in seconds
@@ -128,7 +128,7 @@ class TCP(stream.Stream):
         load distribution in multi-process setups.
 
         :raises uv.UVError: error enabling / disabling simultaneous accepts
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param enable: enable / disable
         :type enable: bool
@@ -149,7 +149,7 @@ class TCP(stream.Stream):
         The current address to which the handle is bound to.
 
         :raises uv.UVError: error while receiving sockname
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
@@ -170,7 +170,7 @@ class TCP(stream.Stream):
         The address of the peer connected to the handle.
 
         :raises uv.UVError: error while receiving peername
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
@@ -194,7 +194,7 @@ class TCP(stream.Stream):
         or `connect()` will succeed as well.
 
         :raises uv.UVError: error while binding to `address`
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
         :param flags: bind flags to be used (mask of :class:`uv.TCPFlags`)
@@ -216,7 +216,7 @@ class TCP(stream.Stream):
         Establish an IPv4 or IPv6 TCP connection.
 
         :raises uv.UVError: error while connecting to `address`
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
         :param on_connect: callback called after connection has been established

@@ -93,7 +93,7 @@ class Async(handle.Handle):
 
         :raises uv.UVError:
             error while trying to wakeup the event loop
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
 
         :param on_wakeup:

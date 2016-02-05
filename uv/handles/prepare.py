@@ -62,7 +62,7 @@ class Prepare(handle.Handle):
         Starts the handle.
 
         :raises uv.UVError: error while starting the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param on_prepare: callback called before polling for IO
         :type on_prepare: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)

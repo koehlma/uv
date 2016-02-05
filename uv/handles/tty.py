@@ -132,7 +132,7 @@ class TTY(stream.Stream):
         Set the TTY using the specified terminal mode.
 
         :raises uv.UVError: error while setting mode
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param mode: mode to set
         :type mode: uv.TTYMode

@@ -66,7 +66,7 @@ class Idle(handle.Handle):
         Starts the handle.
 
         :raises uv.UVError: error while starting the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param on_idle: callback called before prepare handles
         :type on_idle: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)

@@ -86,7 +86,7 @@ class Timer(handle.Handle):
             was repeating, then the old repeat value will have been
             used to schedule the next timeout.
 
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: False
         :rtype: int
@@ -98,7 +98,7 @@ class Timer(handle.Handle):
     @repeat.setter
     def repeat(self, repeat):
         """
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param repeat: repeat interval which should be set
         :type repeat: int
@@ -114,7 +114,7 @@ class Timer(handle.Handle):
         raises :class:`uv.UVError` with :class:`uv.StatusCode.EINVAL`.
 
         :raises uv.UVError: error while restarting the timer
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         """
         if self.closing:
@@ -131,7 +131,7 @@ class Timer(handle.Handle):
         repeatedly after `repeat` milliseconds.
 
         :raises uv.UVError: error while starting the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param timeout: timeout to be used (in milliseconds)
         :param on_timeout: callback called on timeout

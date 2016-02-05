@@ -60,7 +60,7 @@ class Pipe(stream.Stream):
         Open an existing file descriptor as a pipe.
 
         :raises uv.UVError: error while opening the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param fd: file descriptor
         :type fd: int
@@ -88,7 +88,7 @@ class Pipe(stream.Stream):
         """
         Type of first pending stream. This returns a subclass of :class:`uv.Stream`.
 
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: True
         :rtype: type
@@ -102,7 +102,7 @@ class Pipe(stream.Stream):
         Accept a pending stream.
 
         :raises uv.UVError: error while accepting stream
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :rtype: uv.Stream
         """
@@ -128,7 +128,7 @@ class Pipe(stream.Stream):
         Name of the Unix domain socket or the named pipe.
 
         :raises uv.UVError: error while receiving sockname
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: True
         :rtype: unicode
@@ -151,7 +151,7 @@ class Pipe(stream.Stream):
         Name of the Unix domain socket or the named pipe to which the handle is connected.
 
         :raises uv.UVError: error while receiving peername
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: True
         :rtype: unicode
@@ -173,7 +173,7 @@ class Pipe(stream.Stream):
         Bind the pipe to a file path (Unix) or a name (Windows).
 
         :raises uv.UVError: error while binding to `path`
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param path: path to bind to
         :type path: unicode
@@ -188,7 +188,7 @@ class Pipe(stream.Stream):
         """
         Connect to the given Unix domain socket or named pipe.
 
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param path: path to connect to
         :param on_connect: callback called after connection has been established

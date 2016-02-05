@@ -79,7 +79,7 @@ class SendRequest(request.Request):
     UDP send request.
 
     :raises uv.UVError: error while initializing the request
-    :raises uv.HandleClosedError: udp handle has already been closed or is closing
+    :raises uv.ClosedHandleError: udp handle has already been closed or is closing
 
     :param udp: udp handle the request should run on
     :param buffers: buffers or buffer to send
@@ -186,7 +186,7 @@ class UDP(handle.Handle):
         Open an existing file descriptor as a udp handle.
 
         :raises uv.UVError: error while opening the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param fd: file descriptor
         :type fd: int
@@ -202,7 +202,7 @@ class UDP(handle.Handle):
         Set membership for a multicast address
 
         raises uv.UVError: error while setting membership
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param multicast_address: multicast address to set membership for
         :param interface_address: interface address
@@ -225,7 +225,7 @@ class UDP(handle.Handle):
         Set IP multicast loop flag. Makes multicast packets loop back to local sockets.
 
         :raises uv.UVError: error enabling / disabling multicast loop
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param enable: enable / disable multicast loop
         :type enable: bool
@@ -241,7 +241,7 @@ class UDP(handle.Handle):
         Set the multicast ttl.
 
         :raises uv.UVError: error while setting ttl
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param ttl: multicast ttl (1 trough 255)
         :type ttl: int
@@ -257,7 +257,7 @@ class UDP(handle.Handle):
         Set the multicast interface to send or receive data on.
 
         :raises uv.UVError: error while setting multicast interface
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param interface: multicast interface address
         :type interface: str
@@ -273,7 +273,7 @@ class UDP(handle.Handle):
         Set broadcast on or off.
 
         :raises uv.UVError: error enabling / disabling broadcast
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param enable: enable / disable broadcast
         :type enable: bool
@@ -307,7 +307,7 @@ class UDP(handle.Handle):
         The local IP and port of the UDP handle.
 
         :raises uv.UVError: error while receiving sockname
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
@@ -331,7 +331,7 @@ class UDP(handle.Handle):
         or `connect()` will succeed as well.
 
         :raises uv.UVError: error while binding to `address`
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
         :param flags: bind flags to be used (mask of :class:`uv.TCPBindFlags`)
@@ -354,7 +354,7 @@ class UDP(handle.Handle):
         IPv4 address) and a random port number.
 
         :raises uv.UVError: error while initializing the request
-        :raises uv.HandleClosedError: udp handle has already been closed or is closing
+        :raises uv.ClosedHandleError: udp handle has already been closed or is closing
 
         :param buffers: buffers or buffer to send
         :param address: address of the remote peer `(ip, port, flowinfo=0, scope_id=0)`
@@ -376,7 +376,7 @@ class UDP(handle.Handle):
         cannot be completed immediately.
 
         :raises uv.UVError: error while sending data
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param buffers: buffers or buffer to send
         :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
@@ -404,7 +404,7 @@ class UDP(handle.Handle):
         and a random port number.
 
         :raises uv.UVError: error while start receiving datagrams
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param on_receive: callback called after package has been received
         :type on_receive:

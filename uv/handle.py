@@ -154,7 +154,7 @@ class Handle(object):
         """
         Handle is already closed or is closing. This is `True` right
         after close has been called. Operations on a closed or closing
-        handle will raise :class:`uv.HandleClosedError`.
+        handle will raise :class:`uv.ClosedHandleError`.
 
         :readonly:
             True
@@ -251,7 +251,7 @@ class Handle(object):
 
         :raises uv.UVError:
             error while getting/setting the send buffer size
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
 
         :readonly:
@@ -272,7 +272,7 @@ class Handle(object):
         """
         :raises uv.UVError:
             error while getting/setting the send buffer size
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
 
         :param size:
@@ -305,7 +305,7 @@ class Handle(object):
 
         :raises uv.UVError:
             error while getting/setting the receive buffer size
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
 
         :readonly:
@@ -326,7 +326,7 @@ class Handle(object):
         """
         :raises uv.UVError:
             error while getting/setting the receive buffer size
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
 
         :param size:
@@ -360,7 +360,7 @@ class Handle(object):
 
         :raises uv.UVError:
             error while receiving fileno
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
 
         :return:
@@ -384,7 +384,7 @@ class Handle(object):
         counting. References are idempotent, that is, if a handle is
         referenced calling this method again will have not effect.
 
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
         """
         if self.closing:
@@ -399,7 +399,7 @@ class Handle(object):
         counting. References are idempotent, that is, if a handle is
         not referenced calling this method again will have not effect.
 
-        :raises uv.HandleClosedError:
+        :raises uv.ClosedHandleError:
             handle has already been closed or is closing
         """
         if self.closing:
@@ -418,7 +418,7 @@ class Handle(object):
         :class:`uv.StatusCodes.ECANCELED`.
 
         After this method has been called on a handle no operations can
-        be performed on it (they raise :class:`uv.HandleClosedError`).
+        be performed on it (they raise :class:`uv.ClosedHandleError`).
 
         .. note::
             Handles are automatically closed when they are garbage

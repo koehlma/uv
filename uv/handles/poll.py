@@ -133,7 +133,7 @@ class Poll(handle.Handle):
         update the events mask that is being watched for.
 
         :raises uv.UVError: error while starting the handle
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param events: bitmask of events to be polled for
         :param on_event: callback called on IO events

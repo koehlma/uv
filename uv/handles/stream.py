@@ -38,7 +38,7 @@ class ShutdownRequest(request.Request):
     Shutdown request.
 
     :raises uv.UVError: error while initializing the request
-    :raises uv.HandleClosedError: stream has already been closed or is closing
+    :raises uv.ClosedHandleError: stream has already been closed or is closing
 
     :param stream: stream to shutdown
     :param on_shutdown: callback called after shutdown has been completed
@@ -93,7 +93,7 @@ class WriteRequest(request.Request):
     Write request.
 
     :raises uv.UVError: error while initializing the request
-    :raises uv.HandleClosedError: stream has already been closed or is closing
+    :raises uv.ClosedHandleError: stream has already been closed or is closing
 
     :param stream: stream to write to
     :param buffers: data to write
@@ -326,7 +326,7 @@ class Stream(handle.Handle):
         .. function: on_connection(Stream, Status)
 
         :raises uv.UVError: error while start listening for incoming connections
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param backlog: number of connections the kernel might queue
         :param on_connection: callback called when a new connection is available
@@ -354,7 +354,7 @@ class Stream(handle.Handle):
         this method once per `on_connection` call.
 
         :raises uv.UVError: error while accepting incoming connection
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param cls: class of the new stream, must be a subclass of :class:`uv.Stream`
         :param args: arguments passed to the constructor of the new connection
@@ -379,7 +379,7 @@ class Stream(handle.Handle):
         `read_stop` has been called.
 
         :raises uv.UVError: error while start reading from stream
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param on_read: callback called after data was read
         :type on_read: ((uv.Stream, uv.StatusCode, int, bytes) -> None) |
@@ -417,7 +417,7 @@ class Stream(handle.Handle):
         be either a TCP socket or pipe, which is a server or connection.
 
         :raises uv.UVError: error while creating a write request
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param buffers: buffers or buffer to send
         :param send_stream: stream to send to the other end
@@ -439,7 +439,7 @@ class Stream(handle.Handle):
         cannot be completed immediately.
 
         :raises uv.UVError: error while writing data
-        :raises uv.HandleClosedError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :param buffers: buffers or buffer to send
         :type buffers: list[bytes] | bytes
