@@ -546,7 +546,7 @@ def request_callback(callback_type):
     def decorator(callback):
         def wrapper(uv_request, *arguments):
             base_request = ffi.from_handle(uv_request.data)
-            """ :type: Request """
+            """ :type: BaseRequest """
             base_request.set_finished()
             user_request = base_request.user_request
             user_request.clear_pending()
