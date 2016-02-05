@@ -96,9 +96,12 @@ class Poll(handle.Handle):
 
     __slots__ = ['uv_poll', 'fd', 'on_event']
 
+    uv_handle_type = 'uv_poll_t*'
+    uv_handle_init = lib.cross_uv_poll_init_socket
+
     def __init__(self, fd, loop=None, on_event=None):
-        self.uv_poll = ffi.new('uv_poll_t*')
-        super(Poll, self).__init__(self.uv_poll, loop)
+        super(Poll, self).__init__(loop, (fd, ))
+        self.uv_poll = self.base_handle.uv_object
         self.fd = fd
         """
         File descriptor the handle polls on.
@@ -116,10 +119,6 @@ class Poll(handle.Handle):
         :type: ((uv.Poll, uv.StatusCode, int) -> None) |
                ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
-        code = lib.cross_uv_poll_init_socket(self.loop.uv_loop, self.uv_poll, fd)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
 
     def start(self, events=PollEvent.READABLE, on_event=None):
         """
@@ -143,10 +142,12 @@ class Poll(handle.Handle):
         :type on_event: ((uv.Poll, uv.StatusCode, int) -> None) |
                         ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_event = on_event or self.on_event
         code = lib.uv_poll_start(self.uv_poll, events, poll_callback)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.set_pending()
 
     def stop(self):
@@ -155,9 +156,11 @@ class Poll(handle.Handle):
 
         :raises uv.UVError: error while stopping the handle
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_poll_stop(self.uv_poll)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.clear_pending()
 
     __call__ = start

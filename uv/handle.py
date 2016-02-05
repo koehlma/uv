@@ -15,7 +15,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from . import common, error, library
+from . import base, common, error
 from .library import ffi, lib
 from .loop import Loop
 
@@ -57,19 +57,6 @@ class HandleTypes(common.Enumeration):
         return cls
 
 
-@ffi.callback('uv_close_cb')
-def uv_close_cb(uv_handle):
-    handle = library.detach(uv_handle)
-    """ :type: uv.Handle """
-    if not handle:
-        return
-    try:
-        handle.on_closed(handle)
-    except:
-        handle.loop.handle_exception()
-    handle.set_closed()
-
-
 @HandleTypes.UNKNOWN
 @HandleTypes.HANDLE
 class Handle(object):
@@ -82,27 +69,29 @@ class Handle(object):
         Handles underlie a special garbage collection strategy which
         means they are not garbage collected as other objects. If a
         handle is able to do anything in the program for example
-        calling a callback it is excluded from garbage collection as
-        well as the corresponding event loop.
+        calling a callback they are not garbage collected.
 
     :raises uv.LoopClosedError:
         loop has already been closed
 
-    :param uv_handle:
-        allocated c struct for this handle (with CFFI ownership)
     :param loop:
         loop where the handle should run on
+    :param arguments:
+        arguments passed to the libuv handle init function
 
-    :type uv_handle:
-        ffi.CData
     :type loop:
         uv.Loop
+    :type arguments:
+        tuple
     """
 
-    __slots__ = ['__weakref__', 'loop', 'uv_handle', '_c_reference', 'on_closed',
-                 'closed', 'closing', 'data', 'allocator']
+    __slots__ = ['__weakref__', 'loop', 'base_handle', 'uv_handle',
+                 'on_closed', 'data', 'allocator']
 
-    def __init__(self, uv_handle, loop=None):
+    uv_handle_type = None
+    uv_handle_init = None
+
+    def __init__(self, loop, arguments=()):
         self.loop = loop or Loop.get_current()
         """
         Loop the handle is running on.
@@ -114,8 +103,12 @@ class Handle(object):
         """
         if self.loop.closed:
             raise error.ClosedLoopError()
-        self.uv_handle = ffi.cast('uv_handle_t*', uv_handle)
-        self._c_reference = library.attach(self.uv_handle, self)
+
+        self.base_handle = base.BaseHandle(self, self.loop.base_loop, self.uv_handle_type,
+                                           self.uv_handle_init, arguments)
+
+        self.uv_handle = self.base_handle.uv_handle
+
         self.on_closed = common.dummy_callback
         """
         Callback which should run after the handle has been closed.
@@ -135,28 +128,7 @@ class Handle(object):
         :type:
             ((uv.Handle) -> None) | ((Any, uv.Handle) -> None)
         """
-        self.closed = False
-        """
-        Handle has been closed. This is `True` right after the close
-        callback has been called. It means all internal resources are
-        freed and this handle is ready to be garbage collected.
 
-        :readonly:
-            True
-        :type:
-            bool
-        """
-        self.closing = False
-        """
-        Handle is already closed or is closing. This is `True` right
-        after close has been called. Operations on a closed or closing
-        handle will raise :class:`uv.HandleClosedError`.
-
-        :readonly:
-            True
-        :type:
-            bool
-        """
         self.data = None
         """
         User-specific data of any type. This is necessary because of
@@ -176,7 +148,34 @@ class Handle(object):
         :type:
             uv.loop.Allocator
         """
-        self.loop.register_handle(self)
+
+    @property
+    def closing(self):
+        """
+        Handle is already closed or is closing. This is `True` right
+        after close has been called. Operations on a closed or closing
+        handle will raise :class:`uv.HandleClosedError`.
+
+        :readonly:
+            True
+        :type:
+            bool
+        """
+        return self.base_handle.closing
+
+    @property
+    def closed(self):
+        """
+        Handle has been closed. This is `True` right after the close
+        callback has been called. It means all internal resources are
+        freed and this handle is ready to be garbage collected.
+
+        :readonly:
+            True
+        :type:
+            bool
+        """
+        return self.base_handle.closed
 
     @property
     def active(self):
@@ -436,13 +435,13 @@ class Handle(object):
         """
         if self.closing:
             return
-        self.closing = True
         self.on_closed = on_closed or self.on_closed
         # exclude the handle from garbage collection until it is closed
         self.set_pending()
         # the finalizer does not have to close the handle anymore
         #common.detach_finalizer(self)
-        lib.uv_close(self.uv_handle, uv_close_cb)
+        #lib.uv_close(self.uv_handle, uv_close_cb)
+        self.base_handle.close()
 
     def set_closed(self):
         """
@@ -452,8 +451,6 @@ class Handle(object):
             and activates garbage collection for the handle. You should
             never call it directly!
         """
-        self.closing = True
-        self.closed = True
         self.clear_pending()
         self.loop.handle_set_closed(self)
 

@@ -16,6 +16,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os
+import platform
 import unittest
 
 import uv
@@ -54,6 +55,14 @@ except: pass
 
 try: os.remove(TEST_PIPE2)
 except: pass
+
+
+def implementation_skip(*implementations):
+    def decorator(obj):
+        return obj
+    if platform.python_implementation().lower() in implementations:
+        return unittest.skip('test is not available on the current implementation')
+    return decorator
 
 
 class TestLoop(uv.Loop):

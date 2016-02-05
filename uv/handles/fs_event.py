@@ -16,7 +16,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, error, handle, library
+from .. import base, common, error, handle
 from ..library import ffi, lib
 
 
@@ -94,16 +94,20 @@ class FSEvents(common.Enumeration):
     """
 
 
-@ffi.callback('uv_fs_event_cb')
-def uv_fs_event_cb(uv_fs_event, c_filename, events, status):
-    fs_event = library.detach(uv_fs_event)
-    """ :type: uv.FSEvent """
-    if fs_event is not None:
-        filename = ffi.string(c_filename).decode()
-        try:
-            fs_event.on_event(fs_event, status, filename, events)
-        except:
-            fs_event.loop.handle_exception()
+@base.handle_callback('uv_fs_event_cb')
+def uv_fs_event_cb(fs_event_handle, c_filename, events, status):
+    """
+    :type fs_event_handle:
+        uv.FSEvent
+    :type c_filename:
+        ffi.CData[char*]
+    :type events:
+        int
+    :type status:
+        int
+    """
+    filename = ffi.string(c_filename).decode()
+    fs_event_handle.on_event(fs_event_handle, status, filename, events)
 
 
 @handle.HandleTypes.FS_EVENT
@@ -116,6 +120,9 @@ class FSEvent(handle.Handle):
     """
 
     __slots__ = ['uv_fs_event', 'on_event', 'flags', 'path']
+
+    uv_handle_type = 'uv_fs_event_t*'
+    uv_handle_init = lib.uv_fs_event_init
 
     def __init__(self, path=None, flags=0, loop=None, on_event=None):
         """
@@ -141,8 +148,8 @@ class FSEvent(handle.Handle):
             ((uv.FSEvent, uv.StatusCode, unicode, int) -> None) |
             ((Any, uv.FSEvent, uv.StatusCode, unicode, int) -> None)
         """
-        self.uv_fs_event = ffi.new('uv_fs_event_t*')
-        super(FSEvent, self).__init__(self.uv_fs_event, loop)
+        super(FSEvent, self).__init__(loop)
+        self.uv_fs_event = self.base_handle.uv_object
         self.path = path
         """
         Directory or filename to monitor.
@@ -203,10 +210,6 @@ class FSEvent(handle.Handle):
             ((uv.FSEvent, uv.StatusCode, unicode, int) -> None) |
             ((Any, uv.FSEvent, uv.StatusCode, unicode, int) -> None)
         """
-        code = lib.uv_fs_event_init(self.loop.uv_loop, self.uv_fs_event)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
 
     def start(self, path=None, flags=None, on_event=None):
         """
@@ -235,14 +238,17 @@ class FSEvent(handle.Handle):
             ((uv.FSEvent, uv.StatusCode, unicode, int) -> None) |
             ((Any, uv.FSEvent, uv.StatusCode, unicode, int) -> None)
         """
-        # TODO: assert path is not none
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.path = path or self.path
         self.flags = flags or self.flags
         self.on_event = on_event or self.on_event
+        if self.path is None:
+            raise error.InvalidTypeError(message='no path has been specified')
         c_path = self.path.encode()
         code = lib.uv_fs_event_start(self.uv_fs_event, uv_fs_event_cb, c_path, self.flags)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.set_pending()
 
     def stop(self):
@@ -252,9 +258,11 @@ class FSEvent(handle.Handle):
         :raises uv.UVError:
             error while stopping the handle
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_fs_event_stop(self.uv_fs_event)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.clear_pending()
 
     __call__ = start

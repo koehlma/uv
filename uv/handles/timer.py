@@ -15,7 +15,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, error, handle, library
+from .. import base, common, error, handle
 from ..library import ffi, lib
 
 __all__ = ['Timer']
@@ -23,7 +23,7 @@ __all__ = ['Timer']
 
 @ffi.callback('uv_timer_cb')
 def uv_timer_cb(uv_timer):
-    timer = library.detach(uv_timer)
+    timer = base.BaseHandle.detach(uv_timer)
     """ :type: uv.Timer """
     if timer is not None:
         try:
@@ -49,9 +49,12 @@ class Timer(handle.Handle):
 
     __slots__ = ['uv_timer', 'on_timeout']
 
+    uv_handle_type = 'uv_timer_t*'
+    uv_handle_init = lib.uv_timer_init
+
     def __init__(self, loop=None, on_timeout=None):
-        self.uv_timer = ffi.new('uv_timer_t*')
-        super(Timer, self).__init__(self.uv_timer, loop)
+        super(Timer, self).__init__(loop)
+        self.uv_timer = self.base_handle.uv_object
         self.on_timeout = on_timeout or common.dummy_callback
         """
         Callback called on timeout.
@@ -61,10 +64,6 @@ class Timer(handle.Handle):
         :readonly: False
         :type: ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
         """
-        code = lib.uv_timer_init(self.loop.uv_loop, self.uv_timer)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
 
     @property
     def repeat(self):
@@ -92,7 +91,8 @@ class Timer(handle.Handle):
         :readonly: False
         :rtype: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         return lib.uv_timer_get_repeat(self.uv_timer)
 
     @repeat.setter
@@ -103,7 +103,8 @@ class Timer(handle.Handle):
         :param repeat: repeat interval which should be set
         :type repeat: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         lib.uv_timer_set_repeat(self.uv_timer, repeat)
 
     def again(self):
@@ -116,9 +117,11 @@ class Timer(handle.Handle):
         :raises uv.HandleClosedError: handle has already been closed or is closing
 
         """
-        if self.closing: raise error.ClosedHandleError
+        if self.closing:
+            raise error.ClosedHandleError
         code = lib.uv_timer_again(self.uv_timer)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
 
     def start(self, timeout, on_timeout=None, repeat=0):
         """
@@ -138,10 +141,12 @@ class Timer(handle.Handle):
         :type on_timeout: ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
         :type repeat: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_timeout = on_timeout or self.on_timeout
         code = lib.uv_timer_start(self.uv_timer, uv_timer_cb, timeout, repeat)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
         self.set_pending()
 
     def stop(self):
@@ -150,7 +155,9 @@ class Timer(handle.Handle):
 
         :raises uv.UVError: error while stopping the handle
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_timer_stop(self.uv_timer)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
         self.clear_pending()

@@ -18,7 +18,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import sys
 import warnings
 
-from .. import common, error, handle, library
+from .. import base, common, error, handle, library
 from ..library import ffi, lib
 
 from . import pipe, signal, stream
@@ -137,16 +137,10 @@ class ProcessFlags(common.Enumeration):
     """
 
 
-@ffi.callback('uv_exit_cb')
-def uv_exit_cb(uv_process, exit_status, term_signum):
-    process = library.detach(uv_process)
-    """ :type: uv.Process """
-    if process is not None:
-        process.clear_pending()
-        try:
-            process.on_exit(process, exit_status, term_signum)
-        except:
-            process.loop.handle_exception()
+@base.handle_callback('uv_exit_cb')
+def uv_exit_cb(process_handle, exit_status, term_signum):
+    process_handle.clear_pending()
+    process_handle.on_exit(process_handle, exit_status, term_signum)
 
 
 def populate_stdio_container(uv_stdio, file_base=None):
@@ -160,13 +154,13 @@ def populate_stdio_container(uv_stdio, file_base=None):
         uv_stdio.data.flags = file_base.flags
     else:
         try:
-            if isinstance(fileno, int):
+            if isinstance(file_base, int):
                 uv_stdio.data.fd = file_base
             else:
                 uv_stdio.data.fd = file_base.fileno()
-            uv_stdio.data.flags = StandardIOFlags.INHERIT_FD
+            uv_stdio.flags = StandardIOFlags.INHERIT_FD
         except AttributeError:
-            uv_stdio.data.flags = StandardIOFlags.IGNORE
+            uv_stdio.flags = StandardIOFlags.IGNORE
             if file_base is not None:
                 warnings.warn('ignoring unknown file object (%s)' % str(file_base))
     return fileobj
@@ -207,12 +201,13 @@ class Process(handle.Handle):
     :type on_exit: ((uv.Process, int, int) -> None) |
                    ((Any, uv.Process, int, int) -> None)
     """
+
+    uv_handle_type = 'uv_process_t*'
+    uv_handle_init = lib.uv_spawn
+
     def __init__(self, arguments, uid=None, gid=None, cwd=None, env=None,
                  flags=0, stdin=None, stdout=None, stderr=None, stdio=None,
                  loop=None, on_exit=None):
-
-        self.process = ffi.new('uv_process_t*')
-        super(Process, self).__init__(self.process, loop)
 
         self.uv_options = ffi.new('uv_process_options_t*')
 
@@ -226,7 +221,8 @@ class Process(handle.Handle):
         self.uv_options.args = self.c_args
 
         stdio_count = 3
-        if stdio is not None: stdio_count += len(stdio)
+        if stdio is not None:
+            stdio_count += len(stdio)
         self.uv_options.stdio_count = stdio_count
 
         self.c_stdio_containers = ffi.new('uv_stdio_container_t[]', stdio_count)
@@ -270,14 +266,16 @@ class Process(handle.Handle):
             self.uv_options.cwd = self.c_cwd
 
         if env is not None:
-            self.c_env_list = [library.new('char[]', ('%s=%s' % item).encode())
+            self.c_env_list = [ffi.new('char[]', ('%s=%s' % item).encode())
                                for item in env.items()]
             self.c_env_list.append(ffi.NULL)
             self.c_env = ffi.new('char*[]', self.c_env_list)
             self.uv_options.env = self.c_env
 
-        if uid is not None: flags |= ProcessFlags.SETUID
-        if gid is not None: flags |= ProcessFlags.SETGID
+        if uid is not None:
+            flags |= ProcessFlags.SETUID
+        if gid is not None:
+            flags |= ProcessFlags.SETGID
 
         lib.cross_set_process_uid_gid(self.uv_options, uid or 0, gid or 0)
 
@@ -294,10 +292,7 @@ class Process(handle.Handle):
         :type: ((uv.Process, int, int) -> None) | ((Any, uv.Process, int, int) -> None)
         """
 
-        code = lib.uv_spawn(self.loop.uv_loop, self.process, self.uv_options)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
+        super(Process, self).__init__(loop, (self.uv_options, ))
         self.set_pending()
 
     @property
@@ -307,7 +302,8 @@ class Process(handle.Handle):
 
         :rtype: int
         """
-        if self.closing: return None
+        if self.closing:
+            return None
         return self.process.pid
 
     def kill(self, signum=signal.Signals.SIGINT):
@@ -317,6 +313,8 @@ class Process(handle.Handle):
         :param signum: signal number
         :type signum: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_process_kill(self.process, signum)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)

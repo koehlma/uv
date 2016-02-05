@@ -22,8 +22,6 @@ from ..library import ffi, lib
 
 from . import stream
 
-__all__ = ['TCPFlags', 'TCP']
-
 
 class TCPFlags(common.Enumeration):
     """ """
@@ -33,6 +31,15 @@ class TCPFlags(common.Enumeration):
 
     :type: int
     """
+
+
+class TCPConnectRequest(stream.ConnectRequest):
+    uv_request_init = lib.uv_tcp_connect
+
+    def __init__(self, tcp, address, on_connect=None):
+        c_storage = dns.c_create_sockaddr(*address)
+        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
+        super(TCPConnectRequest, self).__init__(tcp, c_sockaddr, on_connect=on_connect)
 
 
 @handle.HandleTypes.TCP
@@ -51,13 +58,12 @@ class TCP(stream.Stream):
 
     __slots__ = ['uv_tcp', '_family']
 
+    uv_handle_type = 'uv_tcp_t*'
+    uv_handle_init = lib.uv_tcp_init_ex
+
     def __init__(self, flags=0, loop=None):
-        self.uv_tcp = ffi.new('uv_tcp_t*')
-        super(TCP, self).__init__(self.uv_tcp, False, loop)
-        code = lib.uv_tcp_init_ex(self.loop.uv_loop, self.uv_tcp, flags)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
+        super(TCP, self).__init__(loop, False, (flags, ))
+        self.uv_tcp = self.base_handle.uv_object
         self._family = socket.AF_INET
 
     def open(self, fd):
@@ -70,9 +76,11 @@ class TCP(stream.Stream):
         :param fd: file descriptor
         :type fd: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.cross_uv_tcp_open(self.uv_tcp, fd)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
 
     def set_nodelay(self, enable):
         """
@@ -84,9 +92,11 @@ class TCP(stream.Stream):
         :param enable: enable / disable
         :type enable: bool
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_tcp_nodelay(self.uv_tcp, int(enable))
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
 
     def set_keepalive(self, enable, delay=0):
         """
@@ -101,9 +111,11 @@ class TCP(stream.Stream):
         :type enable: bool
         :type delay: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_tcp_keepalive(self.uv_tcp, int(enable), delay)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
 
     def set_simultaneous_accepts(self, enable):
         """
@@ -121,9 +133,11 @@ class TCP(stream.Stream):
         :param enable: enable / disable
         :type enable: bool
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_tcp_simultaneous_accepts(self.uv_tcp, int(enable))
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
 
     @property
     def family(self):
@@ -140,12 +154,14 @@ class TCP(stream.Stream):
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
         code = lib.uv_tcp_getsockname(self.uv_tcp, c_sockaddr, c_size)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         return dns.unpack_sockaddr(c_sockaddr)
 
     @property
@@ -159,12 +175,14 @@ class TCP(stream.Stream):
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
         code = lib.uv_tcp_getpeername(self.uv_tcp, c_sockaddr, c_size)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         return dns.unpack_sockaddr(c_sockaddr)
 
     def bind(self, address, flags=0):
@@ -184,12 +202,14 @@ class TCP(stream.Stream):
         :type address: tuple | uv.Address
         :type flags: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         self._family = c_sockaddr.sa_family
         code = lib.uv_tcp_bind(self.uv_tcp, c_sockaddr, flags)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
 
     def connect(self, address, on_connect=None):
         """
@@ -208,15 +228,6 @@ class TCP(stream.Stream):
         :returns: connect request
         :rtype: uv.ConnectRequest
         """
-        if self.closing: raise error.ClosedHandleError()
-        request = stream.ConnectRequest(self, on_connect)
-        c_storage = dns.c_create_sockaddr(*address)
-        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        self._family = c_sockaddr.sa_family
-        uv_tcp = self.uv_tcp
-        code = lib.uv_tcp_connect(request.uv_connect, uv_tcp, c_sockaddr,
-                                  stream.uv_connect_cb)
-        if code < 0:
-            request.destroy()
-            raise error.UVError(code)
-        return request
+        # FIXME: fix family
+        #self._family = c_sockaddr.sa_family
+        return TCPConnectRequest(self, address, on_connect)

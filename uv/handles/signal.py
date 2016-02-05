@@ -17,8 +17,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import signal as std_signal
 
-from .. import common, error, handle, library
-from ..library import ffi, lib
+from .. import base, common, error, handle
+from ..library import lib
 
 __all__ = ['Signal', 'Signals']
 
@@ -60,15 +60,9 @@ class Signals(common.Enumeration):
     """
 
 
-@ffi.callback('uv_signal_cb')
-def uv_signal_cb(uv_signal, signum):
-    signal = library.detach(uv_signal)
-    """ :type: uv.Signal """
-    if signal is not None:
-        try:
-            signal.on_signal(signal, signum)
-        except:
-            signal.loop.handle_exception()
+@base.handle_callback('uv_signal_cb')
+def uv_signal_cb(signal_handle, signum):
+    signal_handle.on_signal(signal_handle, signum)
 
 
 @handle.HandleTypes.SIGNAL
@@ -97,9 +91,12 @@ class Signal(handle.Handle):
 
     __slots__ = ['uv_signal', 'on_signal']
 
+    uv_handle_type = 'uv_signal_t*'
+    uv_handle_init = lib.uv_signal_init
+
     def __init__(self, loop=None, on_signal=None):
-        self.uv_signal = ffi.new('uv_signal_t*')
-        super(Signal, self).__init__(self.uv_signal, loop)
+        super(Signal, self).__init__(loop)
+        self.uv_signal = self.base_handle.uv_object
         self.on_signal = on_signal or common.dummy_callback
         """
         Callback called on signal delivery.
@@ -109,10 +106,6 @@ class Signal(handle.Handle):
         :readonly: False
         :type: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
         """
-        code = lib.uv_signal_init(self.loop.uv_loop, self.uv_signal)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
 
     @property
     def signum(self):
@@ -124,7 +117,8 @@ class Signal(handle.Handle):
         :readonly: True
         :rtype: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         return self.uv_signal.signum
 
     def start(self, signum, on_signal=None):
@@ -140,10 +134,12 @@ class Signal(handle.Handle):
         :type signum: int
         :type on_signal: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_signal = on_signal or self.on_signal
         code = lib.uv_signal_start(self.uv_signal, uv_signal_cb, signum)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.set_pending()
 
     def stop(self):
@@ -152,9 +148,11 @@ class Signal(handle.Handle):
 
         :raises uv.UVError: error while stopping the handle
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_signal_stop(self.uv_signal)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.clear_pending()
 
     __call__ = start

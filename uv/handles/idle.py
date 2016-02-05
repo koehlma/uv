@@ -15,21 +15,17 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, error, handle, library
-from ..library import ffi, lib
-
-__all__ = ['Idle']
+from .. import base, common, error, handle
+from ..library import lib
 
 
-@ffi.callback('uv_idle_cb')
-def uv_idle_cb(uv_idle):
-    idle = library.detach(uv_idle)
-    """ :type: uv.Idle """
-    if idle is not None:
-        try:
-            idle.on_idle(idle)
-        except:
-            idle.loop.handle_exception()
+@base.handle_callback('uv_idle_cb')
+def uv_idle_cb(idle_handle):
+    """
+    :type idle_handle:
+        uv.Idle
+    """
+    idle_handle.on_idle(idle_handle)
 
 
 @handle.HandleTypes.IDLE
@@ -43,24 +39,18 @@ class Idle(handle.Handle):
     instead of blocking for IO.
 
     .. warning:
-
         Despite the name, idle handles will get their callback called on
         every loop iteration, not when the loop is actually "idle".
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param loop: event loop the handle should run on
-    :param on_idle: callback called before prepare handles
-
-    :type loop: uv.Loop
-    :type on_idle: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
     """
 
     __slots__ = ['uv_idle', 'on_idle']
 
+    uv_handle_type = 'uv_idle_t*'
+    uv_handle_init = lib.uv_idle_init
+
     def __init__(self, loop=None, on_idle=None):
-        self.uv_idle = ffi.new('uv_idle_t*')
-        super(Idle, self).__init__(self.uv_idle, loop)
+        super(Idle, self).__init__(loop)
+        self.uv_idle = self.base_handle.uv_object
         self.on_idle = on_idle or common.dummy_callback
         """
         Callback called before prepare handles.
@@ -70,10 +60,6 @@ class Idle(handle.Handle):
         :readonly: False
         :type: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
         """
-        code = lib.uv_idle_init(self.loop.uv_loop, self.uv_idle)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
 
     def start(self, on_idle=None):
         """
@@ -85,10 +71,12 @@ class Idle(handle.Handle):
         :param on_idle: callback called before prepare handles
         :type on_idle: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_idle = on_idle or self.on_idle
         code = lib.uv_idle_start(self.uv_idle, uv_idle_cb)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.set_pending()
 
     def stop(self):
@@ -97,9 +85,11 @@ class Idle(handle.Handle):
 
         :raises uv.UVError: error while stopping the handle
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_idle_stop(self.uv_idle)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.clear_pending()
 
     __call__ = start

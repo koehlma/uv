@@ -15,21 +15,13 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, error, handle, library
-from ..library import ffi, lib
-
-__all__ = ['Prepare']
+from .. import base, common, error, handle
+from ..library import lib
 
 
-@ffi.callback('uv_prepare_cb')
-def uv_prepare_cb(uv_prepare):
-    prepare = library.detach(uv_prepare)
-    """ :type: uv.Prepare """
-    if prepare is not None:
-        try:
-            prepare.on_prepare(prepare)
-        except:
-            prepare.loop.handle_exception()
+@base.handle_callback('uv_prepare_cb')
+def uv_prepare_cb(prepare_handle):
+    prepare_handle.on_prepare(prepare_handle)
 
 
 @handle.HandleTypes.PREPARE
@@ -49,9 +41,11 @@ class Prepare(handle.Handle):
 
     __slots__ = ['uv_prepare', 'on_prepare']
 
+    uv_handle_type = 'uv_prepare_t*'
+    uv_handle_init = lib.uv_prepare_init
+
     def __init__(self, loop=None, on_prepare=None):
-        self.uv_prepare = ffi.new('uv_prepare_t*')
-        super(Prepare, self).__init__(self.uv_prepare, loop)
+        super(Prepare, self).__init__(loop)
         self.on_prepare = on_prepare or common.dummy_callback
         """
         Callback which called before polling for IO.
@@ -61,10 +55,7 @@ class Prepare(handle.Handle):
         :readonly: False
         :type: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
         """
-        code = lib.uv_prepare_init(self.loop.uv_loop, self.uv_prepare)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
+        self.uv_prepare = self.base_handle.uv_object
 
     def start(self, on_prepare=None):
         """
@@ -76,10 +67,12 @@ class Prepare(handle.Handle):
         :param on_prepare: callback called before polling for IO
         :type on_prepare: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_prepare = on_prepare or self.on_prepare
         code = lib.uv_prepare_start(self.uv_prepare, uv_prepare_cb)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.set_pending()
 
     def stop(self):
@@ -88,9 +81,11 @@ class Prepare(handle.Handle):
 
         :raises uv.UVError: error while stopping the handle
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_prepare_stop(self.uv_prepare)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.clear_pending()
 
     __call__ = start

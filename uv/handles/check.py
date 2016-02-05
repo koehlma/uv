@@ -15,19 +15,17 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, error, handle, library
-from ..library import ffi, lib
+from .. import base, common, error, handle
+from ..library import lib
 
 
-@ffi.callback('uv_check_cb')
-def uv_check_cb(uv_check):
-    check = library.detach(uv_check)
-    """ :type: uv.Check """
-    if check is not None:
-        try:
-            check.on_check(check)
-        except:
-            check.loop.handle_exception()
+@base.handle_callback('uv_check_cb')
+def uv_check_cb(check_handle):
+    """
+    :type check_handle:
+        uv.Check
+    """
+    check_handle.on_check(check_handle)
 
 
 @handle.HandleTypes.CHECK
@@ -38,6 +36,9 @@ class Check(handle.Handle):
     """
 
     __slots__ = ['uv_check', 'on_check']
+
+    uv_handle_type = 'uv_check_t*'
+    uv_handle_init = lib.uv_check_init
 
     def __init__(self, loop=None, on_check=None):
         """
@@ -54,20 +55,20 @@ class Check(handle.Handle):
         :type on_check:
             ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
-        self.uv_check = ffi.new('uv_check_t*')
-        super(Check, self).__init__(self.uv_check, loop)
+        super(Check, self).__init__(loop)
+        self.uv_check = self.base_handle.uv_object
         self.on_check = on_check or common.dummy_callback
         """
         Callback which should run right after polling for IO if the
         handle has been started.
 
 
-        .. function:: on_check(check)
+        .. function:: on_check(check_handle)
 
-            :param check:
+            :param check_handle:
                 handle the call originates from
 
-            :type check:
+            :type check_handle:
                 uv.Check
 
 
@@ -76,10 +77,6 @@ class Check(handle.Handle):
         :type:
             ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
-        code = lib.uv_check_init(self.loop.uv_loop, self.uv_check)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
 
     def start(self, on_check=None):
         """
@@ -98,10 +95,12 @@ class Check(handle.Handle):
         :type on_check:
             ((uv.Check) -> None) | ((Any, uv.Check) -> None)
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_check = on_check or self.on_check
         code = lib.uv_check_start(self.uv_check, uv_check_cb)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.set_pending()
 
     def stop(self):
@@ -111,9 +110,11 @@ class Check(handle.Handle):
         :raises uv.UVError:
             error while stopping the handle
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_check_stop(self.uv_check)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.clear_pending()
 
     __call__ = start

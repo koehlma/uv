@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import threading
 import time
 
 from common import TestCase
@@ -155,20 +156,35 @@ class TestLoop(TestCase):
 
         self.loop.run()
 
+    def test_call_later(self):
+        self.callback_called = False
 
-    '''
+        def callback():
+            self.callback_called = True
+
+        def on_prepare(prepare):
+            prepare.close()
+
+        self.prepare = uv.Prepare(on_prepare=on_prepare)
+        self.prepare.start()
+
+        self.loop.call_later(callback)
+        self.loop.run()
+
+        self.assert_true(self.callback_called)
+
     def test_current_loop(self):
-        self.assertEqual(uv.Loop.default_loop(), uv.Loop.current_loop())
+        self.assertEqual(uv.Loop.get_default(), uv.Loop.get_current())
 
         self.loop1 = uv.Loop()
         self.loop2 = uv.Loop()
 
         def on_prepare1(prepare):
-            self.assertEqual(self.loop1, uv.Loop.current_loop())
+            self.assertEqual(self.loop1, uv.Loop.get_current())
             prepare.close()
 
         def on_prepare2(prepare):
-            self.assertEqual(self.loop2, uv.Loop.current_loop())
+            self.assertEqual(self.loop2, uv.Loop.get_current())
             prepare.close()
 
         def main1():
@@ -190,6 +206,7 @@ class TestLoop(TestCase):
 
         thread1.join()
 
-        self.assertEqual(uv.Loop.default_loop(), uv.Loop.current_loop())
-    '''
+        self.assertEqual(self.loop2, uv.Loop.get_current())
 
+        self.loop1.close()
+        self.loop2.close()

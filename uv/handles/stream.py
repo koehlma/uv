@@ -15,22 +15,21 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, error, handle, library, loop, request
+from .. import base, common, error, handle, loop, request
 from ..library import ffi, lib
 
 __all__ = ['ShutdownRequest', 'ConnectRequest', 'WriteRequest', 'Stream']
 
 
-@ffi.callback('uv_shutdown_cb')
-def uv_shutdown_cb(uv_request, status):
-    shutdown_request = library.detach(uv_request)
-    """ :type: uv.ShutdownRequest """
-    if shutdown_request is not None:
-        try:
-            shutdown_request.on_shutdown(shutdown_request, status)
-        except:
-            shutdown_request.loop.handle_exception()
-        shutdown_request.destroy()
+@base.request_callback('uv_shutdown_cb')
+def uv_shutdown_cb(shutdown_request, status):
+    """
+    :type shutdown_request:
+        ShutdownRequest
+    :type status:
+        int
+    """
+    shutdown_request.on_shutdown(shutdown_request, status)
 
 
 @request.RequestType.SHUTDOWN
@@ -51,10 +50,11 @@ class ShutdownRequest(request.Request):
 
     __slots__ = ['uv_shutdown', 'stream', 'on_shutdown']
 
+    uv_request_type = 'uv_shutdown_t*'
+    uv_request_init = lib.uv_shutdown
+
     def __init__(self, stream, on_shutdown=None):
         if stream.closing: raise error.ClosedHandleError()
-        self.uv_shutdown = ffi.new('uv_shutdown_t*')
-        super(ShutdownRequest, self).__init__(self.uv_shutdown, stream.loop)
         self.stream = stream
         """
         Stream this request belongs to.
@@ -72,22 +72,19 @@ class ShutdownRequest(request.Request):
         :type: ((uv.ShutdownRequest, uv.StatusCode) -> None) |
                ((Any, uv.ShutdownRequest, uv.StatusCode) -> None)
         """
-        code = lib.uv_shutdown(self.uv_shutdown, self.stream.uv_stream, uv_shutdown_cb)
-        if code < 0:
-            self.destroy()
-            raise error.UVError(code)
+        super(ShutdownRequest, self).__init__(stream.loop, uv_shutdown_cb,
+                                              uv_handle=stream.uv_stream)
 
 
-@ffi.callback('uv_write_cb')
-def uv_write_cb(uv_request, status):
-    write_request = library.detach(uv_request)
-    """ :type: uv.WriteRequest """
-    if write_request is not None:
-        try:
-            write_request.on_write(write_request, status)
-        except:
-            write_request.loop.handle_exception()
-        write_request.destroy()
+@base.request_callback('uv_write_cb')
+def uv_write_cb(write_request, status):
+    """
+    :type write_request:
+        WriteRequest
+    :type status:
+        int
+    """
+    write_request.on_write(write_request, status)
 
 
 @request.RequestType.WRITE
@@ -112,10 +109,11 @@ class WriteRequest(request.Request):
 
     __slots__ = ['uv_write', 'buffers', 'stream', 'send_stream', 'on_write']
 
+    uv_request_type = 'uv_write_t*'
+
     def __init__(self, stream, buffers, send_stream=None, on_write=None):
-        if stream.closing: raise error.ClosedHandleError()
-        self.uv_write = ffi.new('uv_write_t*')
-        super(WriteRequest, self).__init__(self.uv_write, stream.loop)
+        if stream.closing:
+            raise error.ClosedHandleError()
         self.buffers = common.Buffers(buffers)
         self.stream = stream
         """
@@ -141,29 +139,24 @@ class WriteRequest(request.Request):
         :type: ((uv.WriteRequest, uv.StatusCode) -> None) |
                ((Any, uv.WriteRequest, uv.StatusCode) -> None)
         """
-        uv_stream = self.stream.uv_stream
         c_buffers, uv_buffers = self.buffers
         if send_stream is None:
-            code = lib.uv_write(self.uv_write, uv_stream, uv_buffers,
-                                len(self.buffers), uv_write_cb)
+            super(WriteRequest, self).__init__(stream.loop, uv_buffers,
+                                               len(self.buffers), uv_write_cb,
+                                               uv_handle=stream.uv_stream,
+                                               request_init=lib.uv_write)
         else:
-            code = lib.uv_write2(self.uv_write, uv_stream, uv_buffers, len(self.buffers),
-                                 self.send_stream.uv_stream, uv_write_cb)
-        if code < 0:
-            self.destroy()
-            raise error.UVError(code)
+            super(WriteRequest, self).__init__(stream.loop, uv_buffers,
+                                               len(self.buffers),
+                                               self.send_stream.uv_stream, uv_write_cb,
+                                               uv_handle=stream.uv_stream,
+                                               request_init=lib.uv_write2)
+        self.uv_write = self.base_request.uv_object
 
 
-@ffi.callback('uv_connect_cb')
-def uv_connect_cb(uv_request, status):
-    connect_request = library.detach(uv_request)
-    """ :type: uv.ConnectRequest """
-    if connect_request is not None:
-        try:
-            connect_request.on_connect(connect_request, status)
-        except:
-            connect_request.loop.handle_exception()
-        connect_request.destroy()
+@base.request_callback('uv_connect_cb')
+def uv_connect_cb(connect_request, status):
+    connect_request.on_connect(connect_request, status)
 
 
 @request.RequestType.CONNECT
@@ -184,11 +177,16 @@ class ConnectRequest(request.Request):
                       ((Any, uv.ConnectRequest, uv.StatusCode) -> None)
     """
 
-    __slots__ = ['uv_connect', 'stream', 'on_connect']
+    __slots__ = ['stream', 'on_connect']
 
-    def __init__(self, stream, on_connect=None):
-        self.uv_connect = ffi.new('uv_connect_t*')
-        super(ConnectRequest, self).__init__(self.uv_connect, stream.loop)
+    uv_request_type = 'uv_connect_t*'
+
+    def __init__(self, stream, *arguments, **keywords):
+        on_connect = keywords.get('on_connect')
+        if stream.closing:
+            raise error.ClosedHandleError()
+        super(ConnectRequest, self).__init__(stream.loop, *(arguments + (uv_connect_cb,)),
+                                             uv_handle=stream.base_handle.uv_object)
         self.stream = stream
         """
         Stream this request belongs to.
@@ -208,31 +206,19 @@ class ConnectRequest(request.Request):
         """
 
 
-@ffi.callback('uv_connection_cb')
-def uv_connection_cb(uv_stream, status):
-    stream = library.detach(uv_stream)
-    """ :type: uv.Stream """
-    if stream is not None:
-        try:
-            stream.on_connection(stream, status)
-        except:
-            stream.loop.handle_exception()
+@base.handle_callback('uv_connection_cb')
+def uv_connection_cb(stream_handle, status):
+    stream_handle.on_connection(stream_handle, status)
 
 
-@ffi.callback('uv_read_cb')
-def uv_read_cb(uv_stream, length, uv_buf):
-    stream = library.detach(uv_stream)
-    """ :type: uv.Stream """
-    if stream is not None:
-        data = stream.loop.allocator.finalize(stream, length, uv_buf)
-        if length < 0:
-            length, status = 0, length
-        else:
-            status = error.StatusCodes.SUCCESS
-        try:
-            stream.on_read(stream, status, length, data)
-        except:
-            stream.loop.handle_exception()
+@base.handle_callback('uv_read_cb')
+def uv_read_cb(stream_handle, length, uv_buffer):
+    data = stream_handle.loop.allocator.finalize(stream_handle, length, uv_buffer)
+    if length < 0:
+        length, status = 0, length
+    else:
+        status = error.StatusCodes.SUCCESS
+    stream_handle.on_read(stream_handle, status, length, data)
 
 
 @handle.HandleTypes.STREAM
@@ -252,9 +238,9 @@ class Stream(handle.Handle):
 
     __slots__ = ['uv_stream', 'on_read', 'on_connection', 'ipc']
 
-    def __init__(self, uv_stream, ipc=False, loop=None):
-        super(Stream, self).__init__(uv_stream, loop)
-        self.uv_stream = ffi.cast('uv_stream_t*', uv_stream)
+    def __init__(self, loop, ipc, arguments):
+        super(Stream, self).__init__(loop, arguments)
+        self.uv_stream = ffi.cast('uv_stream_t*', self.base_handle.uv_object)
         self.on_read = common.dummy_callback
         """
         Callback called after data was read.
@@ -291,7 +277,8 @@ class Stream(handle.Handle):
         :readonly: True
         :type: bool
         """
-        if self.closing: return False
+        if self.closing:
+            return False
         return bool(lib.uv_is_readable(self.uv_stream))
 
     @property
@@ -302,7 +289,8 @@ class Stream(handle.Handle):
         :readonly: True
         :type: bool
         """
-        if self.closing: return False
+        if self.closing:
+            return False
         return bool(lib.uv_is_writable(self.uv_stream))
 
     @property
@@ -347,10 +335,12 @@ class Stream(handle.Handle):
         :type on_connection: ((uv.Stream, uv.StatusCode) -> None) |
                              ((Any, uv.Stream, uv.StatusCode) -> None
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_connection = on_connection or self.on_connection
         code = lib.uv_listen(self.uv_stream, backlog, uv_connection_cb)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
 
     def accept(self, cls=None, *args, **kwargs):
         """
@@ -374,10 +364,12 @@ class Stream(handle.Handle):
 
         :return: new stream connection of type `cls`
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         connection = (cls or type(self))(*args, **kwargs)
         code = lib.uv_accept(self.uv_stream, connection.uv_stream)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         return connection
 
     def read_start(self, on_read=None):
@@ -393,10 +385,12 @@ class Stream(handle.Handle):
         :type on_read: ((uv.Stream, uv.StatusCode, int, bytes) -> None) |
                        ((Any, uv.Stream, uv.StatusCode, int, bytes) -> None)
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_read = on_read or self.on_read
         code = lib.uv_read_start(self.uv_stream, loop.uv_alloc_cb, uv_read_cb)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.set_pending()
 
     def read_stop(self):
@@ -407,9 +401,11 @@ class Stream(handle.Handle):
 
         :raises uv.UVError: error while stop reading from stream
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_read_stop(self.uv_stream)
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         self.clear_pending()
 
     def write(self, buffers, send_stream=None, on_write=None):
@@ -451,8 +447,10 @@ class Stream(handle.Handle):
         :return: number of bytes written
         :rtype: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         buffers = Buffers(buffers)
         code = lib.uv_try_write(self.uv_stream, buffers.uv_buffers, len(buffers))
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
         return code

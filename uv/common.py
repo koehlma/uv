@@ -18,17 +18,15 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import platform
 import sys
-import threading
-import weakref
 
 from collections import OrderedDict
 
 from . import library
 from .library import ffi
 
+
 is_py2 = sys.version_info[0] == 2
 is_py3 = sys.version_info[0] == 3
-
 
 is_pypy = platform.python_implementation().lower() == 'pypy'
 is_cpython = platform.python_implementation().lower() == 'cpython'

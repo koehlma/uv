@@ -63,7 +63,8 @@ def reset_mode():
     :raises uv.UVError: error while resetting tty mode
     """
     code = lib.uv_tty_reset_mode()
-    if code < 0: raise error.UVError(code)
+    if code < 0:
+        raise error.UVError(code)
 
 
 class TTYMode(common.Enumeration):
@@ -102,13 +103,12 @@ class TTY(stream.Stream):
 
     __slots__ = ['uv_tty']
 
-    def __init__(self, fd, readable=False, loop=None, ipc=False):
-        self.uv_tty = ffi.new('uv_tty_t*')
-        super(TTY, self).__init__(self.uv_tty, ipc, loop)
-        code = lib.cross_uv_tty_init(self.loop.uv_loop, self.uv_tty, fd, int(readable))
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
+    uv_handle_type = 'uv_tty_t*'
+    uv_handle_init = lib.cross_uv_tty_init
+
+    def __init__(self, fd, readable=False, loop=None):
+        super(TTY, self).__init__(loop, False, (fd, int(readable)))
+        self.uv_tty = self.base_handle.uv_object
 
     @property
     def console_size(self):
@@ -119,10 +119,12 @@ class TTY(stream.Stream):
 
         :rtype: ConsoleSize
         """
-        if self.closing: return ConsoleSize(0, 0)
+        if self.closing:
+            return ConsoleSize(0, 0)
         c_with, c_height = ffi.new('int*'), ffi.new('int*')
         code = lib.uv_tty_get_winsize(self.uv_tty, c_with, c_height)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
         return ConsoleSize(c_with[0], c_height[0])
 
     def set_mode(self, mode=TTYMode.NORMAL):
@@ -135,6 +137,8 @@ class TTY(stream.Stream):
         :param mode: mode to set
         :type mode: uv.TTYMode
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_tty_set_mode(self.uv_tty, mode)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)

@@ -15,7 +15,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from . import common, error, library
+from . import base, common, error, library
 from .library import ffi, lib
 from .loop import Loop
 
@@ -55,14 +55,18 @@ class Request(object):
     :type loop: Loop
     """
 
-    __slots__ = ['__weakref__', 'uv_request', '_c_reference', 'finished', 'loop']
+    __slots__ = ['__weakref__', 'uv_request', '_c_reference', 'finished', 'loop',
+                 'base_request']
 
-    def __init__(self, uv_request, loop=None):
-        self.uv_request = ffi.cast('uv_req_t*', uv_request)
-        self._c_reference = library.attach(self.uv_request, self)
+    uv_request_type = None
+    uv_request_init = None
+
+    def __init__(self, loop, *arguments, **keywords):
+        uv_handle = keywords.get('uv_handle')
+        request_init = keywords.get('request_init')
         self.loop = loop or Loop.get_current()
         """
-        Loop where the handle is running on.
+        Loop where the request is running on.
 
         :readonly: True
         :type: Loop
@@ -77,8 +81,11 @@ class Request(object):
         if self.loop.closed:
             self.finished = True
             raise error.ClosedLoopError()
-        # TODO: add garbage collection for requests
-        self.loop.register_request(self)
+        self.base_request = base.BaseRequest(self, self.loop.base_loop,
+                                             self.uv_request_type,
+                                             request_init or self.uv_request_init,
+                                             arguments,
+                                             uv_handle=uv_handle)
         self.set_pending()
 
     @property
@@ -109,6 +116,7 @@ class Request(object):
         """
         if not self.finished:
             self.finished = True
+        self.loop.request_set_finished(self)
 
     def set_pending(self):
         """
@@ -129,6 +137,8 @@ class Request(object):
             for the request. You should never call it directly!
         """
         self.loop.structure_clear_pending(self)
+
+
 
 
 RequestType.cls = Request

@@ -164,9 +164,12 @@ class UDP(handle.Handle):
 
     __slots__ = ['uv_udp', 'on_receive']
 
+    uv_handle_type = 'uv_udp_t*'
+    uv_handle_init = lib.uv_udp_init_ex
+
     def __init__(self, flags=0, loop=None, on_receive=None):
-        self.uv_udp = ffi.new('uv_tcp_t*')
-        super(UDP, self).__init__(self.uv_udp, loop)
+        super(UDP, self).__init__(loop, (flags, ))
+        self.uv_udp = self.base_handle.uv_object
         self.on_receive = on_receive or common.dummy_callback
         """
         Callback called after package has been received.
@@ -177,10 +180,6 @@ class UDP(handle.Handle):
         :type: ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
                ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
         """
-        code = lib.uv_udp_init_ex(self.loop.uv_loop, self.uv_udp, flags)
-        if code < 0:
-            self.set_closed()
-            raise error.UVError(code)
 
     def open(self, fd):
         """
@@ -192,9 +191,11 @@ class UDP(handle.Handle):
         :param fd: file descriptor
         :type fd: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.cross_uv_udp_open(self.uv_udp, fd)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
 
     def set_membership(self, multicast_address, interface_address, membership):
         """
@@ -211,11 +212,13 @@ class UDP(handle.Handle):
         :type interface_address: str
         :type membership: uv.UDPMembership
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         c_m_addr = multicast_address.encode()
         c_i_addr = interface_address.encode()
         code = lib.uv_udp_set_membership(self.uv_udp, c_m_addr, c_i_addr, membership)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
 
     def set_multicast_loop(self, enable):
         """
@@ -227,9 +230,11 @@ class UDP(handle.Handle):
         :param enable: enable / disable multicast loop
         :type enable: bool
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_udp_set_multicast_loop(self.uv_udp, int(enable))
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
 
     def set_multicast_ttl(self, ttl):
         """
@@ -241,9 +246,11 @@ class UDP(handle.Handle):
         :param ttl: multicast ttl (1 trough 255)
         :type ttl: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_udp_set_multicast_ttl(self.uv_udp, ttl)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
 
     def set_multicast_interface(self, interface):
         """
@@ -255,9 +262,11 @@ class UDP(handle.Handle):
         :param interface: multicast interface address
         :type interface: str
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_udp_set_multicast_interface(self.uv_udp, interface.encode())
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
 
     def set_broadcast(self, enable):
         """
@@ -269,9 +278,11 @@ class UDP(handle.Handle):
         :param enable: enable / disable broadcast
         :type enable: bool
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         code = lib.uv_udp_set_broadcast(self.uv_udp, int(enable))
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
 
     @property
     def family(self):
@@ -280,12 +291,14 @@ class UDP(handle.Handle):
 
         :type: int | None
         """
-        if self.closing: return None
+        if self.closing:
+            return None
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
         code = lib.uv_udp_getsockname(self.uv_udp, c_sockaddr, c_size)
-        if code < 0: return None
+        if code < 0:
+            return None
         return c_sockaddr.sa_family
 
     @property
@@ -299,12 +312,14 @@ class UDP(handle.Handle):
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
         code = lib.uv_udp_getsockname(self.uv_udp, c_sockaddr, c_size)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
         return dns.unpack_sockaddr(c_sockaddr)
 
     def bind(self, address, flags=0):
@@ -324,11 +339,13 @@ class UDP(handle.Handle):
         :type address: tuple | uv.Address
         :type flags: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         code = lib.uv_udp_bind(self.uv_udp, c_sockaddr, flags)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
 
     def send(self, buffers, address, on_send=None):
         """
@@ -370,12 +387,14 @@ class UDP(handle.Handle):
         :return: number of bytes sent
         :rtype: int
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         c_storage = c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_buffers, uv_buffers = common.Buffers(buffers)
         code = lib.uv_udp_try_send(self.uv_udp, uv_buffers, len(buffers), c_sockaddr)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
         return code
 
     def receive_start(self, on_receive=None):
@@ -392,10 +411,12 @@ class UDP(handle.Handle):
             ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
             ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
         """
-        if self.closing: raise error.ClosedHandleError()
+        if self.closing:
+            raise error.ClosedHandleError()
         self.on_receive = on_receive or self.on_receive
         code = lib.uv_udp_recv_start(self.uv_udp, loop.uv_alloc_cb, uv_udp_recv_cb)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
         self.set_pending()
 
     def receive_stop(self):
@@ -404,7 +425,9 @@ class UDP(handle.Handle):
 
         :raises uv.UVError: error while stop listening for incoming datagrams
         """
-        if self.closing: return
+        if self.closing:
+            return
         code = lib.uv_udp_recv_stop(self.uv_udp)
-        if code < 0: raise error.UVError(code)
+        if code < 0:
+            raise error.UVError(code)
         self.clear_pending()
