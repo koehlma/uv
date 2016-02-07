@@ -49,27 +49,58 @@ class Idle(handle.Handle):
     uv_handle_init = lib.uv_idle_init
 
     def __init__(self, loop=None, on_idle=None):
+        """
+        :raises uv.UVError:
+            error while initializing the handle
+
+        :param loop:
+            event loop the handle should run on
+        :param on_idle:
+            callback which should run right before the prepare handles
+
+        :type loop:
+            uv.Loop
+        :type on_idle:
+            ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
+        """
         super(Idle, self).__init__(loop)
         self.uv_idle = self.base_handle.uv_object
         self.on_idle = on_idle or common.dummy_callback
         """
-        Callback called before prepare handles.
+        Callback which should run right before the prepare handles.
 
-        .. function:: on_idle(Idle)
 
-        :readonly: False
-        :type: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
+        .. function:: on_idle(idle)
+
+            :param idle:
+                handle the call originates from
+
+            :type idle:
+                uv.Idle
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
         """
 
     def start(self, on_idle=None):
         """
-        Starts the handle.
+        Start the handle. The callback will run once per loop iteration
+        right before the prepare handles from now on.
 
-        :raises uv.UVError: error while starting the handle
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while starting the handle
+        :raises uv.HandleClosedError:
+            handle has already been closed or is closing
 
-        :param on_idle: callback called before prepare handles
-        :type on_idle: ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
+        :param on_idle:
+            callback which should run right before the prepare handles
+            (overrides the current callback if specified)
+
+        :type on_idle:
+            ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -83,7 +114,8 @@ class Idle(handle.Handle):
         """
         Stops the handle, the callback will no longer be called.
 
-        :raises uv.UVError: error while stopping the handle
+        :raises uv.UVError:
+            error while stopping the handle
         """
         if self.closing:
             return
