@@ -36,8 +36,7 @@ class FSEventFlags(common.Enumeration):
     .. note::
         This flag is currently not implemented yet on any backend.
 
-    :type:
-        uv.FSEventFlags
+    :type: uv.FSEventFlags
     """
 
     STAT = lib.UV_FS_EVENT_STAT
@@ -51,8 +50,7 @@ class FSEventFlags(common.Enumeration):
     .. note::
         This flag is currently not implemented yet on any backend.
 
-    :type:
-        uv.FSEventFlags
+    :type: uv.FSEventFlags
     """
 
     RECURSIVE = lib.UV_FS_EVENT_RECURSIVE
@@ -65,8 +63,7 @@ class FSEventFlags(common.Enumeration):
     .. note::
         Currently the only supported platforms are OSX and Windows.
 
-    :type:
-        uv.FSEventFlags
+    :type: uv.FSEventFlags
     """
 
 
@@ -81,16 +78,14 @@ class FSEvents(common.Enumeration):
     is necessary (at least on Linux) to restart the corresponding
     watcher even if the file has been directly recreated.
 
-    :type:
-        uv.FSEvents
+    :type: uv.FSEvents
     """
 
     CHANGE = lib.UV_CHANGE
     """
     File has been changed.
 
-    :type:
-        uv.FSEvents
+    :type: uv.FSEvents
     """
 
 
