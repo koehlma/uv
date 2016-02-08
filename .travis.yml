@@ -15,6 +15,7 @@ matrix:
         - python: pypy3
           env: TOX_ENV=pypy3
 install:
+    - pip install cffi
     - pip install tox
     - pip install coveralls
 script:
