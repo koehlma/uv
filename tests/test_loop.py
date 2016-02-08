@@ -162,11 +162,11 @@ class TestLoop(TestCase):
         def callback():
             self.callback_called = True
 
-        def on_prepare(prepare):
-            prepare.close()
+        def on_wakeup(async_handle):
+            async_handle.close()
 
-        self.prepare = uv.Prepare(on_prepare=on_prepare)
-        self.prepare.start()
+        self.async = uv.Async(on_wakeup=on_wakeup)
+        self.async.send()
 
         self.loop.call_later(callback)
         self.loop.run()
