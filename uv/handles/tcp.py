@@ -39,7 +39,7 @@ class TCPConnectRequest(stream.ConnectRequest):
     def __init__(self, tcp, address, on_connect=None):
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        super(TCPConnectRequest, self).__init__(tcp, c_sockaddr, on_connect=on_connect)
+        super(TCPConnectRequest, self).__init__(tcp, (c_sockaddr,), on_connect=on_connect)
 
 
 @handle.HandleTypes.TCP

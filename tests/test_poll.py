@@ -31,12 +31,11 @@ class TestPoll(common.TestCase):
             """
             shutdown_request.stream.close()
 
-        def on_connection(server, _):
+        def on_connection(server, status, connection):
             """
             :type server:
                 uv.TCP
             """
-            connection = server.accept()
             connection.write(b'hello')
             connection.shutdown(on_shutdown=on_shutdown)
             server.close()

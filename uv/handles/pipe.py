@@ -27,7 +27,7 @@ class PipeConnectRequest(stream.ConnectRequest):
     uv_request_init = lib.uv_pipe_connect
 
     def __init__(self, pipe, path, on_connect=None):
-        super(PipeConnectRequest, self).__init__(pipe, path.encode(),
+        super(PipeConnectRequest, self).__init__(pipe, (path.encode(),),
                                                  on_connect=on_connect)
 
 

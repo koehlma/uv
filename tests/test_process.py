@@ -39,7 +39,7 @@ class TestProcess(common.TestCase):
         def on_exit(process_handle, returncode, term_signal):
             self.returncode = returncode
 
-        def on_read(pipe_handle, status, length, data):
+        def on_read(pipe_handle, status, data):
             self.buffer += data
 
         self.process = uv.Process(arguments, stdout=uv.PIPE, on_exit=on_exit)
