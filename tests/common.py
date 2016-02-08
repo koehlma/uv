@@ -17,6 +17,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os
 import platform
+import sys
 import unittest
 
 import uv
@@ -62,6 +63,17 @@ def implementation_skip(*implementations):
         return obj
     if platform.python_implementation().lower() in implementations:
         return unittest.skip('test is not available on the current implementation')
+    return decorator
+
+
+sys_platform = 'linux' if sys.platform.startswith('linux') else sys.platform
+
+
+def skip_platform(*platforms):
+    def decorator(test):
+        return test
+    if sys_platform in platforms:
+        return unittest.skip('test is not available on the current platform')
     return decorator
 
 

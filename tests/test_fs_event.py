@@ -19,12 +19,13 @@ import os
 import os.path
 import tempfile
 
-from common import TestCase
+import common
 
 import uv
 
 
-class TestFSEvent(TestCase):
+@common.skip_platform('win32')
+class TestFSEvent(common.TestCase):
     def test_fs_event_change(self):
         def on_event(fs_event, status, name, events):
             self.assert_equal(status, uv.error.StatusCodes.SUCCESS)
