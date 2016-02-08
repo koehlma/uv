@@ -110,7 +110,7 @@ class _FD(int):
 def _get_fileno(fileobj):
     try:
         return _FD(fileobj.fileno())
-    except AttributeError:
+    except Exception:
         return None
 
 

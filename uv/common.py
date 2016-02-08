@@ -46,22 +46,26 @@ class _EnumerationMeta(type):
     def __prepare__(mcs, *args, **kwargs):
         return OrderedDict()
 
-    def __new__(mcs, name, bases, attributes):
+    def __new__(mcs, cls_name, cls_bases, attributes):
         members = [(name, value) for name, value in attributes.items()
                    if not (hasattr(value, '__get__') or hasattr(value, '__set__') or
                            hasattr(value, '__delete__') or name.startswith('_'))]
-        for name, value in members: del attributes[name]
-        attributes['_members'] = members
-        attributes['_value_member_map'] = {}
-        cls = type.__new__(mcs, name, bases, attributes)
         for name, value in members:
-            cls._value_member_map[name] = cls(value)
-            setattr(cls, name, cls._value_member_map[name])
+            attributes[name] = None
+        value_member_map = {}
+        attributes['_members'] = members
+        attributes['_value_member_map'] = value_member_map
+        cls = type.__new__(mcs, cls_name, cls_bases, attributes)
+        for name, value in members:
+            value_member_map[value] = cls(value)
+            setattr(cls, name, value_member_map[value])
         return cls
 
     def __call__(cls, value):
-        try: return cls._value_member_map[value]
-        except KeyError: return cls.__new__(cls, value)
+        try:
+            return cls._value_member_map[value]
+        except KeyError:
+            return cls.__new__(cls, value)
 
     def __iter__(cls):
         return cls._members
