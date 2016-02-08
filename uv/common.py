@@ -52,7 +52,7 @@ class _EnumerationMeta(type):
         attributes['_value_member_map'] = value_member_map
         cls = type.__new__(mcs, cls_name, cls_bases, attributes)
         for name, value in members:
-            value_member_map[value] = cls(value)
+            value_member_map[value] = super(_EnumerationMeta, mcs).__call__(cls, value)
             setattr(cls, name, value_member_map[value])
         return cls
 
@@ -60,10 +60,10 @@ class _EnumerationMeta(type):
         try:
             return cls._value_member_map[value]
         except KeyError:
-            return cls.__new__(cls, value)
+            raise ValueError(value)
 
     def __iter__(cls):
-        return cls._members
+        return iter(cls._value_member_map.values())
 
 try:
     from enum import IntEnum as Enumeration
