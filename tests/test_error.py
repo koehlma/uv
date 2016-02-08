@@ -41,3 +41,6 @@ class TestError(common.TestCase):
 
     def test_unknown(self):
         self.assert_equal(uv.UVError(42).name, 'UNKNOWN')
+
+    def test_name(self):
+        self.assert_equal(uv.UVError(int(uv.StatusCodes.EAGAIN)).name, 'EAGAIN')
