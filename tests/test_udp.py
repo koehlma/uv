@@ -149,3 +149,22 @@ class TestUDP(common.TestCase):
         self.loop.run()
 
         self.assert_equal(self.datagram, b'hello')
+
+    def test_udp_closed(self):
+        self.udp = uv.UDP()
+        self.udp.close()
+        self.assert_is(self.udp.family, None)
+        self.assert_equal(self.udp.sockname, ('0.0.0.0', 0))
+        self.assert_raises(uv.ClosedHandleError, self.udp.open, None)
+        self.assert_raises(uv.ClosedHandleError, self.udp.set_membership, None, None)
+        self.assert_raises(uv.ClosedHandleError, self.udp.set_multicast_loop, False)
+        self.assert_raises(uv.ClosedHandleError, self.udp.set_multicast_ttl, 10)
+        self.assert_raises(uv.ClosedHandleError, self.udp.set_multicast_interface, None)
+        self.assert_raises(uv.ClosedHandleError, self.udp.set_broadcast, False)
+        self.assert_raises(uv.ClosedHandleError, self.udp.bind, ('0.0.0.0', 0))
+        self.assert_raises(uv.ClosedHandleError, self.udp.send, b'', ('0.0.0.0', 0))
+        self.assert_raises(uv.ClosedHandleError, self.udp.try_send, b'', ('0.0.0.0', 0))
+        self.assert_raises(uv.ClosedHandleError, self.udp.receive_start)
+        self.assert_is(self.udp.receive_stop(), None)
+
+

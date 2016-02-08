@@ -121,6 +121,8 @@ class UDPSendRequest(request.Request):
             ((uv.SendRequest, uv.StatusCode) -> None) |
             ((Any, uv.SendRequest, uv.StatusCode) -> None)
         """
+        if udp.closing:
+            raise error.ClosedHandleError()
         self.buffers = library.Buffers(buffers)
         self.udp = udp
         """
@@ -344,13 +346,12 @@ class UDP(handle.Handle):
         The local IP and port of the UDP handle.
 
         :raises uv.UVError: error while receiving sockname
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
 
         :readonly: True
         :rtype: uv.Address4 | uv.Address6
         """
         if self.closing:
-            raise error.ClosedHandleError()
+            return '0.0.0.0', 0
         c_storage = ffi.new('struct sockaddr_storage*')
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
