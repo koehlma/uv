@@ -16,35 +16,25 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from .. import base, common, error, handle
-from ..library import ffi, lib
-
-__all__ = ['Timer']
+from ..library import lib
 
 
-@ffi.callback('uv_timer_cb')
-def uv_timer_cb(uv_timer):
-    timer = base.BaseHandle.detach(uv_timer)
-    """ :type: uv.Timer """
-    if timer is not None:
-        try:
-            timer.on_timeout(timer)
-        except:
-            timer.loop.handle_exception()
-        # TODO: set / clear pending based on repeat value
+@base.handle_callback('uv_timer_cb')
+def uv_timer_cb(timer_handle):
+    """
+    :type timer_handle:
+        uv.Timer
+    """
+    if not timer_handle.repeat:
+        timer_handle.clear_pending()
+    timer_handle.on_timeout(timer_handle)
 
 
 @handle.HandleTypes.TIMER
 class Timer(handle.Handle):
     """
-    Timer handles are used to schedule callbacks to be called in the future.
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param loop: event loop the handle should run on
-    :param on_timeout: callback called on timeout
-
-    :type loop: uv.Loop
-    :type on_timeout: ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
+    Timer handles are used to schedule callbacks to be called in the
+    future after a given amount of time.
     """
 
     __slots__ = ['uv_timer', 'on_timeout']
@@ -53,16 +43,40 @@ class Timer(handle.Handle):
     uv_handle_init = lib.uv_timer_init
 
     def __init__(self, loop=None, on_timeout=None):
+        """
+        :raises uv.UVError:
+            error while initializing the handle
+
+        :param loop: event
+            loop the handle should run on
+        :param on_timeout:
+            callback which should on timeout
+
+        :type loop:
+            uv.Loop
+        :type on_timeout:
+            ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
+        """
         super(Timer, self).__init__(loop)
         self.uv_timer = self.base_handle.uv_object
         self.on_timeout = on_timeout or common.dummy_callback
         """
-        Callback called on timeout.
+        Callback which should run on timeout.
 
-        .. function:: callback(Timer)
 
-        :readonly: False
-        :type: ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
+        .. function:: on_timeout(timer_handle)
+
+            :param timer_handle:
+                handle the call originates from
+
+            :type timer_handle:
+                uv.Timer
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
         """
 
     @property
@@ -79,17 +93,19 @@ class Timer(handle.Handle):
         then the callback will run as soon as possible.
 
         .. note::
+            If the repeat value is set from a timer callback it does
+            not immediately take effect. If the timer was non-repeating
+            before, it will have been stopped. If it was repeating,
+            then the old repeat value will have been used to schedule
+            the next timeout.
 
-            If the repeat value is set from a timer callback it
-            does not immediately take effect. If the timer was
-            non-repeating before, it will have been stopped. If it
-            was repeating, then the old repeat value will have been
-            used to schedule the next timeout.
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
-
-        :readonly: False
-        :rtype: int
+        :readonly:
+            False
+        :rtype:
+            int
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -98,10 +114,13 @@ class Timer(handle.Handle):
     @repeat.setter
     def repeat(self, repeat):
         """
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param repeat: repeat interval which should be set
-        :type repeat: int
+        :param repeat:
+            repeat interval which should be set in milliseconds
+        :type repeat:
+            int
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -109,37 +128,48 @@ class Timer(handle.Handle):
 
     def again(self):
         """
-        Stop the timer, and if it is repeating restart it using the repeat
-        value as the timeout. If the timer has never been started before it
-        raises :class:`uv.UVError` with :class:`uv.StatusCode.EINVAL`.
+        Stop the timer, and if it is repeating restart it using the
+        repeat value as the timeout. If the timer has never been
+        started before it raises :class:`uv.error.InvalidTypeError`.
 
-        :raises uv.UVError: error while restarting the timer
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
-
+        :raises uv.UVError:
+            error while restarting the timer
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
         """
         if self.closing:
             raise error.ClosedHandleError
         code = lib.uv_timer_again(self.uv_timer)
         if code < 0:
             raise error.UVError(code)
+        self.set_pending()
 
-    def start(self, timeout, on_timeout=None, repeat=0):
+    def start(self, timeout, repeat=0, on_timeout=None):
         """
-        Starts the timer. If `timeout` is zero, the callback fires
-        on the next event loop iteration. If repeat is non-zero, the
+        Start the timer. If `timeout` is zero, the callback fires on
+        the next event loop iteration. If repeat is non-zero, the
         callback fires first after `timeout` milliseconds and then
         repeatedly after `repeat` milliseconds.
 
-        :raises uv.UVError: error while starting the handle
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while starting the handle
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param timeout: timeout to be used (in milliseconds)
-        :param on_timeout: callback called on timeout
-        :param repeat: repeat interval (in milliseconds)
+        :param timeout
+            timeout to be used (in milliseconds)
+        :param repeat:
+            repeat interval to be used (in milliseconds)
+        :param on_timeout:
+            callback which should run on timeout (overrides the current
+            callback if specified)
 
-        :type timeout: int
-        :type on_timeout: ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
-        :type repeat: int
+        :type timeout:
+            int
+        :type repeat:
+            int
+        :type on_timeout:
+            ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -151,9 +181,10 @@ class Timer(handle.Handle):
 
     def stop(self):
         """
-        Stops the handle, the callback will no longer be called.
+        Stop the handle. The callback will no longer be called.
 
-        :raises uv.UVError: error while stopping the handle
+        :raises uv.UVError:
+            error while stopping the handle
         """
         if self.closing:
             return

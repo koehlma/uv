@@ -81,3 +81,26 @@ class TestTimer(TestCase):
 
         self.assert_true(timer.referenced)
         self.assert_equal(self.timer_called, 1)
+
+    def test_timer_pending(self):
+        self.timer_called = 0
+
+        def on_timeout(timer_handle):
+            if self.timer_called == 0:
+                self.assert_false(self.loop.structure_is_pending(timer_handle))
+                timer_handle.repeat = 5
+                timer_handle.again()
+                self.assert_true(self.loop.structure_is_pending(timer_handle))
+            self.timer_called += 1
+            if self.timer_called >= 5:
+                timer_handle.stop()
+                self.assert_false(self.loop.structure_is_pending(timer_handle))
+
+        self.timer = uv.Timer(on_timeout=on_timeout)
+        self.assert_false(self.loop.structure_is_pending(self.timer))
+        self.timer.start(5)
+        self.assert_true(self.loop.structure_is_pending(self.timer))
+
+        self.loop.run()
+
+        self.assert_equal(self.timer_called, 5)
