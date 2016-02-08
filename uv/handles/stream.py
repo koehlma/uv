@@ -15,7 +15,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import base, common, error, handle, loop, request
+from .. import base, common, error, handle, library, loop, request
 from ..library import ffi, lib
 
 __all__ = ['ShutdownRequest', 'ConnectRequest', 'WriteRequest', 'Stream']
@@ -114,7 +114,7 @@ class WriteRequest(request.Request):
     def __init__(self, stream, buffers, send_stream=None, on_write=None):
         if stream.closing:
             raise error.ClosedHandleError()
-        self.buffers = common.Buffers(buffers)
+        self.buffers = library.Buffers(buffers)
         self.stream = stream
         """
         Stream this request belongs to.
