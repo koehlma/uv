@@ -194,6 +194,18 @@ class BaseLoop(object):
             self.run()
             self.close()
 
+    def reference_internal_async(self):
+        """
+        Reference the internal async handle used for wakeup.
+        """
+        lib.uv_ref(ffi.cast('uv_handle_t*', self.internal_uv_async))
+
+    def dereference_internal_async(self):
+        """
+        Dereference the internal async handle used for wakeup.
+        """
+        lib.uv_unref(ffi.cast('uv_handle_t*', self.internal_uv_async))
+
     @property
     def user_loop(self):
         """

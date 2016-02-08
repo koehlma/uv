@@ -373,6 +373,7 @@ class Loop(object):
         self.make_current()
         self.pending_structures = set()
         self.pending_callbacks = collections.deque()
+        self.pending_callbacks_lock = threading.RLock()
 
     @property
     def closed(self):
@@ -584,8 +585,10 @@ class Loop(object):
         :type keywords:
             dict
         """
-        self.pending_callbacks.append((callback, arguments, keywords))
-        self.base_loop.wakeup()
+        with self.pending_callbacks_lock:
+            self.pending_callbacks.append((callback, arguments, keywords))
+            self.base_loop.wakeup()
+            self.base_loop.reference_internal_async()
 
     def on_wakeup(self):
         """
@@ -597,13 +600,17 @@ class Loop(object):
         """
         try:
             while True:
-                callback, arguments, keywords = self.pending_callbacks.popleft()
+                with self.pending_callbacks_lock:
+                    callback, arguments, keywords = self.pending_callbacks.popleft()
                 try:
                     callback(*arguments, **keywords)
                 except BaseException:
                     self.handle_exception()
         except IndexError:
             pass
+        with self.pending_callbacks_lock:
+            if not self.pending_callbacks:
+                self.base_loop.dereference_internal_async()
 
     def handle_exception(self):
         """
