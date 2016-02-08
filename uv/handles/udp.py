@@ -15,7 +15,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import base, common, dns, error, handle, library, loop, request
+from .. import base, common, dns, error, handle, library, request
 from ..library import ffi, lib
 
 
@@ -453,7 +453,7 @@ class UDP(handle.Handle):
         if self.closing:
             raise error.ClosedHandleError()
         self.on_receive = on_receive or self.on_receive
-        code = lib.uv_udp_recv_start(self.uv_udp, loop.uv_alloc_cb, uv_udp_recv_cb)
+        code = lib.uv_udp_recv_start(self.uv_udp, handle.uv_alloc_cb, uv_udp_recv_cb)
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         self.set_pending()

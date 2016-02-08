@@ -188,20 +188,6 @@ class DefaultAllocator(Allocator):
         return bytes(ffi.buffer(c_base, length)) if length > 0 else b''
 
 
-@ffi.callback('uv_alloc_cb')
-def uv_alloc_cb(uv_handle, suggested_size, uv_buf):
-    handle = base.BaseHandle.detach(uv_handle)
-    """ :type: uv.Handle """
-    if handle is None:
-        library.uv_buffer_set(uv_buf, ffi.NULL, 0)
-    else:
-        try:
-            handle.allocator.allocate(handle, suggested_size, uv_buf)
-        except BaseException:
-            warnings.warn('exception in lib uv allocator')
-            library.uv_buffer_set(uv_buf, ffi.NULL, 0)
-
-
 @ffi.callback('uv_walk_cb')
 def uv_walk_cb(uv_handle, c_handles_set):
     handle = base.BaseHandle.detach(uv_handle)

@@ -15,7 +15,9 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from . import base, common, error
+import warnings
+
+from . import base, common, error, library
 from .library import ffi, lib
 from .loop import Loop
 
@@ -55,6 +57,20 @@ class HandleTypes(common.Enumeration):
         """
         self.cls = cls
         return cls
+
+
+@ffi.callback('uv_alloc_cb')
+def uv_alloc_cb(uv_handle, suggested_size, uv_buf):
+    handle = base.BaseHandle.detach(uv_handle)
+    """ :type: uv.Handle """
+    if handle is None:
+        library.uv_buffer_set(uv_buf, ffi.NULL, 0)
+    else:
+        try:
+            handle.allocator.allocate(handle, suggested_size, uv_buf)
+        except Exception:
+            warnings.warn('exception in lib uv allocator')
+            library.uv_buffer_set(uv_buf, ffi.NULL, 0)
 
 
 @HandleTypes.UNKNOWN
