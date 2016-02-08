@@ -3,3 +3,5 @@ exclude_lines =
     pragma: no cover
     def __repr__
     if code != error.StatusCodes.SUCCESS
+omit =
+    uv/helpers/*

@@ -15,6 +15,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+
 MOCK_CONSTANTS = {
     'UV_RUN_DEFAULT': 0,
     'UV_RUN_ONCE': 1,
@@ -126,7 +127,7 @@ MOCK_CONSTANTS = {
 }
 
 
-class Mock(object):  # pragma: no cover
+class Mock(object):
     def __getattr__(self, name):
         try:
             return MOCK_CONSTANTS[name]
