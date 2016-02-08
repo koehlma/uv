@@ -16,18 +16,42 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import sys
-import warnings
 
-from .. import base, common, error, handle, library
+from .. import base, common, error, handle
 from ..library import ffi, lib
 
 from . import pipe, signal, stream
 
-__all__ = ['disable_stdio_inheritance', 'CreatePipe', 'PIPE', 'STDIN', 'STDOUT',
-           'STDERR', 'ProcessFlags', 'Process']
+
+def disable_stdio_inheritance():
+    """
+    Disables inheritance for file descriptors / handles that this
+    process inherited from its parent. The effect is that child
+    processes spawned by this process don’t accidentally inherit
+    these handles.
+
+    It is recommended to call this function as early in your program
+    as possible, before the inherited file descriptors can be closed
+    or duplicated.
+
+    .. note::
+        This function works on a best-effort basis: which means there
+        is no guarantee that libuv can discover all file descriptors
+        that were inherited. In general it does a better job on Windows
+        than it does on Unix.
+    """
+    lib.uv_disable_stdio_inheritance()
 
 
 class StandardIOFlags(common.Enumeration):
+    """
+    Standard IO flags enumeration.
+
+    .. warning::
+        These flags are used internally to specify which file
+        descriptors should be exposed to a new child process.
+    """
+
     IGNORE = lib.UV_IGNORE
 
     INHERIT_FD = lib.UV_INHERIT_FD
@@ -38,42 +62,37 @@ class StandardIOFlags(common.Enumeration):
     WRITABLE_PIPE = lib.UV_WRITABLE_PIPE
 
 
-def disable_stdio_inheritance():
-    """
-    Disables inheritance for file descriptors / handles that this process
-    inherited from its parent. The effect is that child processes spawned
-    by this process don’t accidentally inherit these handles.
-
-    It is recommended to call this function as early in your program as possible,
-    before the inherited file descriptors can be closed or duplicated.
-
-    .. note::
-
-        This function works on a best-effort basis: there is no guarantee that
-        libuv can discover all file descriptors that were inherited. In general
-        it does a better job on Windows than it does on Unix.
-    """
-    lib.uv_disable_stdio_inheritance()
-
-
 class CreatePipe(object):
     """
-    Passed to one of the standard IO arguments of :class:`Process`, it tells
-    the library to create a pipe to communicate with the new process.
-
-    :param readable: pipe is readable
-    :param writable: pipe is writable
-    :param ipc: pipe supports inter process communication
-
-    :type readable: bool
-    :type writable: bool
-    :type ipc: bool
+    Passed to one of the standard IO arguments of :class:`Process`, it
+    tells the library to create a new pipe to communicate with the
+    child process.
     """
+
+    __slots__ = ['ipc', 'flags']
+
     def __init__(self, readable=False, writable=False, ipc=True):
+        """
+        :param readable:
+            pipe should be readable
+        :param writable:
+            pipe should be writable
+        :param ipc:
+            pipe should support inter process communication
+
+        :type readable:
+            bool
+        :type writable:
+            bool
+        :type ipc:
+            bool
+        """
         self.ipc = ipc
         self.flags = StandardIOFlags.CREATE_PIPE
-        if readable: self.flags |= StandardIOFlags.READABLE_PIPE
-        if writable: self.flags |= StandardIOFlags.WRITABLE_PIPE
+        if readable:
+            self.flags |= StandardIOFlags.READABLE_PIPE
+        if writable:
+            self.flags |= StandardIOFlags.WRITABLE_PIPE
 
     def __repr__(self):
         readable = bool(self.flags & StandardIOFlags.READABLE_PIPE)
@@ -84,12 +103,15 @@ class CreatePipe(object):
 
 # subclass int for documentation purposes
 class _FD(int):
-    def __repr__(self): return '<FileDescriptor: {}>'.format(self)
+    def __repr__(self):
+        return '<FileDescriptor: {}>'.format(self)
 
 
 def _get_fileno(fileobj):
-    try: return _FD(fileobj.fileno())
-    except: return None
+    try:
+        return _FD(fileobj.fileno())
+    except AttributeError:
+        return None
 
 
 PIPE = CreatePipe(readable=True, writable=True)
@@ -111,47 +133,69 @@ Standard error file descriptor.
 
 
 class ProcessFlags(common.Enumeration):
-    """ """
+    """
+    Process flags enumeration.
+    """
+
+    # set implicitly by uid and gid parameters
     SETUID = lib.UV_PROCESS_SETUID
     SETGID = lib.UV_PROCESS_SETGID
 
     DETACHED = lib.UV_PROCESS_DETACHED
     """
-    Spawn the child process in a detached state – this will make it a process
-    group leader, and will effectively enable the child to keep running after
-    the parent exits. Note that the child process will still keep the parent's
-    event loop alive unless the parent process calls :func:`Handle.dereference`
-    on the child's process handle.
+    Spawn the child process in a detached state – this will make it a
+    process group leader, and will effectively enable the child to keep
+    running after the parent exits. Note that the child process will
+    still keep the parent's event loop alive unless the parent process
+    calls :func:`uv.Handle.dereference` on the child's process handle.
+
+    :type: uv.ProcessFlags
     """
 
     WINDOWS_HIDE = lib.UV_PROCESS_WINDOWS_HIDE
     """
-    Hide the subprocess console window that would normally be created. This
-    option is only meaningful on Windows systems. On Unix it is ignored.
+    Hide the subprocess console window that would normally be created.
+    This option is only meaningful on Windows systems. On Unix it is
+    ignored.
+
+    :type: uv.ProcessFlags
     """
+
     WINDOWS_VERBATIM = lib.UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS
     """
-    Do not wrap any arguments in quotes, or perform any other escaping, when
-    converting the argument list into a command line string. This option is
-    only meaningful on Windows systems. On Unix it is ignored.
+    Do not wrap any arguments in quotes, or perform any other escaping,
+    when converting the argument list into a command line string. This
+    option is only meaningful on Windows systems. On Unix it is
+    ignored.
+
+    :type: uv.ProcessFlags
     """
 
 
 @base.handle_callback('uv_exit_cb')
-def uv_exit_cb(process_handle, exit_status, term_signum):
+def uv_exit_cb(process_handle, returncode, signum):
     process_handle.clear_pending()
-    process_handle.on_exit(process_handle, exit_status, term_signum)
+    process_handle.on_exit(process_handle, returncode, signum)
 
 
 def populate_stdio_container(uv_stdio, file_base=None):
+    """
+    Used internally to populate `uv_stdio_t` with data based on a given
+    file like base object.
+
+    :type uv_stdio:
+        ffi.CData[uv_stdio_t]
+    :type file_base:
+        uv.Stream | uv.CreatePipe | int | file-like
+    """
     fileobj = file_base
     if isinstance(file_base, stream.Stream):
         uv_stdio.data.stream = file_base.uv_stream
-        uv_stdio.data.flags = StandardIOFlags.INHERIT_STREAM
+        uv_stdio.flags = StandardIOFlags.INHERIT_STREAM
     elif isinstance(file_base, CreatePipe):
         fileobj = pipe.Pipe(ipc=file_base.ipc)
         uv_stdio.data.stream = fileobj.uv_stream
-        uv_stdio.data.flags = file_base.flags
+        uv_stdio.flags = file_base.flags
     else:
         try:
             if isinstance(file_base, int):
@@ -162,52 +206,79 @@ def populate_stdio_container(uv_stdio, file_base=None):
         except AttributeError:
             uv_stdio.flags = StandardIOFlags.IGNORE
             if file_base is not None:
-                warnings.warn('ignoring unknown file object (%s)' % str(file_base))
+                raise error.InvalidTypeError(message='unknown file object type')
     return fileobj
 
 
 @handle.HandleTypes.PROCESS
 class Process(handle.Handle):
     """
-    Process handles will spawn a new process and allow the user to control
-    it and establish communication channels with it using streams.
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param arguments: program path and command line arguments
-    :param uid: spawn as user with user id `uid`
-    :param gid: spawn as group with group id `gid`
-    :param cwd: set current working directory
-    :param env: set environment variables
-    :param flags: process spawn flags to be used
-    :param stdin: standard input of the child process
-    :param stdout: standard output of the child process
-    :param stderr: standard error of the child process
-    :param stdio: other standard file descriptors of the child process
-    :param loop: event loop the handle should run on
-    :param on_exit: callback called after process exited
-
-    :type arguments: list[str]
-    :type uid: int
-    :type gid: int
-    :type cwd: str
-    :type env: dict[str, str]
-    :type flags: int
-    :type stdin: int | uv.Stream | file | None
-    :type stdout: int | uv.Stream | file | None
-    :type stderr: int | uv.Stream | file | None
-    :type stdio: list[int | uv.Stream | file]
-    :type loop: uv.Loop
-    :type on_exit: ((uv.Process, int, int) -> None) |
-                   ((Any, uv.Process, int, int) -> None)
+    Process handles will spawn a new process and allow the user to
+    control it and establish communication channels with it using
+    streams.
     """
 
     uv_handle_type = 'uv_process_t*'
     uv_handle_init = lib.uv_spawn
 
-    def __init__(self, arguments, uid=None, gid=None, cwd=None, env=None,
-                 flags=0, stdin=None, stdout=None, stderr=None, stdio=None,
+    def __init__(self, arguments, uid=None, gid=None, cwd=None, env=None, stdin=None,
+                 stdout=None, stderr=None, stdio=None, flags=ProcessFlags.WINDOWS_HIDE,
                  loop=None, on_exit=None):
+        """
+        :raises uv.UVError:
+            error while initializing the handle
+
+        :param arguments:
+            program path and command line arguments
+        :param uid:
+            spawn as user with user id `uid`
+        :param gid:
+            spawn as group with group id `gid`
+        :param cwd:
+            child process working directory
+        :param env:
+            child process environment variables
+        :param flags:
+            process spawn flags to be used
+        :param stdin:
+            standard input of the child process
+        :param stdout:
+            standard output of the child process
+        :param stderr:
+            standard error of the child process
+        :param stdio:
+            other standard file descriptors of the child process
+        :param loop:
+            event loop the handle should run on
+        :param on_exit:
+            callback which should be called after process exited
+
+        :type arguments:
+            list[unicode]
+        :type uid:
+            int
+        :type gid:
+            int
+        :type cwd:
+            unicode
+        :type env:
+            dict[unicode,unicode]
+        :type flags:
+            int
+        :type stdin:
+            int | uv.Stream | uv.CreatePipe | file-like | None
+        :type stdout:
+            int | uv.Stream | uv.CreatePipe | file-like | None
+        :type stderr:
+            int | uv.Stream | uv.CreatePipe | file-like | None
+        :type stdio:
+            list[int | uv.Stream | uv.CreatePipe | file-like]
+        :type loop:
+            uv.Loop
+        :type on_exit:
+            ((uv.Process, int, int) -> None) |
+            ((Any, uv.Process, int, int) -> None)
+        """
 
         self.uv_options = ffi.new('uv_process_options_t*')
 
@@ -230,29 +301,37 @@ class Process(handle.Handle):
         """
         Standard input of the child process.
 
-        :readonly: True
-        :type: int | uv.Stream | file | None
+        :readonly:
+            True
+        :type:
+            int | uv.Stream | file-like | None
         """
         self.stdout = populate_stdio_container(self.c_stdio_containers[1], stdout)
         """
         Standard output of the child process.
 
-        :readonly: True
-        :type: int | uv.Stream | file | None
+        :readonly:
+            True
+        :type:
+            int | uv.Stream | file-like | None
         """
         self.stderr = populate_stdio_container(self.c_stdio_containers[2], stderr)
         """
         Standard error of the child process.
 
-        :readonly: True
-        :type: int | uv.Stream | file | None
+        :readonly:
+            True
+        :type:
+            int | uv.Stream | file-like | None
         """
         self.stdio = []
         """
         Other standard file descriptors of the child process.
 
-        :readonly: True
-        :type: list[int | uv.Stream | file]
+        :readonly:
+            True
+        :type:
+            list[int | uv.Stream | file-like]
         """
         if stdio is not None:
             for number in range(len(stdio)):
@@ -284,15 +363,35 @@ class Process(handle.Handle):
 
         self.on_exit = on_exit or common.dummy_callback
         """
-        Callback called after process exited.
+        Callback which should be called after process exited.
 
-        .. function:: on_exit(Process, Status, Signum)
 
-        :readonly: False
-        :type: ((uv.Process, int, int) -> None) | ((Any, uv.Process, int, int) -> None)
+        .. function:: on_exit(process_handle, returncode, signum)
+
+            :param process_handle:
+                handle the call originates from
+            :param returncode:
+                status code returned by the process on termination
+            :param signum:
+                signal number caused the process to exit
+
+            :type process_handle:
+                uv.Process
+            :type returncode:
+                int
+            :type signum:
+                int
+
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Process, int, int) -> None) |
+            ((Any, uv.Process, int, int) -> None)
         """
-
         super(Process, self).__init__(loop, (self.uv_options, ))
+        self.uv_process = self.base_handle.uv_object
         self.set_pending()
 
     @property
@@ -300,21 +399,25 @@ class Process(handle.Handle):
         """
         PID of the spawned process.
 
-        :rtype: int
+        :readonly:
+            True
+        :rtype:
+            int
         """
-        if self.closing:
-            return None
-        return self.process.pid
+        return self.uv_process.pid
 
     def kill(self, signum=signal.Signals.SIGINT):
         """
-        Sends the specified signal to the process.
+        Send the specified signal to the process.
 
-        :param signum: signal number
-        :type signum: int
+        :param signum:
+            signal number
+
+        :type signum:
+            int
         """
         if self.closing:
             raise error.ClosedHandleError()
-        code = lib.uv_process_kill(self.process, signum)
+        code = lib.uv_process_kill(self.uv_process, signum)
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
