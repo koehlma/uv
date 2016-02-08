@@ -27,11 +27,11 @@ class RequestType(common.Enumeration):
     CONNECT = lib.UV_CONNECT
     WRITE = lib.UV_WRITE
     SHUTDOWN = lib.UV_SHUTDOWN
-    SEND = lib.UV_UDP_SEND
     FS = lib.UV_FS
     WORK = lib.UV_WORK
     GETADDRINFO = lib.UV_GETADDRINFO
     GETNAMEINFO = lib.UV_GETNAMEINFO
+    UDP_SEND = lib.UV_UDP_SEND
 
     def __call__(self, cls):
         self.cls = cls

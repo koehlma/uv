@@ -15,151 +15,170 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, dns, error, handle, library, loop, request
+from .. import base, common, dns, error, handle, library, loop, request
 from ..library import ffi, lib
-
-__all__ = ['UDPFlags', 'UDPMembership', 'UDP', 'SendRequest']
 
 
 class UDPFlags(common.Enumeration):
-    """ """
+    """
+    UDP configuration and status flags enumeration.
+    """
+
     IPV6ONLY = lib.UV_UDP_IPV6ONLY
     """
     Disable dual stack support.
 
-    :type: int
+    :type: uv.UDPFlags
     """
-    PARTIAL = lib.UV_UDP_PARTIAL
-    """
-    Indicates message was truncated because read buffer was too small. The
-    remainder was discarded by the OS.
 
-    :type: int
-    """
     REUSEADDR = lib.UV_UDP_REUSEADDR
     """
-    Indicates if `SO_REUSEADDR` will be set when binding the handle. This sets
-    the `SO_REUSEPORT` socket flag on the BSDs and OSX. On other Unix platforms,
-    it sets the `SO_REUSEADDR` flag. What that means is that multiple threads or
-    processes can bind to the same address without error (provided they all set
-    the flag) but only the last one to bind will receive any traffic, in effect
-    "stealing" the port from the previous listener.
+    Enable `SO_REUSEADDR` when binding the handle. This sets the
+    `SO_REUSEPORT` socket flag on the BSDs and OSX. On other Unix
+    platforms, it sets the `SO_REUSEADDR` flag. This allows multiple
+    threads or processes to bind to the same address without errors
+    (provided that they all set the flag) but only the last one will
+    receive any traffic, in effect "stealing" the port from the
+    previous listener.
 
-    :type: int
+    :type: uv.UDPFlags
+    """
+
+    PARTIAL = lib.UV_UDP_PARTIAL
+    """
+    Indicates that the received message has been truncated because the
+    read buffer was too small. The remainder was discarded by the OS.
+
+    :type: uv.UDPFlags
     """
 
 
 class UDPMembership(common.Enumeration):
-    """ """
+    """
+    Membership types enumeration for multicast addresses.
+    """
+
     LEAVE_GROUP = lib.UV_LEAVE_GROUP
     """
-    Leave group.
+    Leave multicast group.
+
+    :type: uv.UDPMembership
     """
+
     JOIN_GROUP = lib.UV_JOIN_GROUP
     """
-    Join group.
+    Join multicast group.
+
+    :type: uv.UDPMembership
     """
 
 
-@ffi.callback('uv_udp_send_cb')
-def uv_udp_send_cb(uv_request, status):
-    send_request = library.detach(uv_request)
-    """ :type: uv.SendRequest """
-    if send_request is not None:
-        try:
-            send_request.on_send(send_request, status)
-        except:
-            send_request.loop.handle_exception()
-        send_request.destroy()
-
-
-@request.RequestType.SEND
-class SendRequest(request.Request):
+@base.request_callback('uv_udp_send_cb')
+def uv_udp_send_cb(send_request, status):
     """
-    UDP send request.
+    :type send_request:
+        uv.SendRequest
+    :type status:
+        int
+    """
+    send_request.on_send(send_request, status)
 
-    :raises uv.UVError: error while initializing the request
-    :raises uv.ClosedHandleError: udp handle has already been closed or is closing
 
-    :param udp: udp handle the request should run on
-    :param buffers: buffers or buffer to send
-    :param address: address of the remote peer `(ip, port, flowinfo=0, scope_id=0)`
-    :param on_send: callback called after all data has been sent
-
-    :type udp: uv.UDP
-    :type buffers: list[bytes] | bytes
-    :type address: tuple | uv.Address
-    :type on_send: ((uv.SendRequest, uv.StatusCode) -> None) |
-                   ((Any, uv.SendRequest, uv.StatusCode) -> None)
+@request.RequestType.UDP_SEND
+class UDPSendRequest(request.Request):
+    """
+    Request to send a UDP datagram.
     """
 
     __slots__ = ['uv_send', 'buffers', 'udp', 'on_send']
 
+    uv_request_type = 'uv_udp_send_t*'
+    uv_request_init = lib.uv_udp_send
+
     def __init__(self, udp, buffers, address, on_send=None):
-        if stream.closing: raise error.ClosedHandleError()
-        self.uv_send = ffi.new('uv_udp_send_t*')
-        super(SendRequest, self).__init__(self.uv_send, udp.loop)
-        self.buffers = common.Buffers(buffers)
+        """
+        :raises uv.UVError:
+            error while initializing the request
+        :raises uv.ClosedHandleError:
+            udp handle has already been closed or is closing
+
+        :param udp:
+            udp handle the request should run on
+        :param buffers:
+            buffers or buffer to send
+        :param address:
+            address of the remote peer `(ip, port, flowinfo=0, scope_id=0)`
+        :param on_send:
+            callback called after all data has been sent
+
+        :type udp:
+            uv.UDP
+        :type buffers:
+            list[bytes] | bytes
+        :type address:
+            tuple | uv.Address
+        :type on_send:
+            ((uv.SendRequest, uv.StatusCode) -> None) |
+            ((Any, uv.SendRequest, uv.StatusCode) -> None)
+        """
+        self.buffers = library.Buffers(buffers)
         self.udp = udp
         """
-        UDP handle this request belongs to.
+        UDP handle the request belongs to.
 
-        :readonly: True
-        :type: uv.UDP
+        :readonly:
+            True
+        :type:
+            uv.UDP
         """
         self.on_send = on_send or common.dummy_callback
         """
-        Callback called after all data has been sent.
+        Callback which should run after all data has been sent.
 
-        .. function: on_write(Send-Request, Status)
 
-        :readonly: False
-        :type: ((uv.SendRequest, uv.StatusCode) -> None) |
-               ((Any, uv.SendRequest, uv.StatusCode) -> None)
+        .. function: on_send(send_request, status)
+
+                :param send_request:
+                    request the call originates from
+                :param status:
+                    status of the request
+
+                :type send_request:
+                    uv.UDPSendRequest
+                :type status:
+                    uv.StatusCode
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.SendRequest, uv.StatusCode) -> None) |
+            ((Any, uv.SendRequest, uv.StatusCode) -> None)
         """
         uv_udp = self.udp.uv_udp
         c_buffers, uv_buffers = self.buffers
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        code = lib.uv_udp_send(self.uv_send, uv_udp, uv_buffers, len(self.buffers),
-                               c_sockaddr, uv_udp_send_cb)
-        if code < 0:
-            self.destroy()
-            raise error.UVError(code)
+        init_arguments = (uv_buffers, len(self.buffers), c_sockaddr, uv_udp_send_cb)
+        super(UDPSendRequest, self).__init__(udp.loop, *init_arguments, uv_handle=uv_udp)
 
 
-@ffi.callback('uv_udp_recv_cb')
-def uv_udp_recv_cb(uv_udp, length, uv_buf, c_sockaddr, flags):
-    udp = library.detach(uv_udp)
-    """ :type: uv.UDP """
-    if udp is not None:
-        data = udp.loop.allocator.finalize(udp, length, uv_buf)
-        if length < 0:
-            length, status = 0, length
-        else:
-            status = error.StatusCodes.SUCCESS
-        address = dns.unpack_sockaddr(c_sockaddr)
-        try:
-            udp.on_receive(udp, status, address, length, data, flags)
-        except:
-            udp.loop.handle_exception()
+@base.handle_callback('uv_udp_recv_cb')
+def uv_udp_recv_cb(udp_handle, length, uv_buf, c_sockaddr, flags):
+    data = udp_handle.loop.allocator.finalize(udp_handle, length, uv_buf)
+    if length < 0:
+        length, status = 0, length
+    else:
+        status = error.StatusCodes.SUCCESS
+    address = dns.unpack_sockaddr(c_sockaddr)
+    udp_handle.on_receive(udp_handle, status, address, length, data, flags)
 
 
 @handle.HandleTypes.UDP
 class UDP(handle.Handle):
     """
-    UDP handles encapsulate UDP communication for both clients and servers.
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param flags: udp flags to be used
-    :param loop: event loop the handle should run on
-    :param on_receive: callback called after package has been received
-
-    :type flags: int
-    :type loop: uv.Loop
-    :type on_receive: ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
-                      ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
+    UDP handles encapsulate UDP communication for both clients and
+    servers.
     """
 
     __slots__ = ['uv_udp', 'on_receive']
@@ -168,6 +187,24 @@ class UDP(handle.Handle):
     uv_handle_init = lib.uv_udp_init_ex
 
     def __init__(self, flags=0, loop=None, on_receive=None):
+        """
+        :raises uv.UVError: error while initializing the handle
+
+        :param flags:
+            udp flags to be used
+        :param loop:
+            event loop the handle should run on
+        :param on_receive:
+            callback called after package has been received
+
+        :type flags:
+            int
+        :type loop:
+            uv.Loop
+        :type on_receive:
+            ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
+            ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
+        """
         super(UDP, self).__init__(loop, (flags, ))
         self.uv_udp = self.base_handle.uv_object
         self.on_receive = on_receive or common.dummy_callback
@@ -197,7 +234,7 @@ class UDP(handle.Handle):
         if code < 0:
             raise error.UVError(code)
 
-    def set_membership(self, multicast_address, interface_address, membership):
+    def set_membership(self, multicast_address, membership, interface_address=None):
         """
         Set membership for a multicast address
 
@@ -215,7 +252,7 @@ class UDP(handle.Handle):
         if self.closing:
             raise error.ClosedHandleError()
         c_m_addr = multicast_address.encode()
-        c_i_addr = interface_address.encode()
+        c_i_addr = interface_address.encode() if interface_address else ffi.NULL
         code = lib.uv_udp_set_membership(self.uv_udp, c_m_addr, c_i_addr, membership)
         if code < 0:
             raise error.UVError(code)
@@ -366,9 +403,9 @@ class UDP(handle.Handle):
                        ((Any, uv.SendRequest, uv.StatusCode) -> None)
 
         :returns: send request
-        :rtype: uv.SendRequest
+        :rtype: uv.UDPSendRequest
         """
-        return SendRequest(self, buffers, address, on_send)
+        return UDPSendRequest(self, buffers, address, on_send)
 
     def try_send(self, buffers, address):
         """
@@ -389,10 +426,11 @@ class UDP(handle.Handle):
         """
         if self.closing:
             raise error.ClosedHandleError()
-        c_storage = c_create_sockaddr(*address)
+        c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        c_buffers, uv_buffers = common.Buffers(buffers)
-        code = lib.uv_udp_try_send(self.uv_udp, uv_buffers, len(buffers), c_sockaddr)
+        buffers = library.Buffers(buffers)
+        code = lib.uv_udp_try_send(self.uv_udp, buffers.uv_buffers, len(buffers),
+                                   c_sockaddr)
         if code < 0:
             raise error.UVError(code)
         return code
@@ -423,7 +461,8 @@ class UDP(handle.Handle):
         """
         Stop listening for incoming datagrams.
 
-        :raises uv.UVError: error while stop listening for incoming datagrams
+        :raises uv.UVError:
+            error while stop listening for incoming datagrams
         """
         if self.closing:
             return
