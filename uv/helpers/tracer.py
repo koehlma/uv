@@ -24,7 +24,7 @@ import uvcffi
 wrapper_codes = set()
 
 
-class LIBTracer(object):
+class LIBTracer(object):  # pragma: no cover
     def __init__(self):
         self.wrappers = {}
 
@@ -58,7 +58,7 @@ class LIBTracer(object):
         print('lib-return     : {}{}: {}'.format(function.__name__, arguments, result))
 
 
-class FFITracer(object):
+class FFITracer(object):  # pragma: no cover
     def __getattr__(self, name):
         return getattr(uvcffi.ffi, name)
 

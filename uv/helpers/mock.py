@@ -126,7 +126,7 @@ MOCK_CONSTANTS = {
 }
 
 
-class Mock(object):
+class Mock(object):  # pragma: no cover
     def __getattr__(self, name):
         try:
             return MOCK_CONSTANTS[name]
