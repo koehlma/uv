@@ -15,11 +15,14 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import os
 import tempfile
 
 from common import TestCase
 
 import uv
+
+U_TIME = (4200, 4200)
 
 
 class TestFSPoll(TestCase):
@@ -30,8 +33,7 @@ class TestFSPoll(TestCase):
             fs_poll.close()
 
         def on_timeout(timer):
-            self.temp_file.write(b'x')
-            self.temp_file.flush()
+            os.utime(self.temp_file.name, U_TIME)
             timer.close()
 
         self.fs_poll = uv.FSPoll(interval=2000, on_change=on_change)
