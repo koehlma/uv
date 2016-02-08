@@ -263,7 +263,7 @@ class Handle(object):
             raise error.ClosedHandleError()
         c_buffer_size = ffi.new('int*')
         code = lib.uv_send_buffer_size(self.uv_handle, c_buffer_size)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         return c_buffer_size[0]
 
@@ -283,9 +283,9 @@ class Handle(object):
         """
         if self.closing:
             raise error.ClosedHandleError()
-        c_buffer_size = ffi.new('int*', int(size / 2) if is_linux else size)
+        c_buffer_size = ffi.new('int*', int(size / 2) if common.is_linux else size)
         code = lib.uv_send_buffer_size(self.uv_handle, c_buffer_size)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     @property
@@ -317,7 +317,7 @@ class Handle(object):
             raise error.ClosedHandleError()
         c_buffer_size = ffi.new('int*')
         code = lib.uv_recv_buffer_size(self.uv_handle, c_buffer_size)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         return c_buffer_size[0]
 
@@ -337,9 +337,9 @@ class Handle(object):
         """
         if self.closing:
             raise error.ClosedHandleError()
-        c_buffer_size = ffi.new('int*', int(size / 2) if is_linux else size)
+        c_buffer_size = ffi.new('int*', int(size / 2) if common.is_linux else size)
         code = lib.uv_recv_buffer_size(self.uv_handle, c_buffer_size)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     def fileno(self):
@@ -372,7 +372,7 @@ class Handle(object):
             raise error.ClosedHandleError()
         uv_fd = ffi.new('uv_os_fd_t*')
         code = lib.uv_fileno(self.uv_handle, uv_fd)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         return ffi.cast('int*', uv_fd)[0]
 
@@ -442,17 +442,6 @@ class Handle(object):
         #common.detach_finalizer(self)
         #lib.uv_close(self.uv_handle, uv_close_cb)
         self.base_handle.close()
-
-    def set_closed(self):
-        """
-        .. warning::
-            This method is only for internal purposes and is not part
-            of the official API. It sets the handles state to closed
-            and activates garbage collection for the handle. You should
-            never call it directly!
-        """
-        self.clear_pending()
-        self.loop.handle_set_closed(self)
 
     def set_pending(self):
         """

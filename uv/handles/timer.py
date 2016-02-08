@@ -140,7 +140,7 @@ class Timer(handle.Handle):
         if self.closing:
             raise error.ClosedHandleError
         code = lib.uv_timer_again(self.uv_timer)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         self.set_pending()
 
@@ -175,7 +175,7 @@ class Timer(handle.Handle):
             raise error.ClosedHandleError()
         self.on_timeout = on_timeout or self.on_timeout
         code = lib.uv_timer_start(self.uv_timer, uv_timer_cb, timeout, repeat)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         self.set_pending()
 
@@ -189,6 +189,6 @@ class Timer(handle.Handle):
         if self.closing:
             return
         code = lib.uv_timer_stop(self.uv_timer)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         self.clear_pending()

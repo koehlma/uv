@@ -156,7 +156,8 @@ def fs_callback(uv_request):
 def close(fd, callback=None, loop=None):
     request = FSRequest(None, callback, loop)
     code = lib.cross_uv_fs_close(request.loop.uv_loop, request.uv_fs, fd, fs_callback)
-    if code < 0: raise error.UVError(code)
+    if code != error.StatusCodes.SUCCESS:
+        raise error.UVError(code)
     return request
 
 
@@ -188,7 +189,8 @@ def open(path, flags, mode=0o777, callback=None, loop=None):
     c_path = path.encode()
     code = lib.uv_fs_open(fs_request.loop.uv_loop, uv_fs, c_path, flags, mode,
                           fs_callback)
-    if code < 0: raise error.UVError(code)
+    if code != error.StatusCodes.SUCCESS:
+        raise error.UVError(code)
     return request
 
 
@@ -196,7 +198,8 @@ def stat(path, callback=None, loop=None):
     fs_request = FSRequest(callback=callback, loop=loop)
     code = lib.uv_fs_stat(fs_request.loop.uv_loop, fs_request.uv_fs, path.encode(),
                           fs_callback)
-    if code < 0: raise error.UVError(code)
+    if code != error.StatusCodes.SUCCESS:
+        raise error.UVError(code)
     return request
 
 

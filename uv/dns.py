@@ -235,8 +235,10 @@ class GetAddrInfo(request.Request):
         code = lib.uv_getaddrinfo(self.loop.uv_loop, self.uv_getaddrinfo, uv_callback,
                                   host.encode(), str(port).encode(), self.c_hints)
 
-        if code < 0: raise error.UVError(code)
-        if callback is None: self.populate()
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
+        if callback is None:
+            self.populate()
 
     def populate(self):
         if self.uv_getaddrinfo.addrinfo:
@@ -285,7 +287,8 @@ class GetNameInfo(request.Request):
         code = lib.uv_getnameinfo(self.loop.uv_loop, self.uv_getnameinfo, uv_callback,
                                   self.c_sockaddr, flags)
 
-        if code < 0: raise error.UVError(code)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
 
     @property
     def host(self):
@@ -309,6 +312,7 @@ def c_create_sockaddr(ip, port, flowinfo=0, scope_id=0):
     if not code: return c_sockaddr
     c_sockaddr_in6 = ffi.cast('struct sockaddr_in6*', c_sockaddr)
     code = lib.uv_ip6_addr(c_ip, port, c_sockaddr_in6)
-    if code < 0: raise error.UVError(code)
+    if code != error.StatusCodes.SUCCESS:
+        raise error.UVError(code)
     lib.cross_set_ipv6_additional(c_sockaddr_in6, flowinfo, scope_id)
     return c_sockaddr

@@ -166,7 +166,7 @@ class UDPSendRequest(request.Request):
 @base.handle_callback('uv_udp_recv_cb')
 def uv_udp_recv_cb(udp_handle, length, uv_buf, c_sockaddr, flags):
     data = udp_handle.loop.allocator.finalize(udp_handle, length, uv_buf)
-    if length < 0:
+    if length < 0:  # pragma: no cover
         length, status = 0, length
     else:
         status = error.StatusCodes.SUCCESS
@@ -231,7 +231,7 @@ class UDP(handle.Handle):
         if self.closing:
             raise error.ClosedHandleError()
         code = lib.cross_uv_udp_open(self.uv_udp, fd)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     def set_membership(self, multicast_address, membership, interface_address=None):
@@ -254,7 +254,7 @@ class UDP(handle.Handle):
         c_m_addr = multicast_address.encode()
         c_i_addr = interface_address.encode() if interface_address else ffi.NULL
         code = lib.uv_udp_set_membership(self.uv_udp, c_m_addr, c_i_addr, membership)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     def set_multicast_loop(self, enable):
@@ -270,7 +270,7 @@ class UDP(handle.Handle):
         if self.closing:
             raise error.ClosedHandleError()
         code = lib.uv_udp_set_multicast_loop(self.uv_udp, int(enable))
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     def set_multicast_ttl(self, ttl):
@@ -286,7 +286,7 @@ class UDP(handle.Handle):
         if self.closing:
             raise error.ClosedHandleError()
         code = lib.uv_udp_set_multicast_ttl(self.uv_udp, ttl)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     def set_multicast_interface(self, interface):
@@ -302,7 +302,7 @@ class UDP(handle.Handle):
         if self.closing:
             raise error.ClosedHandleError()
         code = lib.uv_udp_set_multicast_interface(self.uv_udp, interface.encode())
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     def set_broadcast(self, enable):
@@ -318,7 +318,7 @@ class UDP(handle.Handle):
         if self.closing:
             raise error.ClosedHandleError()
         code = lib.uv_udp_set_broadcast(self.uv_udp, int(enable))
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     @property
@@ -334,7 +334,7 @@ class UDP(handle.Handle):
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
         code = lib.uv_udp_getsockname(self.uv_udp, c_sockaddr, c_size)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             return None
         return c_sockaddr.sa_family
 
@@ -355,7 +355,7 @@ class UDP(handle.Handle):
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
         code = lib.uv_udp_getsockname(self.uv_udp, c_sockaddr, c_size)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         return dns.unpack_sockaddr(c_sockaddr)
 
@@ -381,7 +381,7 @@ class UDP(handle.Handle):
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         code = lib.uv_udp_bind(self.uv_udp, c_sockaddr, flags)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
     def send(self, buffers, address, on_send=None):
@@ -431,7 +431,7 @@ class UDP(handle.Handle):
         buffers = library.Buffers(buffers)
         code = lib.uv_udp_try_send(self.uv_udp, buffers.uv_buffers, len(buffers),
                                    c_sockaddr)
-        if code < 0:
+        if code < 0:  # pragma: no cover
             raise error.UVError(code)
         return code
 
@@ -453,7 +453,7 @@ class UDP(handle.Handle):
             raise error.ClosedHandleError()
         self.on_receive = on_receive or self.on_receive
         code = lib.uv_udp_recv_start(self.uv_udp, loop.uv_alloc_cb, uv_udp_recv_cb)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         self.set_pending()
 
@@ -467,6 +467,6 @@ class UDP(handle.Handle):
         if self.closing:
             return
         code = lib.uv_udp_recv_stop(self.uv_udp)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         self.clear_pending()

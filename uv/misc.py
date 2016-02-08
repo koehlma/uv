@@ -71,13 +71,15 @@ def guess_handle(fd):
 
 def kill(pid, signum):
     code = lib.uv_kill(pid, signum)
-    if code < 0: raise error.UVError(code)
+    if code != error.StatusCodes.SUCCESS:
+        raise error.UVError(code)
 
 def cpu_info():
     uv_cpu_info_array = ffi.new('uv_cpu_info_t**')
     uv_cpu_info_count = ffi.new('int*')
     code = lib.uv_cpu_info(uv_cpu_info_array, uv_cpu_info_count)
-    if code < 0: raise error.UVError(code)
+    if code != error.StatusCodes.SUCCESS:
+        raise error.UVError(code)
     result = []
     try:
         for index in range(uv_cpu_info_count[0]):

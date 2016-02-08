@@ -105,18 +105,8 @@ class Request(object):
         :raises uv.UVError: error while canceling request
         """
         code = lib.uv_cancel(self.uv_request)
-        if code < 0: raise error.UVError(code)
-
-    def destroy(self):
-        """
-        .. warning::
-
-            This method is used internally to free all allocated C
-            resources. You should never call it directly!
-        """
-        if not self.finished:
-            self.finished = True
-        self.loop.request_set_finished(self)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
 
     def set_pending(self):
         """
@@ -137,8 +127,6 @@ class Request(object):
             for the request. You should never call it directly!
         """
         self.loop.structure_clear_pending(self)
-
-
 
 
 RequestType.cls = Request

@@ -63,7 +63,7 @@ def reset_mode():
     :raises uv.UVError: error while resetting tty mode
     """
     code = lib.uv_tty_reset_mode()
-    if code < 0:
+    if code != error.StatusCodes.SUCCESS:
         raise error.UVError(code)
 
 
@@ -123,7 +123,7 @@ class TTY(stream.Stream):
             return ConsoleSize(0, 0)
         c_with, c_height = ffi.new('int*'), ffi.new('int*')
         code = lib.uv_tty_get_winsize(self.uv_tty, c_with, c_height)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         return ConsoleSize(c_with[0], c_height[0])
 
@@ -140,5 +140,5 @@ class TTY(stream.Stream):
         if self.closing:
             raise error.ClosedHandleError()
         code = lib.uv_tty_set_mode(self.uv_tty, mode)
-        if code < 0:
+        if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
