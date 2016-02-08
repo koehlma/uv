@@ -54,3 +54,15 @@ class TestFSPoll(TestCase):
             self.fs_poll.start()
             self.fs_poll.stop()
             self.loop.run()
+
+    def test_closed(self):
+        self.fs_poll = uv.FSPoll()
+        self.fs_poll.close()
+
+        self.assert_raises(uv.ClosedHandleError, self.fs_poll.start)
+        self.assert_is(self.fs_poll.stop(), None)
+
+    def test_path_none(self):
+        self.fs_poll = uv.FSPoll()
+
+        self.assert_raises(uv.error.InvalidTypeError, self.fs_poll.start)

@@ -48,3 +48,10 @@ class TestCheck(TestCase):
         self.check.start()
         self.check.stop()
         self.loop.run()
+
+    def test_closed(self):
+        self.check = uv.Check()
+        self.check.close()
+
+        self.assert_raises(uv.ClosedHandleError, self.check.start)
+        self.assert_is(self.check.stop(), None)

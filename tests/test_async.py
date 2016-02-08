@@ -60,3 +60,9 @@ class TestAsync(TestCase):
 
         self.assert_equal(self.async_callback_called, 3)
         self.assert_equal(self.close_callback_called, 2)
+
+    def test_closed(self):
+        self.async = uv.Async()
+        self.async.close()
+
+        self.assert_raises(uv.ClosedHandleError, self.async.send)

@@ -104,3 +104,23 @@ class TestTimer(TestCase):
         self.loop.run()
 
         self.assert_equal(self.timer_called, 5)
+
+    def test_closed(self):
+        self.timer = uv.Timer()
+        self.timer.close()
+
+        try:
+            repeat = self.timer.repeat
+        except uv.ClosedHandleError:
+            pass
+        else:
+            self.assert_true(False)
+        try:
+            self.timer.repeat = 10
+        except uv.ClosedHandleError:
+            pass
+        else:
+            self.assert_true(False)
+        self.assert_raises(uv.ClosedHandleError, self.timer.again)
+        self.assert_raises(uv.ClosedHandleError, self.timer.start, 10)
+        self.assert_is(self.timer.stop(), None)

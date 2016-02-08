@@ -78,3 +78,15 @@ class TestFSEvent(common.TestCase):
             self.fs_event.start()
             self.fs_event.stop()
             self.loop.run()
+
+    def test_closed(self):
+        self.fs_event = uv.FSEvent()
+        self.fs_event.close()
+
+        self.assert_raises(uv.ClosedHandleError, self.fs_event.start)
+        self.assert_is(self.fs_event.stop(), None)
+
+    def test_path_none(self):
+        self.fs_event = uv.FSEvent()
+
+        self.assert_raises(uv.error.InvalidTypeError, self.fs_event.start)

@@ -20,25 +20,24 @@ from common import TestCase
 import uv
 
 
-class TestIdle(TestCase):
-    def test_idle(self):
-        def on_idle(idle):
-            self.on_idle_called += 1
-            if self.on_idle_called > 5:
-                idle.stop()
+class TestPrepare(TestCase):
+    def test_prepare(self):
+        self.on_prepare_called = 0
 
-        self.on_idle_called = 0
+        def on_prepare(prepare_handle):
+            self.on_prepare_called += 1
+            prepare_handle.stop()
 
-        self.idle = uv.Idle(on_idle=on_idle)
-        self.idle.start()
+        self.prepare = uv.Prepare(on_prepare=on_prepare)
+        self.prepare.start()
 
         self.loop.run()
 
-        self.assert_equal(self.on_idle_called, 6)
+        self.assert_equal(self.on_prepare_called, 1)
 
     def test_closed(self):
-        self.idle = uv.Idle()
-        self.idle.close()
+        self.prepare = uv.Prepare()
+        self.prepare.close()
 
-        self.assert_raises(uv.ClosedHandleError, self.idle.start)
-        self.assert_is(self.idle.stop(), None)
+        self.assert_raises(uv.ClosedHandleError, self.prepare.start)
+        self.assert_is(self.prepare.stop(), None)

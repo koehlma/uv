@@ -46,3 +46,16 @@ class TestSignal(common.TestCase):
         thread.join()
 
         self.assert_equal(self.signum, signal.SIGUSR1)
+
+    def test_closed(self):
+        self.signal = uv.Signal()
+        self.signal.close()
+
+        try:
+            signum = self.signal.signum
+        except uv.ClosedHandleError:
+            pass
+        else:
+            self.assert_true(False)
+        self.assert_raises(uv.ClosedHandleError, self.signal.start, 2)
+        self.assert_is(self.signal.stop(), None)
