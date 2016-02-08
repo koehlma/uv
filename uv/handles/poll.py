@@ -15,40 +15,41 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import common, error, handle, library
-from ..library import ffi, lib
-
-__all__ = ['Poll', 'PollEvent']
+from .. import base, common, error, handle
+from ..library import lib
 
 
 class PollEvent(common.Enumeration):
     """
-    Poll event types enumeration.
+    Events reported by :class:`uv.Poll` on IO events.
     """
 
     READABLE = lib.UV_READABLE
     """
     File descriptor is readable.
 
-    :type: int
+    :type: uv.PollEvent
     """
+
     WRITABLE = lib.UV_WRITABLE
     """
     File descriptor is writable.
 
-    :type: int
+    :type: uv.PollEvent
     """
 
 
-@ffi.callback('uv_poll_cb')
-def poll_callback(uv_poll, status, events):
-    poll = library.detach(uv_poll)
-    """ :type: uv.Poll """
-    if poll is not None:
-        try:
-            poll.on_event(poll, status, events)
-        except:
-            poll.loop.handle_exception()
+@base.handle_callback('uv_poll_cb')
+def poll_callback(poll_handle, status, events):
+    """
+    :type poll_handle:
+        uv.Poll
+    :type status:
+        int
+    :type events:
+        int
+    """
+    poll_handle.on_event(poll_handle, status, events)
 
 
 @handle.HandleTypes.POLL
@@ -77,21 +78,9 @@ class Poll(handle.Handle):
     :func:`uv.Handle.close` has been called.
 
     .. note::
-
         On Windows only sockets can be polled with :class:`uv.Poll`
         handles. On Unix any file descriptor that would be accepted
         by :manpage:`poll(2)` can be used.
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param fd: file descriptor to be polled (is set to non-blocking mode)
-    :param loop: event loop the handle should run on
-    :param on_event: callback called on IO events
-
-    :type fd: int
-    :type loop: uv.Loop
-    :type on_event: ((uv.Poll, uv.StatusCode, int) -> None) |
-                    ((Any, uv.Poll, uv.StatusCode, int) -> None)
     """
 
     __slots__ = ['uv_poll', 'fd', 'on_event']
@@ -100,47 +89,93 @@ class Poll(handle.Handle):
     uv_handle_init = lib.cross_uv_poll_init_socket
 
     def __init__(self, fd, loop=None, on_event=None):
+        """
+        :raises uv.UVError:
+            error while initializing the handle
+
+        :param fd:
+            file descriptor to be polled (is set to non-blocking mode)
+        :param loop:
+            event loop the handle should run on
+        :param on_event:
+            callback which should be called on IO events
+
+        :type fd:
+            int
+        :type loop:
+            uv.Loop
+        :type on_event:
+            ((uv.Poll, uv.StatusCode, int) -> None) |
+            ((Any, uv.Poll, uv.StatusCode, int) -> None)
+        """
         super(Poll, self).__init__(loop, (fd, ))
         self.uv_poll = self.base_handle.uv_object
         self.fd = fd
         """
         File descriptor the handle polls on.
 
-        :readonly: True
-        :type: int
+        :readonly:
+            True
+        :type:
+            int
         """
         self.on_event = on_event or common.dummy_callback
         """
         Callback called on IO events.
 
-        .. function:: on_event(Poll, Status, Events)
 
-        :readonly: False
-        :type: ((uv.Poll, uv.StatusCode, int) -> None) |
-               ((Any, uv.Poll, uv.StatusCode, int) -> None)
+        .. function:: on_event(poll_handle, status, events)
+
+            :param poll_handle:
+                handle the call originates from
+            :param status:
+                may indicate any errors
+            :param events:
+                bitmask of the triggered IO events
+
+            :type poll_handle:
+                uv.Poll
+            :type status:
+                uv.StatusCode
+            :type events:
+                int
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Poll, uv.StatusCode, int) -> None) |
+            ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
 
     def start(self, events=PollEvent.READABLE, on_event=None):
         """
-        Starts polling the file descriptor for the given events. As soon as
-        an event is detected the callback will be called with status code
-        :class:`uv.StatusCode.SUCCESS` and the detected events.
+        Start polling the file descriptor for the given events. As soon
+        as an event is detected the callback will be called with status
+        code class:`uv.StatusCode.SUCCESS` and the triggered events.
 
-        If an error happens while polling the callback gets called with status
-        code < 0 which corresponds to a :class:`uv.StatusCode`.
+        If an error happens while polling the callback gets called with
+        status code != 0 which corresponds to a :class:`uv.StatusCode`.
 
-        Calling this on a handle that is already active is fine. Doing so will
-        update the events mask that is being watched for.
+        Calling this on a handle that is already active is fine. Doing
+        so will update the events mask that is being polled for.
 
-        :raises uv.UVError: error while starting the handle
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while starting the handle
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param events: bitmask of events to be polled for
-        :param on_event: callback called on IO events
+        :param events:
+            bitmask of events to be polled for
+        :param on_event:
+            callback which should be called on IO events (overrides the
+            current callback if specified)
 
-        :type events: int
-        :type on_event: ((uv.Poll, uv.StatusCode, int) -> None) |
-                        ((Any, uv.Poll, uv.StatusCode, int) -> None)
+        :type events:
+            int
+        :type on_event:
+            ((uv.Poll, uv.StatusCode, int) -> None) |
+            ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -152,9 +187,10 @@ class Poll(handle.Handle):
 
     def stop(self):
         """
-        Stops the handle, the callback will no longer be called.
+        Stop the handle, the callback will no longer be called.
 
-        :raises uv.UVError: error while stopping the handle
+        :raises uv.UVError
+            error while stopping the handle
         """
         if self.closing:
             return
