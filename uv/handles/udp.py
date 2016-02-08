@@ -162,7 +162,7 @@ class UDPSendRequest(request.Request):
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         init_arguments = (uv_buffers, len(self.buffers), c_sockaddr, uv_udp_send_cb)
-        super(UDPSendRequest, self).__init__(udp.loop, *init_arguments, uv_handle=uv_udp)
+        super(UDPSendRequest, self).__init__(udp.loop, init_arguments, uv_udp)
 
 
 @base.handle_callback('uv_udp_recv_cb')

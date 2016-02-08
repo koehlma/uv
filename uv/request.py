@@ -61,9 +61,7 @@ class Request(object):
     uv_request_type = None
     uv_request_init = None
 
-    def __init__(self, loop, *arguments, **keywords):
-        uv_handle = keywords.get('uv_handle')
-        request_init = keywords.get('request_init')
+    def __init__(self, loop, arguments, uv_handle=None, request_init=None):
         self.loop = loop or Loop.get_current()
         """
         Loop where the request is running on.
