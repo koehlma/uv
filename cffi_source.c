@@ -16,6 +16,11 @@
 #include <uv.h>
 
 
+typedef union {
+    struct sockaddr_in address4;
+    struct sockaddr_in6 address6;
+} address_in;
+
 /* Python */
 const char* PYTHON_UV_CFFI_VERSION = "__version__";
 

@@ -18,7 +18,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 from collections import namedtuple
 
 
-from . import error, handle
+from . import dns, error, handle
 from .library import ffi, lib
 
 Timeval = namedtuple('Timeval', ['sec', 'usec'])
@@ -53,6 +53,17 @@ def unpack_cpu_info(uv_cpu_info):
     return CpuInfo(model, uv_cpu_info.speed, unpack_cpu_times(uv_cpu_info.cpu_times))
 
 
+def unpack_interface_address(uv_interface_address):
+    name = ffi.string(uv_interface_address.name).decode()
+    physical = bytes(ffi.buffer(uv_interface_address.phys_addr, 6))
+    internal = bool(uv_interface_address.is_internal)
+    c_address_p = ffi.addressof(uv_interface_address.address.address4)
+    address = dns.unpack_sockaddr(ffi.cast('struct sockaddr*', c_address_p))
+    c_netmask_p = ffi.addressof(uv_interface_address.netmask.address4)
+    netmask = dns.unpack_sockaddr(ffi.cast('struct sockaddr*', c_netmask_p))
+    return InterfaceAddress(name, physical, internal, address, netmask)
+
+
 def guess_handle(fd):
     uv_handle = lib.cross_uv_guess_handle(fd)
     return handle.HandleTypes(uv_handle).cls
@@ -78,3 +89,16 @@ def cpu_info():
 
 def hrtime():
     return lib.uv_hrtime()
+
+
+def interface_addresses():
+    uv_interface_addresses = ffi.new('uv_interface_address_t**')
+    c_count = ffi.new('int*')
+    code = lib.uv_interface_addresses(uv_interface_addresses, c_count)
+    if code != error.StatusCodes.SUCCESS:
+        raise error.UVError(code)
+    addresses = []
+    for index in range(c_count[0]):
+        addresses.append(unpack_interface_address(uv_interface_addresses[0][index]))
+    lib.uv_free_interface_addresses(uv_interface_addresses[0], c_count[0])
+    return addresses

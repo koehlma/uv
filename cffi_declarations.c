@@ -629,11 +629,17 @@ typedef struct {
     } cpu_times;
 } uv_cpu_info_t;
 
+typedef union {
+    struct sockaddr_in address4;
+    struct sockaddr_in6 address6;
+} address_in;
+
 typedef struct uv_interface_address_s {
     char* name;
     char phys_addr[6];
     int is_internal;
-    ...;
+    address_in address;
+    address_in netmask;
 } uv_interface_address_t;
 
 uv_handle_type uv_guess_handle(uv_file);
