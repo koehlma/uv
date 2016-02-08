@@ -1,11 +1,19 @@
-Python libuv CFFI Bindings
-==========================
+Python »libuv« CFFI Wrapper
+===========================
 
 |pypi| |unix_build| |windows_build| |coverage| |docs|
 
 This package aims to provide an object oriented CFFI based wrapper around the libuv
 asynchronous IO library. It supports all handles of libuv as well as filesystem
 operations, dns utility functions and miscellaneous utilities.
+
+State
+=====
+:handles: mostly stable API and covered by unit tests
+:fs: planning
+:dns: planning
+:misc: planning
+:ssl: planning
 
 Features
 ========
@@ -21,9 +29,11 @@ Features
 - cross platform memory, CPU and network interface information
 - timer and high resolution clock
 - supported Python interpreters and versions:
-   - **CPython**: 3.3, 3.4, 3.5
-   - **PyPy**: 4.0 (Windows and Linux)
-   - **PyPy3**: 2.4.0, 2.7.0-alpha0 (Linux Only)
+
+  - **CPython**: 3.3, 3.4, 3.5
+  - **PyPy**: 4.0 (Windows and Linux)
+  - **PyPy3**: 2.4.0, 2.7.0-alpha0 (Linux Only)
+
 - PyCharm type hinting support
 - PEP 3151 compatible exceptions
 
