@@ -172,6 +172,8 @@ class FSPoll(handle.Handle):
         self.path = path or self.path
         self.interval = interval or self.interval
         self.on_change = on_change or self.on_change
+        if self.path is None:
+            raise error.InvalidTypeError(message='no path has been specified')
         c_path = self.path.encode()
         code = lib.uv_fs_poll_start(self.uv_fs_poll, uv_fs_poll_cb, c_path, self.interval)
         if code != error.StatusCodes.SUCCESS:
