@@ -20,43 +20,47 @@ import signal as std_signal
 from .. import base, common, error, handle
 from ..library import lib
 
-__all__ = ['Signal', 'Signals']
-
 
 class Signals(common.Enumeration):
-    """ """
+    """
+    Standard cross platform signals enumeration.
+    """
 
     SIGINT = getattr(std_signal, 'SIGINT', 2)
     """
     Is normally delivered when the user presses CTRL+C. However it is
     not generated when terminal is in raw mode.
 
-    :type: int
+    :type: uv.Signals
     """
+
     SIGBREAK = 21
     """
     Is delivered when the user presses CTRL+BREAK. This signal is only
     supported on Windows.
 
-    :type: int
+    :type: uv.Signals
     """
+
     SIGHUP = getattr(std_signal, 'SIGHUP', 1)
     """
-    Is generated when the user closes the console window. After that the
-    OS might terminate the program after a few seconds.
+    Is generated when the user closes the console window. After that
+    the OS might terminate the program after a few seconds.
 
-    :type: int
+    :type: uv.Signals
     """
+
     SIGWINCH = getattr(std_signal, 'SIGWINCH', 28)
     """
-    Is generated when the console window has been resized. On Windows libuv
-    emulates SIGWINCH when the program uses a :class:`uv.TTY` handle to
-    write to the console. It may not always be delivered in a timely manner,
-    because libuv will only detect changes when the cursor is being moved.
-    When a readable :class:`uv.TTY` handle is used in raw mode, resizing
-    the console buffer will also trigger SIGWINCH.
+    Is generated when the console window has been resized. On Windows
+    libuv emulates `SIGWINCH` when the program uses a :class:`uv.TTY`
+    handle to write to the console. It may not always be delivered in
+    a timely manner, because libuv will only detect changes when the
+    cursor is being moved. When a readable :class:`uv.TTY` handle is
+    used in raw mode, resizing the console buffer will also trigger
+    `SIGWINCH`.
 
-    :type: int
+    :type: uv.Signals
     """
 
 
@@ -69,24 +73,16 @@ def uv_signal_cb(signal_handle, signum):
 class Signal(handle.Handle):
     """
     Signal handles implement Unix style signal handling on a per-event
-    loop bases. Reception of the generic :class:`uv.Signals` is emulated
-    on Windows. Watchers for other signals can be successfully created,
-    but these signals are never received.
+    loop basis. Reception of the generic :class:`uv.Signals` is
+    emulated on Windows. Watchers for other signals can be successfully
+    created, but these signals are never received.
 
     .. note::
-
         On Linux SIGRT0 and SIGRT1 (signals 32 and 33) are used by the
-        NPTL pthreads library to manage threads. Installing watchers for
-        those signals will lead to unpredictable behavior and is strongly
-        discouraged. Future versions of libuv may simply reject them.
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param loop: event loop the handle should run on
-    :param on_signal: callback called on signal delivery
-
-    :type loop: uv.Loop
-    :type on_signal: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
+        NPTL pthreads library to manage threads. Installing watchers
+        for those signals will lead to unpredictable behavior and is
+        strongly discouraged. Future versions of libuv may simply
+        reject them.
     """
 
     __slots__ = ['uv_signal', 'on_signal']
@@ -95,27 +91,60 @@ class Signal(handle.Handle):
     uv_handle_init = lib.uv_signal_init
 
     def __init__(self, loop=None, on_signal=None):
+        """
+        :raises uv.UVError:
+            error while initializing the handle
+
+        :param loop:
+            event loop the handle should run on
+        :param on_signal:
+            callback which should run on signal delivery
+
+        :type loop:
+            uv.Loop
+        :type on_signal:
+            ((uv.Signal, int) -> None) |
+            ((Any, uv.Signal, int) -> None)
+        """
         super(Signal, self).__init__(loop)
         self.uv_signal = self.base_handle.uv_object
         self.on_signal = on_signal or common.dummy_callback
         """
-        Callback called on signal delivery.
+        Callback which should be called on signal delivery.
 
-        .. function:: on_signal(Signal, Signum)
 
-        :readonly: False
-        :type: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
+        .. function:: on_signal(signal_handle, signum):
+
+            :param signal_handle:
+                handle the call originates from
+            :param signum:
+                number of the received signal
+
+            :type signal_handle:
+                uv.Signal
+            :type signum:
+                int
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Signal, int) -> None) |
+            ((Any, uv.Signal, int) -> None)
         """
 
     @property
     def signum(self):
         """
-        Signal being monitored by this handle.
+        Signal currently monitored by this handle.
 
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :readonly: True
-        :rtype: int
+        :readonly:
+            True
+        :rtype:
+            int
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -123,16 +152,24 @@ class Signal(handle.Handle):
 
     def start(self, signum, on_signal=None):
         """
-        Starts the handle.
+        Start listening for the given signal.
 
-        :raises uv.UVError: error while starting the handle
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while starting the handle
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param signum: signal number to be monitored
-        :param on_signal: callback called on signal delivery
+        :param signum:
+            signal number to listen for
+        :param on_signal:
+            callback which should be called on signal delivery
+            (overrides the current callback if specified)
 
-        :type signum: int
-        :type on_signal: ((uv.Signal, int) -> None) | ((Any, uv.Signal, int) -> None)
+        :type signum:
+            int
+        :type on_signal:
+            ((uv.Signal, int) -> None) |
+            ((Any, uv.Signal, int) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -144,9 +181,10 @@ class Signal(handle.Handle):
 
     def stop(self):
         """
-        Stops the handle, the callback will no longer be called.
+        Stop listening. The callback will no longer be called.
 
-        :raises uv.UVError: error while stopping the handle
+        :raises uv.UVError:
+            error while stopping the handle
         """
         if self.closing:
             return
