@@ -27,16 +27,8 @@ def uv_prepare_cb(prepare_handle):
 @handle.HandleTypes.PREPARE
 class Prepare(handle.Handle):
     """
-    Prepare handles will run the given callback once per loop iteration,
-    right before polling for IO.
-
-    :raises uv.UVError: error while initializing the handle
-
-    :param loop: event loop the handle should run on
-    :param on_prepare: callback called right before polling for IO
-
-    :type loop: uv.Loop
-    :type on_prepare: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
+    Prepare handles will run the given callback once per loop
+    iteration, right before polling for IO.
     """
 
     __slots__ = ['uv_prepare', 'on_prepare']
@@ -45,27 +37,57 @@ class Prepare(handle.Handle):
     uv_handle_init = lib.uv_prepare_init
 
     def __init__(self, loop=None, on_prepare=None):
+        """
+        :raises uv.UVError:
+            error while initializing the handle
+
+        :param loop:
+            event loop the handle should run on
+        :param on_prepare:
+            callback which should run right before polling for IO
+
+        :type loop:
+            uv.Loop
+        :type on_prepare:
+            ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
+        """
         super(Prepare, self).__init__(loop)
+        self.uv_prepare = self.base_handle.uv_object
         self.on_prepare = on_prepare or common.dummy_callback
         """
-        Callback which called before polling for IO.
+        Callback which should run right before polling for IO.
 
-        .. function:: on_prepare(Prepare)
 
-        :readonly: False
-        :type: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
+        .. function:: on_prepare(prepare_handle)
+
+            :param prepare_handle:
+                handle the call originates from
+
+            :type prepare_handle:
+                uv.Prepare
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
         """
-        self.uv_prepare = self.base_handle.uv_object
 
     def start(self, on_prepare=None):
         """
-        Starts the handle.
+        Start the handle. The callback will run once per loop iteration
+        right before polling for IO from now on.
 
-        :raises uv.UVError: error while starting the handle
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while starting the handle
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param on_prepare: callback called before polling for IO
-        :type on_prepare: ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
+        :param on_prepare:
+            callback which should run right before polling for IO
+            (overrides the current callback if specified)
+        :type on_prepare:
+            ((uv.Prepare) -> None) | ((Any, uv.Prepare) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -77,9 +99,10 @@ class Prepare(handle.Handle):
 
     def stop(self):
         """
-        Stops the handle, the callback will no longer be called.
+        Stop the handle, the callback will no longer be called.
 
-        :raises uv.UVError: error while stopping the handle
+        :raises uv.UVError:
+            error while stopping the handle
         """
         if self.closing:
             return
