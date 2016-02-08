@@ -180,7 +180,7 @@ class FSPoll(handle.Handle):
 
     def stop(self):
         """
-        Stops the handle, the callback will no longer be called.
+        Stop the handle, the callback will no longer be called.
 
         :raises uv.UVError:
             error while stopping the handle
