@@ -42,3 +42,9 @@ class TestCheck(TestCase):
         self.loop.run()
 
         self.assert_less_equal(self.on_timeout_called, self.on_check_called)
+
+    def test_check_stop(self):
+        self.check = uv.Check()
+        self.check.start()
+        self.check.stop()
+        self.loop.run()
