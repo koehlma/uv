@@ -73,4 +73,4 @@ class TestProcess(common.TestCase):
         self.loop.run()
 
         self.assert_is_not(self.returncode, None)
-        self.assert_equal(self.term_signal, uv.Signals.SIGINT)
+        self.assert_is_not(self.term_signal, None)
