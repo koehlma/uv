@@ -130,7 +130,7 @@ class Timer(handle.Handle):
         """
         Stop the timer, and if it is repeating restart it using the
         repeat value as the timeout. If the timer has never been
-        started before it raises :class:`uv.error.InvalidTypeError`.
+        started before it raises :class:`uv.error.ArgumentError`.
 
         :raises uv.UVError:
             error while restarting the timer

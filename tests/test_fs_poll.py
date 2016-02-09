@@ -65,4 +65,4 @@ class TestFSPoll(TestCase):
     def test_path_none(self):
         self.fs_poll = uv.FSPoll()
 
-        self.assert_raises(uv.error.InvalidTypeError, self.fs_poll.start)
+        self.assert_raises(uv.error.ArgumentError, self.fs_poll.start)

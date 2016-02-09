@@ -206,7 +206,7 @@ def populate_stdio_container(uv_stdio, file_base=None):
         except AttributeError:
             uv_stdio.flags = StandardIOFlags.IGNORE
             if file_base is not None:
-                raise error.InvalidTypeError(message='unknown file object type')
+                raise error.ArgumentError(message='unknown file object type')
     return fileobj
 
 

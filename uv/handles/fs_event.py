@@ -239,7 +239,7 @@ class FSEvent(handle.Handle):
         self.flags = flags or self.flags
         self.on_event = on_event or self.on_event
         if self.path is None:
-            raise error.InvalidTypeError(message='no path has been specified')
+            raise error.ArgumentError(message='no path has been specified')
         c_path = self.path.encode()
         code = lib.uv_fs_event_start(self.uv_fs_event, uv_fs_event_cb, c_path, self.flags)
         if code != error.StatusCodes.SUCCESS:

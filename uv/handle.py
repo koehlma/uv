@@ -257,7 +257,7 @@ class Handle(object):
         socket. The following handles are supported: TCP and UDP
         handles on Unix and Windows, Pipe handles only on Unix. On all
         unsupported handles this will raise :class:`uv.UVError` with
-        error code `EINVAL` (:class:`uv.error.InvalidTypeError`).
+        error code `EINVAL` (:class:`uv.error.ArgumentError`).
 
         .. note::
             Unlike libuv this library abstracts the different
@@ -311,7 +311,7 @@ class Handle(object):
         the socket. The following handles are supported: TCP and UDP
         handles on Unix and Windows, Pipe handles only on Unix. On all
         unsupported handles this will raise :class:`uv.UVError` with
-        error code `EINVAL` (:class:`uv.error.InvalidTypeError`).
+        error code `EINVAL` (:class:`uv.error.ArgumentError`).
 
         .. note::
             Unlike libuv this library abstracts the different
@@ -363,7 +363,7 @@ class Handle(object):
         Get the platform dependent file descriptor equivalent. The
         following handles are supported: TCP, UDP, TTY, Pipes and Poll.
         On all other handles this will raise :class:`uv.UVError` with
-        error code `EINVAL` (:class:`uv.error.InvalidTypeError`).
+        error code `EINVAL` (:class:`uv.error.ArgumentError`).
 
         If a handle does not have an attached file descriptor yet this
         method will raise :class:`uv.UVError` with error code `EBADF`

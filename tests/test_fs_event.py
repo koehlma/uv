@@ -89,4 +89,4 @@ class TestFSEvent(common.TestCase):
     def test_path_none(self):
         self.fs_event = uv.FSEvent()
 
-        self.assert_raises(uv.error.InvalidTypeError, self.fs_event.start)
+        self.assert_raises(uv.error.ArgumentError, self.fs_event.start)
