@@ -63,12 +63,12 @@ class HandleTypes(common.Enumeration):
 def uv_alloc_cb(uv_handle, suggested_size, uv_buf):
     handle = base.BaseHandle.detach(uv_handle)
     """ :type: uv.Handle """
-    if handle is None:
+    if handle is None:  # pragma: no cover
         library.uv_buffer_set(uv_buf, ffi.NULL, 0)
     else:
         try:
             handle.allocator.allocate(handle, suggested_size, uv_buf)
-        except Exception:
+        except Exception:  # pragma: no cover
             warnings.warn('exception in lib uv allocator')
             library.uv_buffer_set(uv_buf, ffi.NULL, 0)
 
@@ -452,11 +452,7 @@ class Handle(object):
         if self.closing:
             return
         self.on_closed = on_closed or self.on_closed
-        # exclude the handle from garbage collection until it is closed
         self.set_pending()
-        # the finalizer does not have to close the handle anymore
-        #common.detach_finalizer(self)
-        #lib.uv_close(self.uv_handle, uv_close_cb)
         self.base_handle.close()
 
     def set_pending(self):

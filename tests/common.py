@@ -15,6 +15,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import contextlib
 import os
 import platform
 import sys
@@ -80,21 +81,6 @@ def skip_platform(*platforms):
 class TestLoop(uv.Loop):
     def __init__(self):
         super(TestLoop, self).__init__()
-        self.callback_context = self
-        self.exc_type = None
-        self.exc_value = None
-        self.exc_traceback = None
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        if exc_type is not None and self.exc_type is None:
-            self.exc_type = exc_type
-            self.exc_value = exc_value
-            self.exc_traceback = exc_traceback
-            self.stop()
-        return True
 
     def run(self, mode=uv.RunModes.DEFAULT):
         self.exc_type = None
@@ -121,6 +107,18 @@ class TestCase(unittest.TestCase):
 
     def tear_down(self):
         pass
+
+    @contextlib.contextmanager
+    def should_raise(self, expected):
+        try:
+            yield
+        except Exception as exception:
+            if not isinstance(exception, expected):
+                import sys
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                reraise(exc_type, exc_value, exc_traceback)
+        else:
+            self.assert_false(True)
 
     assert_true = unittest.TestCase.assertTrue
     assert_false = unittest.TestCase.assertFalse
