@@ -62,7 +62,7 @@ class RunModes(common.Enumeration):
     """
 
 
-def default_excepthook(loop, exc_type, exc_value, exc_traceback):
+def default_excepthook(loop, exc_type, exc_value, exc_traceback):  # pragma: no cover
     """
     Default excepthook. Prints a traceback and stops the event loop to
     prevent deadlocks and livelocks.
@@ -173,7 +173,7 @@ class DefaultAllocator(Allocator):
         self.c_buffer = ffi.new('char[]', self.buffer_size)
 
     def allocate(self, handle, suggested_size, uv_buffer):
-        if self.buffer_in_use:
+        if self.buffer_in_use:  # pragma: no cover
             # this should never happen because lib uv reads the data right
             # before the execution of the read callback even if there are
             # multiple sockets ready for reading
@@ -593,7 +593,7 @@ class Loop(object):
                     callback, arguments, keywords = self.pending_callbacks.popleft()
                 try:
                     callback(*arguments, **keywords)
-                except BaseException:
+                except Exception:
                     self.handle_exception()
         except IndexError:
             pass
@@ -612,7 +612,7 @@ class Loop(object):
         self.exc_type, self.exc_value, self.exc_traceback = sys.exc_info()
         try:
             self.excepthook(self, self.exc_type, self.exc_value, self.exc_traceback)
-        except BaseException:
+        except Exception:  # pragma: no cover
             # this should never happen during normal operation but if it does the
             # program would be in an undefined state, so exit immediately
             try:

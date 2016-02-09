@@ -248,3 +248,41 @@ class TestLoop(common.TestCase):
 
         self.assert_is(self.loop.exc_type, Exception)
         self.assert_equal(self.loop.exc_value.args[0], 'test')
+        self.loop.reset_exception()
+
+        self.loop.call_later(throw_test)
+
+        self.loop.run()
+
+        self.assert_is(self.loop.exc_type, Exception)
+        self.assert_equal(self.loop.exc_value.args[0], 'test')
+        self.loop.reset_exception()
+
+    def test_get_current_instantiate(self):
+        uv.Loop._thread_locals.loop = None
+        loop = uv.Loop.get_current()
+        self.assert_is(uv.Loop.get_current(), loop)
+        loop.close()
+
+    def test_default_exists(self):
+        uv.Loop.get_default()
+        self.assert_raises(RuntimeError, uv.Loop, default=True)
+
+    def test_closed(self):
+        self.loop.close()
+        self.assert_false(self.loop.alive)
+        with self.should_raise(uv.ClosedLoopError):
+            now = self.loop.now
+        self.assert_equal(self.loop.handles, set())
+        self.assert_raises(uv.ClosedLoopError, self.loop.fileno)
+        self.assert_raises(uv.ClosedLoopError, self.loop.update_time)
+        self.assert_raises(uv.ClosedLoopError, self.loop.get_timeout)
+        self.assert_raises(uv.ClosedLoopError, self.loop.run)
+        self.assert_is(self.loop.stop(), None)
+
+    @common.skip_platform('win32')
+    def test_fileno(self):
+        self.assert_greater(self.loop.fileno(), 0)
+
+    def test_poll_timeout(self):
+        self.assert_equal(self.loop.get_timeout(), 0)
