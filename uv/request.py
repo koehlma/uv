@@ -93,7 +93,7 @@ class Request(object):
 
         :type: type
         """
-        return RequestType(self.uv_request.type).cls
+        return RequestType(self.base_request.uv_request.type).cls
 
     def cancel(self):
         """

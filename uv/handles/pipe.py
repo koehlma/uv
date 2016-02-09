@@ -20,8 +20,6 @@ from ..library import ffi, lib
 
 from . import stream
 
-__all__ = ['Pipe']
-
 
 class PipeConnectRequest(stream.ConnectRequest):
     uv_request_init = lib.uv_pipe_connect
