@@ -119,7 +119,7 @@ class TestPingPong(common.TestCase):
         def on_connection(pipe_server, status):
             connection = pipe_server.accept(ipc=True)
             connection.write(b'hello', send_stream=client)
-            connection.shutdown()
+            connection.close()
             pipe_server.close()
 
         self.pipe_server = uv.Pipe()
@@ -134,3 +134,7 @@ class TestPingPong(common.TestCase):
         self.loop.run()
 
         self.run_ping_pong()
+
+        client.close()
+        self.server.close()
+        self.client.close()
