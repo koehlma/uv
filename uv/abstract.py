@@ -56,7 +56,7 @@ class Request(common.with_metaclass(abc.ABCMeta)):
         pass
 
 
-class Stream(common.with_metaclass(abc.ABCMeta)):
+class Stream(Handle):
     @abc.abstractproperty
     def readable(self):
         pass
