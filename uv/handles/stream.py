@@ -291,9 +291,7 @@ def uv_connection_cb(stream_handle, status):
     :type status:
         int
     """
-    connection = None if status != error.StatusCodes.SUCCESS else stream_handle.accept()
-    code = error.StatusCodes.get(status)
-    stream_handle.on_connection(stream_handle, code, connection)
+    stream_handle.on_connection(stream_handle, error.StatusCodes.get(status))
 
 
 @base.handle_callback('uv_read_cb')
@@ -383,21 +381,17 @@ class Stream(handle.Handle):
         Callback which should run after a new connection has been made.
 
 
-        .. function:: on_connection(stream_handle, status, connection)
+        .. function:: on_connection(stream_handle, status)
 
             :param stream_handle:
                 handle the call originates from
             :param status:
                 status of the new connection
-            :param connection
-                new connection which has been established
 
             :type stream_handle:
                 uv.Stream
             :type status:
                 uv.StatusCodes
-            :type connection:
-                uv.Stream
 
 
         :readonly:

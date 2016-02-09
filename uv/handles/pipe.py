@@ -95,7 +95,7 @@ class Pipe(stream.Stream):
             raise error.ClosedHandleError()
         return handle.HandleTypes(lib.uv_pipe_pending_type(self.uv_pipe)).cls
 
-    def pending_accept(self):
+    def pending_accept(self, *arguments, **keywords):
         """
         Accept a pending stream.
 
@@ -104,7 +104,7 @@ class Pipe(stream.Stream):
 
         :rtype: uv.Stream
         """
-        return self.accept(cls=self.pending_type)
+        return self.accept(cls=self.pending_type, *arguments, **keywords)
 
     def pending_instances(self, amount):
         """

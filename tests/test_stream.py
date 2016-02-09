@@ -42,7 +42,8 @@ class TestStream(common.TestCase):
             self.buffer += data
             connection.read_stop()
 
-        def on_connection(pipe_handle, status, connection):
+        def on_connection(pipe_handle, status):
+            connection = pipe_handle.accept()
             connection.read_start(on_read=on_read)
             pipe_handle.close()
 

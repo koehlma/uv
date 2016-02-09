@@ -47,8 +47,9 @@ class TestPingPong(common.TestCase):
         self.assert_equal(status, uv.StatusCodes.SUCCESS)
         request.stream.read_start(on_read=self.on_read)
 
-    def on_connection(self, stream, status, connection):
+    def on_connection(self, stream, status):
         self.assert_equal(status, uv.StatusCodes.SUCCESS)
+        connection = stream.accept()
         connection.read_start(on_read=self.on_read)
         connection.write(b'PING')
 
@@ -96,5 +97,40 @@ class TestPingPong(common.TestCase):
 
         self.client = uv.TCP()
         self.client.connect(address, on_connect=self.on_connect)
+
+        self.run_ping_pong()
+
+    def test_tcp_ipv4_icp_client(self):
+        address = (common.TEST_IPV4, common.TEST_PORT1)
+
+        self.server = uv.TCP()
+        self.server.bind(address)
+        self.server.listen(5, on_connection=self.on_connection)
+
+        client = uv.TCP()
+        client.connect(address)
+
+        def on_read(pipe_client, status, data):
+            if pipe_client.pending_count:
+                self.client = pipe_client.pending_accept()
+                self.client.read_start(on_read=self.on_read)
+                pipe_client.close()
+
+        def on_connection(pipe_server, status):
+            connection = pipe_server.accept(ipc=True)
+            connection.write(b'hello', send_stream=client)
+            connection.shutdown()
+            pipe_server.close()
+
+        self.pipe_server = uv.Pipe()
+        self.pipe_server.pending_instances(100)
+        self.pipe_server.bind(common.TEST_PIPE1)
+        self.pipe_server.listen(on_connection=on_connection)
+
+        self.pipe_client = uv.Pipe(ipc=True)
+        self.pipe_client.connect(common.TEST_PIPE1)
+        self.pipe_client.read_start(on_read=on_read)
+
+        self.loop.run()
 
         self.run_ping_pong()
