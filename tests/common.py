@@ -24,18 +24,24 @@ import unittest
 
 import uv
 
-from uv.common import dummy_callback, is_py3
+
+__dir__ = os.path.dirname(__file__)
+
+
+def resolve_path(relative_path):
+    return os.path.join(__dir__, relative_path)
+
 
 PY2_RERAISE = '''
 def reraise(exc_type, exc_value, exc_traceback):
     raise exc_type, exc_value, exc_traceback
 '''
 
-if is_py3:
-    def reraise(exc_type, exc_value, exc_traceback):
-        raise exc_value.with_traceback(exc_traceback)
-else:
+if uv.is_py2:
     exec(PY2_RERAISE)
+else:
+    def reraise(_, exc_value, exc_traceback):
+        raise exc_value.with_traceback(exc_traceback)
 
 
 if uv.is_win32:
@@ -53,25 +59,22 @@ TEST_IPV6 = '::1'
 TEST_PORT1 = 12345
 TEST_PORT2 = 12346
 
-try: os.remove(TEST_PIPE1)
-except: pass
+try:
+    os.remove(TEST_PIPE1)
+except Exception:
+    pass
 
-try: os.remove(TEST_PIPE2)
-except: pass
-
-
-__dir__ = os.path.dirname(__file__)
-
-
-def resolve_path(relative_path):
-    return os.path.join(__dir__, relative_path)
+try:
+    os.remove(TEST_PIPE2)
+except Exception:
+    pass
 
 
-def implementation_skip(*implementations):
+def skip_interpreter(*implementations):
     def decorator(obj):
         return obj
     if platform.python_implementation().lower() in implementations:
-        return unittest.skip('test is not available on the current implementation')
+        return unittest.skip('test is not available on the current interpreter')
     return decorator
 
 
@@ -106,7 +109,7 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         self.tear_down()
         if not self.loop.closed:
-            self.loop.close_all_handles(dummy_callback)
+            self.loop.close_all_handles(uv.common.dummy_callback)
             self.loop.run()
             self.loop.close()
 
@@ -126,7 +129,8 @@ class TestCase(unittest.TestCase):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 reraise(exc_type, exc_value, exc_traceback)
         else:
-            self.assert_false(True)
+            msg = 'exception %s should have been raised' % str(expected)
+            self.assert_false(True, msg=msg)
 
     assert_true = unittest.TestCase.assertTrue
     assert_false = unittest.TestCase.assertFalse

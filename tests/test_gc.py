@@ -23,7 +23,7 @@ import common
 import uv
 
 
-@common.implementation_skip('pypy')
+@common.skip_interpreter('pypy')
 class TestGC(common.TestCase):
     def set_up(self):
         gc.disable()
