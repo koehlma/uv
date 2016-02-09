@@ -300,14 +300,14 @@ class BaseLoop(object):
             while True:
                 base_handle = self.handles_to_close.pop()
                 """ :type: BaseHandle """
-                base_handle.close()
+                base_handle.close()  # pragma: no cover
         except KeyError:
             pass
         try:
             while True:
                 base_request = self.requests_to_cancel.pop()
                 """ :type: BaseRequest """
-                base_request.cancel()
+                base_request.cancel()  # pragma: no cover
         except KeyError:
             pass
 
@@ -485,14 +485,14 @@ class BaseRequest(object):
         else:
             code = request_init(self.uv_object, uv_handle, *arguments)
 
-        if code == error.StatusCodes.SUCCESS or code is None:
-            self.finished = False
-            self.canceled = False
-            self.base_loop.attach_request(self)
-        else:
+        if code != error.StatusCodes.SUCCESS and code is not None:
             self.finished = True
             self.canceled = True
             raise error.UVError(code)
+        else:
+            self.finished = False
+            self.canceled = False
+            self.base_loop.attach_request(self)
 
     def _destroy(self, _):
         """
