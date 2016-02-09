@@ -15,6 +15,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import errno
 import io
 import socket
 
@@ -634,6 +635,10 @@ class StatusCodes(common.Enumeration):
             return StatusCodes(code)
         except ValueError:
             return code
+
+    @classmethod
+    def from_error_number(cls, error_number):
+        return getattr(cls, errno.errorcode[error_number], cls.UNKNOWN)
 
 
 class UVError(OSError):
