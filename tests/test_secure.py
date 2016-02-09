@@ -24,6 +24,7 @@ KEYFILE = common.resolve_path('server.key')
 CERTFILE = common.resolve_path('server.crt')
 
 
+@common.implementation_skip('pypy')
 class TestSecure(common.TestCase):
     def test_secure(self):
         def on_client_handshake(handshake_request, status, ssl_error):
