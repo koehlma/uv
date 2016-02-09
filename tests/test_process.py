@@ -15,7 +15,6 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os.path
 import sys
 
 import common
@@ -23,10 +22,8 @@ import common
 import uv
 
 
-__dir__ = os.path.dirname(__file__)
-
-PROGRAM_HELLO = os.path.join(__dir__, 'program_hello.py')
-PROGRAM_ENDLESS_LOOP = os.path.join(__dir__, 'program_endless_loop.py')
+PROGRAM_HELLO = common.resolve_path('program_hello.py')
+PROGRAM_ENDLESS_LOOP = common.resolve_path('program_endless_loop.py')
 
 
 class TestProcess(common.TestCase):

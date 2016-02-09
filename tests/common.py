@@ -29,7 +29,7 @@ __dir__ = os.path.dirname(__file__)
 
 
 def resolve_path(relative_path):
-    return os.path.join(__dir__, relative_path)
+    return os.path.join(__dir__, 'data', relative_path)
 
 
 PY2_RERAISE = '''
