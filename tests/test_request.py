@@ -30,4 +30,4 @@ class TestRequest(common.TestCase):
     def test_type(self):
         self.pipe = uv.Pipe()
         request = self.pipe.connect(common.BAD_PIPE)
-        self.assert_is(request.type, uv.PipeConnectRequest)
+        self.assert_is(request.type, uv.ConnectRequest)

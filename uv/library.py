@@ -23,7 +23,7 @@ from collections import namedtuple
 from . import __version__
 
 
-if os.environ.get('PYTHON_MOCK_LIBUV', None) == 'True':
+if os.environ.get('PYTHON_MOCK_LIBUV', None) == 'True':  # pragma: no cover
     from types import ModuleType
 
     from .helpers.mock import Mock
@@ -42,16 +42,16 @@ else:
     c_library_version = uvcffi.ffi.string(uvcffi.lib.PYTHON_UV_CFFI_VERSION).decode()
 
 
-if uvcffi.__version__ != __version__:
+if uvcffi.__version__ != __version__:  # pragma: no cover
     raise RuntimeError('incompatible cffi base library (%s)' % uvcffi.__version__)
 
-if c_library_version != __version__:
+if c_library_version != __version__:  # pragma: no cover
     raise RuntimeError('incompatible cffi c library (%s)' % c_library_version)
 
 
 trace_uvcffi = os.environ.get('PYTHON_TRACE_LIBUV', None) == 'True'
 
-if trace_uvcffi:
+if trace_uvcffi:  # pragma: no cover
     from .helpers.tracer import LIBTracer, FFITracer
 
     lib = LIBTracer()
@@ -68,56 +68,6 @@ version_major = (version_hex >> 16) & 0xff
 version_minor = (version_hex >> 8) & 0xff
 version_patch = version_hex & 0xff
 version = Version(version_string, version_major, version_minor, version_patch)
-
-
-def attach(c_structure, instance):
-    """
-    Attach a python object to a C data structure's `data` field using
-    :func:`ffi.new_handle`. The returned reference must be stored in
-    order to receive the original object with :func:`detach`.
-
-    :param c_structure:
-        C structure with data field of type `void*`
-    :param instance:
-        python instance to attach
-
-    :type c_structure:
-        ffi.CData
-    :type instance:
-        object
-
-    :return:
-        reference of type `void*` (needs to be stored)
-    :rtype:
-        ffi.CData[void*]
-    """
-    c_reference = ffi.new_handle(instance)
-    c_structure.data = c_reference
-    return c_reference
-
-
-def detach(c_structure):
-    """
-    Detach a python object from a C data structure's data field using
-    :func:`ffi.from_handle`. This might segfault on CPython if the
-    referenced python object or the reference itself has been garbage
-    collected. On PyPy it returns `None` in these cases.
-
-    :param c_structure:
-        C structure with data field of type `void*`
-
-    :return:
-        attached python instance if found
-    :rtype:
-        Optional[object]
-    """
-    if c_structure.data:
-        try:
-            # NOTE: on CPython this might segfault if the pointer is not valid
-            instance = ffi.from_handle(c_structure.data)
-            return instance
-        except SystemError:
-            pass
 
 
 def uv_buffer_set(uv_buffer, c_base, length):
