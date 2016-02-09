@@ -73,3 +73,4 @@ from . import dns
 from . import error
 from . import fs
 from . import misc
+from . import secure

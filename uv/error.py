@@ -638,6 +638,8 @@ class StatusCodes(common.Enumeration):
 
     @classmethod
     def from_error_number(cls, error_number):
+        if not error_number:
+            return StatusCodes.SUCCESS
         return getattr(cls, errno.errorcode[error_number], cls.UNKNOWN)
 
 

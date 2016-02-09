@@ -183,7 +183,10 @@ class Poll(handle.Handle):
         code = lib.uv_poll_start(self.uv_poll, events, poll_callback)
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
-        self.set_pending()
+        if events:
+            self.set_pending()
+        else:
+            self.clear_pending()
 
     def stop(self):
         """

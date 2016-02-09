@@ -25,6 +25,51 @@ __all__ = ['AddrInfo', 'NameInfo', 'Address', 'Address4', 'Address6', 'GetAddrIn
            'getaddrinfo', 'GetNameInfo', 'getnameinfo']
 
 
+class AddressFamilies(common.Enumeration):
+    UNKNOWN = socket.AF_UNSPEC
+    INET4 = socket.AF_INET
+    INET6 = socket.AF_INET6
+    UNIX = socket.AF_UNIX
+
+"""
+class Address(object):
+    pass
+
+
+class Address4(Address):
+    __slots__ = ['host', 'port']
+
+    @staticmethod
+    def parse(address):
+        if not isinstance(address, tuple) or len(address) != 2:
+            raise error.ArgumentError(message='not an internet version 4 address')
+        host, port = address
+        if not 0 <= port < 2 ** 16:
+            raise error.ArgumentError(message='port of address out of range')
+        try:
+            octets = tuple(map(int, host.split('.')))
+        except ValueError:
+            octets = ()
+        if len(octets) != 4:
+            raise error.ArgumentError(message='wrong number of octets in address')
+        for octet in octets:
+            if not 0 <= octet < 2 ** 8:
+                raise error.ArgumentError(message='octet of address out of range')
+
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+
+
+class Address6(Address):
+    pass
+
+
+class AddressUnix(Address):
+    pass
+"""
+
+
 class AddrInfo(tuple):
     """
     Address information.

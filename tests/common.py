@@ -17,6 +17,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import contextlib
 import os
+import os.path
 import platform
 import sys
 import unittest
@@ -57,6 +58,13 @@ except: pass
 
 try: os.remove(TEST_PIPE2)
 except: pass
+
+
+__dir__ = os.path.dirname(__file__)
+
+
+def resolve_path(relative_path):
+    return os.path.join(__dir__, relative_path)
 
 
 def implementation_skip(*implementations):
