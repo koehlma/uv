@@ -34,9 +34,9 @@ class Async(handle.Handle):
     """
     Async handles are able to wakeup the event loop of another thread
     and run the given callback in the event loop's thread. Although the
-    :func:`Async.send` method is thread-safe the constructor is not. To
-    run a given callback in the event loop's thread without creating an
-    :class:`Async` handle use :func:`uv.Loop.call_later`.
+    :func:`uv.Async.send` method is thread-safe the constructor is not.
+    To run a given callback in the event loop's thread without creating
+    an :class:`uv.Async` handle use :func:`uv.Loop.call_later`.
     """
 
     __slots__ = ['uv_async', 'on_wakeup']
