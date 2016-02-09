@@ -57,10 +57,8 @@ def unpack_interface_address(uv_interface_address):
     name = ffi.string(uv_interface_address.name).decode()
     physical = bytes(ffi.buffer(uv_interface_address.phys_addr, 6))
     internal = bool(uv_interface_address.is_internal)
-    c_address_p = ffi.addressof(uv_interface_address.address.address4)
-    address = dns.unpack_sockaddr(ffi.cast('struct sockaddr*', c_address_p))
-    c_netmask_p = ffi.addressof(uv_interface_address.netmask.address4)
-    netmask = dns.unpack_sockaddr(ffi.cast('struct sockaddr*', c_netmask_p))
+    address = dns.unpack_sockaddr(lib.interface_address_get_address(uv_interface_address))
+    netmask = dns.unpack_sockaddr(lib.interface_address_get_netmask(uv_interface_address))
     return InterfaceAddress(name, physical, internal, address, netmask)
 
 
@@ -101,6 +99,6 @@ def interface_addresses():
         raise error.UVError(code)
     addresses = []
     for index in range(c_count[0]):
-        addresses.append(unpack_interface_address(uv_interface_addresses[0][index]))
+        addresses.append(unpack_interface_address(uv_interface_addresses[0] + index))
     lib.uv_free_interface_addresses(uv_interface_addresses[0], c_count[0])
     return addresses

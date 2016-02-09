@@ -15,12 +15,6 @@
 
 #include <uv.h>
 
-
-typedef union {
-    struct sockaddr_in address4;
-    struct sockaddr_in6 address6;
-} address_in;
-
 /* Python */
 const char* PYTHON_UV_CFFI_VERSION = "__version__";
 
@@ -82,4 +76,11 @@ void py_uv_buf_set(uv_buf_t* buffer, char* base, unsigned long length) {
 char* py_uv_buf_get(uv_buf_t* buffer, unsigned long* length) {
     *length = buffer->len;
     return buffer->base;
+}
+
+struct sockaddr* interface_address_get_address(uv_interface_address_t* interface_address) {
+    return (struct sockaddr*) &interface_address->address.address4;
+}
+struct sockaddr* interface_address_get_netmask(uv_interface_address_t* interface_address) {
+    return (struct sockaddr*) &interface_address->netmask.netmask4;
 }
