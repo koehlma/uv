@@ -56,28 +56,28 @@ class Protocols(common.Enumeration):
     Secure protocols configuration enumeration.
     """
 
-    SSLv2 = ssl.PROTOCOL_SSLv2
+    SSLv2 = getattr(ssl, 'PROTOCOL_SSLv2', 0)
     """
     Secure Sockets Layer Protocol Version 2
 
     :type: uv.secure.Protocols
     """
 
-    SSLv3 = ssl.PROTOCOL_SSLv3
+    SSLv3 = getattr(ssl, 'PROTOCOL_SSLv3', 1)
     """
     Secure Sockets Layer Protocol Version 3
 
     :type: uv.secure.Protocols
     """
 
-    SSLv23 = ssl.PROTOCOL_SSLv23
+    SSLv23 = getattr(ssl, 'PROTOCOL_SSLv23', 2)
     """
     Secure Sockets Layer Protocol Version 2 or 3
 
     :type: uv.secure.Protocols
     """
 
-    TLSv1 = ssl.PROTOCOL_TLSv1
+    TLSv1 = getattr(ssl, 'PROTOCOL_TLSv1', 3)
     """
     Transport Layer Security Protocol Version 1
 
@@ -331,7 +331,7 @@ class Secure:
                 connection = self._socket.accept()
                 self._pending_connections.append(connection)
                 self.on_connection(self, error.StatusCodes.SUCCESS)
-        except OSError as os_error:
+        except socket.error as socket_error:
             pass
 
     def accept(self, cls=None, server_side=True, *arguments, **keywords):
@@ -366,8 +366,11 @@ class Secure:
         """
         try:
             error_number = self._socket.connect(request.address)
-        except OSError as os_error:
-            error_number = 0 if os_error.errno == errno.EINPROGRESS else os_error.errno
+        except socket.error as socket_error:
+            if socket_error.args[0] == errno.EINPROGRESS:
+                error_number = 0
+            else:
+                error_number = socket_error.args[0]
         if error_number == 0:
             self._connect_request = request
             self.poll.start(poll.PollEvent.WRITABLE, self._do_connect)
