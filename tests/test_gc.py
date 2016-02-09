@@ -18,13 +18,20 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import gc
 import weakref
 
-from common import TestCase, implementation_skip
+import common
 
 import uv
 
 
-@implementation_skip('pypy')
-class TestGC(TestCase):
+@common.implementation_skip('pypy')
+class TestGC(common.TestCase):
+    def set_up(self):
+        gc.disable()
+        gc.collect()
+
+    def tear_down(self):
+        gc.enable()
+
     def test_gc_loop(self):
         loop = uv.Loop()
         weak_loop = weakref.ref(loop)
@@ -49,3 +56,33 @@ class TestGC(TestCase):
         gc.collect()
         self.assert_not_equal(weak_handle(), None)
 
+    def test_gc_pending(self):
+        loop = uv.Loop()
+        client = uv.Pipe(loop=loop)
+        client.connect(common.TEST_PIPE1)
+        client.write(b'hello')
+
+        weak_client = weakref.ref(client)
+
+        self.loop.make_current()
+        del loop
+        del client
+
+        gc.collect()
+
+        self.assert_is(weak_client(), None)
+
+    def test_gc_loop_close(self):
+        client = uv.Pipe()
+        client.connect(common.TEST_PIPE1).clear_pending()
+        client.clear_pending()
+
+        weak_client = weakref.ref(client)
+
+        del client
+
+        gc.collect()
+
+        self.assert_is(weak_client(), None)
+
+        self.loop.close()

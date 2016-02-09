@@ -117,7 +117,7 @@ class BaseLoop(object):
         self.c_reference = ffi.new_handle(self)
 
         self.uv_loop = lib.uv_default_loop() if default else ffi.new('uv_loop_t*')
-        if default and not self.uv_loop:
+        if default and not self.uv_loop:  # pragma: no cover
             raise RuntimeError('error initializing default loop')
         self.uv_loop.data = self.c_reference
 
@@ -284,12 +284,12 @@ class BaseLoop(object):
         self.run()
 
         code = lib.uv_loop_close(self.uv_loop)
-        if code == error.StatusCodes.SUCCESS:
-            _loops.remove(self)
-            self.closed = True
-        else:
+        if code != error.StatusCodes.SUCCESS:
             self._init_internal_async()
             self._init_internal_prepare()
+        else:
+            _loops.remove(self)
+            self.closed = True
         return code
 
     def on_prepare(self):
@@ -332,7 +332,7 @@ def uv_close_cb(uv_handle):
     if user_handle:
         try:
             user_handle.on_closed(user_handle)
-        except BaseException:
+        except Exception:
             user_handle.loop.handle_exception()
 
 
@@ -381,14 +381,14 @@ class BaseHandle(object):
         self.uv_handle = ffi.cast('uv_handle_t*', self.uv_object)
 
         code = handle_init(self.base_loop.uv_loop, self.uv_object, *arguments)
-        if code == error.StatusCodes.SUCCESS:
-            self.closed = False
-            self.closing = False
-            self.base_loop.attach_handle(self)
-        else:
+        if code != error.StatusCodes.SUCCESS:
             self.closed = True
             self.closing = True
             raise error.UVError(code)
+        else:
+            self.closed = False
+            self.closing = False
+            self.base_loop.attach_handle(self)
 
     def _destroy(self, _):
         """
@@ -456,20 +456,6 @@ class BaseRequest(object):
 
     __slots__ = ['c_reference', 'weak_user_request', 'base_loop', 'uv_object',
                  'uv_request', 'finished', 'canceled']
-
-    @staticmethod
-    def detach(uv_request):
-        """
-        :type uv_request:
-            ffi.CData[uv_req_t*]
-        :rtype:
-            uv.Request | None
-        """
-        try:
-            if uv_request.data:
-                return ffi.from_handle(uv_request.data).user_request
-        except AttributeError:
-            return None
 
     def __init__(self, user_request, base_loop, request_type, request_init,
                  arguments, uv_handle=None):
@@ -547,7 +533,7 @@ class BaseRequest(object):
             code = lib.uv_cancel(self.uv_request)
             self.canceled = code == error.StatusCodes.SUCCESS
             return code
-        return error.StatusCodes.SUCCESS
+        return error.StatusCodes.SUCCESS  # pragma: no cover
 
 
 def request_callback(callback_type):
@@ -563,11 +549,20 @@ def request_callback(callback_type):
             """ :type: BaseRequest """
             base_request.set_finished()
             user_request = base_request.user_request
-            user_request.clear_pending()
             if user_request:
+                user_request.clear_pending()
                 try:
                     callback(user_request, *arguments)
-                except BaseException:
+                except Exception:
                     user_request.loop.handle_exception()
         return ffi.callback(callback_type, wrapper)
     return decorator
+
+
+def finalize_request(user_request):
+    """
+    :type user_request:
+        uv.Request
+    """
+    user_request.base_request.set_finished()
+    user_request.clear_pending()

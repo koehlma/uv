@@ -529,8 +529,6 @@ class Loop(object):
         :raises uv.error.ResourceBusyError:
             loop is currently running or there are pending operations
         """
-        if self.closed:
-            return
         code = self.base_loop.close()
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
@@ -575,6 +573,11 @@ class Loop(object):
             self.pending_callbacks.append((callback, arguments, keywords))
             self.base_loop.wakeup()
             self.base_loop.reference_internal_async()
+
+    def reset_exception(self):
+        self.exc_type = None
+        self.exc_value = None
+        self.exc_traceback = None
 
     def on_wakeup(self):
         """

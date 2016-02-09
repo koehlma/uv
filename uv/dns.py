@@ -18,7 +18,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import socket
 import warnings
 
-from . import common, error, library, request
+from . import base, common, error, library, request
 from .library import ffi, lib
 
 __all__ = ['AddrInfo', 'NameInfo', 'Address', 'Address4', 'Address6', 'GetAddrInfo',
@@ -192,20 +192,12 @@ def unpack_sockaddr(c_sockaddr):
     return None
 
 
-@ffi.callback('uv_getaddrinfo_cb')
-def uv_getaddrinfo_cb(uv_getaddrinfo, status, _):
-    addrinfo_request = library.detach(uv_getaddrinfo)
-    """ :type: uv.dns.GetAddrInfo """
-    if addrinfo_request is None:
-        return
+@base.request_callback('uv_getaddrinfo_cb')
+def uv_getaddrinfo_cb(addrinfo_request, status, _):
     if status == error.StatusCodes.SUCCESS:
         addrinfo_request.populate()
-    try:
-        addrinfo_request.callback(addrinfo_request, error.StatusCodes.get(status),
-                                  addrinfo_request.addrinfo)
-    except:
-        addrinfo_request.loop.handle_exception()
-    addrinfo_request.destroy()
+    addrinfo_request.callback(addrinfo_request, error.StatusCodes.get(status),
+                              addrinfo_request.addrinfo)
 
 
 @request.RequestType.GETADDRINFO
@@ -213,11 +205,11 @@ class GetAddrInfo(request.Request):
     __slots__ = ['uv_getaddrinfo', 'c_hints', 'callback', 'host',
                  'port', 'hints', 'flags', 'addrinfo']
 
+    uv_request_type = 'uv_getaddrinfo_t*'
+    uv_request_init = lib.uv_getaddrinfo
+
     def __init__(self, host, port, family=0, socktype=0, protocol=0,
                  flags=0, callback=None, loop=None):
-        self.uv_getaddrinfo = ffi.new('uv_getaddrinfo_t*')
-        super(GetAddrInfo, self).__init__(self.uv_getaddrinfo, loop)
-        self.c_hints = ffi.new('struct addrinfo*')
         self.c_hints = ffi.new('struct addrinfo*')
         self.c_hints.ai_family = family
         self.c_hints.ai_socktype = socktype
@@ -232,19 +224,17 @@ class GetAddrInfo(request.Request):
         self.addrinfo = []
 
         uv_callback = ffi.NULL if callback is None else uv_getaddrinfo_cb
-        code = lib.uv_getaddrinfo(self.loop.uv_loop, self.uv_getaddrinfo, uv_callback,
-                                  host.encode(), str(port).encode(), self.c_hints)
-
-        if code != error.StatusCodes.SUCCESS:
-            raise error.UVError(code)
+        arguments = uv_callback, host.encode(), str(port).encode(), self.c_hints
+        super(GetAddrInfo, self).__init__(loop, arguments)
+        self.uv_getaddrinfo = self.base_request.uv_object
         if callback is None:
             self.populate()
+            base.finalize_request(self)
 
     def populate(self):
         if self.uv_getaddrinfo.addrinfo:
             self.addrinfo = unpack_addrinfo(self.uv_getaddrinfo.addrinfo)
             self.uv_getaddrinfo.addrinfo = ffi.NULL
-        self.destroy()
 
 
 def getaddrinfo(host, port, family=0, socktype=0, protocol=0,

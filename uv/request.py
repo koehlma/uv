@@ -102,7 +102,7 @@ class Request(object):
 
         :raises uv.UVError: error while canceling request
         """
-        code = lib.uv_cancel(self.uv_request)
+        code = self.base_request.cancel()
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 

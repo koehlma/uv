@@ -16,12 +16,12 @@
 import threading
 import time
 
-from common import TestCase
+import common
 
 import uv
 
 
-class TestLoop(TestCase):
+class TestLoop(common.TestCase):
     def test_loop_alive(self):
         self.assert_false(self.loop.alive)
 
@@ -204,3 +204,47 @@ class TestLoop(TestCase):
 
         self.loop1.close()
         self.loop2.close()
+
+    def test_double_close(self):
+        self.loop.close()
+        self.loop.close()
+
+    def test_excepthook(self):
+        self.loop.close()
+        self.loop = uv.Loop()
+
+        def excepthook(loop, exc_type, exc_value, exc_traceback):
+            loop.stop()
+
+        self.loop.excepthook = excepthook
+
+        def throw_test(*_):
+            raise Exception('test')
+
+        self.prepare = uv.Prepare(on_prepare=throw_test)
+        self.prepare.start()
+
+        self.loop.run()
+
+        self.assert_is(self.loop.exc_type, Exception)
+        self.assert_equal(self.loop.exc_value.args[0], 'test')
+
+        self.loop.reset_exception()
+        self.assert_is(self.loop.exc_type, None)
+        self.assert_is(self.loop.exc_value, None)
+
+        self.prepare.close(on_closed=throw_test)
+
+        self.loop.run()
+
+        self.assert_is(self.loop.exc_type, Exception)
+        self.assert_equal(self.loop.exc_value.args[0], 'test')
+        self.loop.reset_exception()
+
+        self.pipe = uv.Pipe()
+        self.pipe.connect(common.BAD_PIPE, on_connect=throw_test)
+
+        self.loop.run()
+
+        self.assert_is(self.loop.exc_type, Exception)
+        self.assert_equal(self.loop.exc_value.args[0], 'test')
