@@ -78,10 +78,20 @@ sys_platform = 'linux' if sys.platform.startswith('linux') else sys.platform
 
 
 def skip_platform(*platforms):
-    def decorator(test):
-        return test
+    def decorator(obj):
+        return obj
     if sys_platform in platforms:
         return unittest.skip('test is not available on the current platform')
+    return decorator
+
+
+def skip_pypy(lt_version):
+    def decorator(obj):
+        return obj
+    if not uv.common.is_pypy:
+        return decorator
+    if sys.pypy_version_info < lt_version:
+        return unittest.skip('test is not available on the current pypy version')
     return decorator
 
 

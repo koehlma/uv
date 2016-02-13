@@ -36,6 +36,7 @@ def interface_addresses():
 
 
 class TestUDP(common.TestCase):
+    @common.skip_pypy((2, 5, 0))
     def test_udp(self):
         self.datagram = None
 
