@@ -306,7 +306,8 @@ def uv_read_cb(stream_handle, length, uv_buffer):
     """
     data = stream_handle.loop.allocator.finalize(stream_handle, length, uv_buffer)
     if length < 0:  # pragma: no cover
-        length, status = 0, error.StatusCodes.get(length)
+        status = error.StatusCodes.get(length)
+        data = b''
     else:
         status = error.StatusCodes.SUCCESS
     stream_handle.on_read(stream_handle, status, data)
@@ -325,7 +326,7 @@ class Stream(handle.Handle):
 
     __slots__ = ['uv_stream', 'on_read', 'on_connection', 'ipc']
 
-    def __init__(self, loop, ipc, arguments):
+    def __init__(self, loop, ipc, arguments, on_read, on_connection):
         """
         :param loop:
             event loop the handle should run on
@@ -333,6 +334,11 @@ class Stream(handle.Handle):
             stream should support inter process communication or not
         :param arguments:
             arguments passed to the underling libuv initializer
+        :param on_read:
+            callback which should be called when data has been read
+        :param on_connection:
+            callback which should run after a new connection has been
+            made or on error (if stream is in listen mode)
 
         :type loop:
             uv.Loop
@@ -340,10 +346,16 @@ class Stream(handle.Handle):
             bool
         :type arguments:
             tuple
+        :type on_read:
+            ((uv.Stream, uv.StatusCodes, bytes) -> None) |
+            ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
+        :type on_connection:
+            ((uv.Stream, uv.StatusCodes, bytes) -> None) |
+            ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
         """
         super(Stream, self).__init__(loop, arguments)
         self.uv_stream = ffi.cast('uv_stream_t*', self.base_handle.uv_object)
-        self.on_read = common.dummy_callback
+        self.on_read = on_read or common.dummy_callback
         """
         Callback which should be called when data has been read.
 
@@ -376,9 +388,10 @@ class Stream(handle.Handle):
             ((uv.Stream, uv.StatusCodes, bytes) -> None) |
             ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
         """
-        self.on_connection = common.dummy_callback
+        self.on_connection = on_connection or common.dummy_callback
         """
-        Callback which should run after a new connection has been made.
+        Callback which should run after a new connection has been made
+        or on error (if stream is in listen mode).
 
 
         .. function:: on_connection(stream_handle, status)

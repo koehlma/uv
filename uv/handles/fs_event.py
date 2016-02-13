@@ -102,7 +102,8 @@ def uv_fs_event_cb(fs_event_handle, c_filename, events, status):
         int
     """
     filename = ffi.string(c_filename).decode()
-    fs_event_handle.on_event(fs_event_handle, status, filename, events)
+    code = error.StatusCodes.get(status)
+    fs_event_handle.on_event(fs_event_handle, code, filename, events)
 
 
 @handle.HandleTypes.FS_EVENT
@@ -248,7 +249,7 @@ class FSEvent(handle.Handle):
 
     def stop(self):
         """
-        Stop the handle, the callback will no longer be called.
+        Stop the handle. The callback will no longer be called.
 
         :raises uv.UVError:
             error while stopping the handle

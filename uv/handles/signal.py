@@ -66,6 +66,12 @@ class Signals(common.Enumeration):
 
 @base.handle_callback('uv_signal_cb')
 def uv_signal_cb(signal_handle, signum):
+    """
+    :type signal_handle:
+        uv.Signal
+    :type signum:
+        int
+    """
     signal_handle.on_signal(signal_handle, signum)
 
 
@@ -98,7 +104,7 @@ class Signal(handle.Handle):
         :param loop:
             event loop the handle should run on
         :param on_signal:
-            callback which should run on signal delivery
+            callback which should be called on signal delivery
 
         :type loop:
             uv.Loop

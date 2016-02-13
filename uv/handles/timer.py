@@ -50,7 +50,7 @@ class Timer(handle.Handle):
         :param loop: event
             loop the handle should run on
         :param on_timeout:
-            callback which should on timeout
+            callback which should run on timeout
 
         :type loop:
             uv.Loop
@@ -119,6 +119,7 @@ class Timer(handle.Handle):
 
         :param repeat:
             repeat interval which should be set in milliseconds
+
         :type repeat:
             int
         """
@@ -142,7 +143,8 @@ class Timer(handle.Handle):
         code = lib.uv_timer_again(self.uv_timer)
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
-        self.set_pending()
+        if self.repeat:
+            self.set_pending()
 
     def start(self, timeout, repeat=0, on_timeout=None):
         """

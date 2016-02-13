@@ -14,12 +14,13 @@
     :member-order: bysource
 
 .. autodata:: uv.PIPE
-.. autodata:: uv.STDIN
-.. autodata:: uv.STDOUT
-.. autodata:: uv.STDERR
 
 .. autoclass:: uv.ProcessFlags
     :members:
     :member-order: bysource
 
-.. autofunction:: uv.disable_stdio_inheritance
+.. autodata:: uv.process.STDIN
+.. autodata:: uv.process.STDOUT
+.. autodata:: uv.process.STDERR
+
+.. autofunction:: uv.process.disable_stdio_inheritance

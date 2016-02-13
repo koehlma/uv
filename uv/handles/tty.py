@@ -20,8 +20,6 @@ from ..library import ffi, lib
 
 from . import stream
 
-__all__ = ['ConsoleSize', 'reset_mode', 'TTYMode', 'TTY']
-
 
 class ConsoleSize(tuple):
     def __new__(cls, width, height):
@@ -34,20 +32,24 @@ class ConsoleSize(tuple):
     @property
     def width(self):
         """
-        Width of th console.
+        Width of the console.
 
-        :readonly: True
-        :type: int
+        :readonly:
+            True
+        :type:
+            int
         """
         return self[0]
 
     @property
     def height(self):
         """
-        Height of th console.
+        Height of the console.
 
-        :readonly: True
-        :type: int
+        :readonly:
+            True
+        :type:
+            int
         """
         return self[1]
 
@@ -57,10 +59,12 @@ def reset_mode():
     To be called when the program exits. Resets TTY settings to default
     values for the next process to take over.
 
-    This function is async signal-safe on Unix platforms but can fail with
-    error code UV_EBUSY if you call it when execution is inside `set_mode()`.
+    This function is async signal-safe on Unix platforms but can fail
+    with error code UV_EBUSY if you call it when execution is inside
+    `set_mode()`.
 
-    :raises uv.UVError: error while resetting tty mode
+    :raises uv.UVError:
+        error while resetting tty mode
     """
     code = lib.uv_tty_reset_mode()
     if code != error.StatusCodes.SUCCESS:
@@ -68,37 +72,60 @@ def reset_mode():
 
 
 class TTYMode(common.Enumeration):
-    """ """
+    """
+    Terminal modes enumeration.
+    """
+
     NORMAL = lib.UV_TTY_MODE_NORMAL
     """
     Initial normal terminal mode.
+
+    :type: uv.TTYMode
     """
+
     RAW = lib.UV_TTY_MODE_RAW
     """
     Raw input mode (on windows, `ENABLE_WINDOW_INPUT` is also enabled).
+
+    :type: uv.TTYMode
     """
+
     IO = lib.UV_TTY_MODE_IO
     """
     Binary-safe IO mode for IPC (Unix only).
+
+    :type: uv.TTYMode
     """
 
 
 @handle.HandleTypes.TTY
 class TTY(stream.Stream):
     """
-    TTY handles represent a stream for the console.
+    Stream interface to the local user terminal console. It allows
+    using ANSI escape codes across platforms.
 
-    :raises uv.UVError: error while initializing the handle
+    :raises uv.UVError:
+        error while initializing the handle
 
-    :param fd: file descriptor
-    :param readable: specifies whether the file descriptor is readable or not
-    :param loop: event loop the handle should run on
-    :param ipc: inter process communication support
+    :param fd:
+        file descriptor of the console
+    :param readable:
+        specifies whether the file descriptor is readable or not
+    :param loop:
+        event loop the handle should run on
+    :param on_read:
+            callback which should be called when data has been read
 
-    :type fd: int
-    :type readable: bool
-    :type loop: uv.Loop
-    :type ipc: bool
+
+    :type fd:
+        int
+    :type readable:
+        bool
+    :type loop:
+        uv.Loop
+    :type on_read:
+        ((uv.TTY, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.TTY, uv.StatusCodes, bytes) -> None)
     """
 
     __slots__ = ['uv_tty']
@@ -106,8 +133,8 @@ class TTY(stream.Stream):
     uv_handle_type = 'uv_tty_t*'
     uv_handle_init = lib.cross_uv_tty_init
 
-    def __init__(self, fd, readable=False, loop=None):
-        super(TTY, self).__init__(loop, False, (fd, int(readable)))
+    def __init__(self, fd, readable=False, loop=None, on_read=None):
+        super(TTY, self).__init__(loop, False, (fd, int(readable)), on_read, None)
         self.uv_tty = self.base_handle.uv_object
 
     @property
@@ -115,9 +142,11 @@ class TTY(stream.Stream):
         """
         Current size of the console.
 
-        :raises uv.UVError: error while getting console size
+        :raises uv.UVError:
+            error while getting console size
 
-        :rtype: ConsoleSize
+        :rtype:
+            ConsoleSize
         """
         if self.closing:
             return ConsoleSize(0, 0)
@@ -129,13 +158,18 @@ class TTY(stream.Stream):
 
     def set_mode(self, mode=TTYMode.NORMAL):
         """
-        Set the TTY using the specified terminal mode.
+        Set the the specified terminal mode.
 
-        :raises uv.UVError: error while setting mode
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while setting mode
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param mode: mode to set
-        :type mode: uv.TTYMode
+        :param mode:
+            mode to set
+
+        :type mode:
+            uv.TTYMode
         """
         if self.closing:
             raise error.ClosedHandleError()

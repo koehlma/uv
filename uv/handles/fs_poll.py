@@ -58,6 +58,7 @@ class FSPoll(handle.Handle):
         """
         :raises uv.UVError:
             error while initializing the handle
+
         :param path:
             directory or filename to monitor
         :param interval:
@@ -66,6 +67,7 @@ class FSPoll(handle.Handle):
             event loop the handle should run on
         :param on_change:
             callback which should be called on filesystem changes
+
         :type path:
             unicode
         :type interval:
@@ -73,8 +75,10 @@ class FSPoll(handle.Handle):
         :type loop:
             uv.Loop
         :type on_change:
-            ((uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None) |
-            ((Any, uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
+            ((uv.FSPoll, uv.StatusCode, uv.Stat,
+              uv.Stat) -> None) |
+            ((Any, uv.FSPoll, uv.StatusCode, uv.Stat,
+              uv.Stat) -> None)
         """
         super(FSPoll, self).__init__(loop)
         self.uv_fs_poll = self.base_handle.uv_object
@@ -125,16 +129,18 @@ class FSPoll(handle.Handle):
             :type status:
                 uv.StatusCode
             :type previous_stat:
-                uv.fs.Stat
+                uv.Stat
             :type current_stat:
-                uv.fs.Stat
+                uv.Stat
 
 
         :readonly:
             False
         :type:
-            ((uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
-            ((Any, uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
+            ((uv.FSPoll, uv.StatusCode, uv.Stat,
+              uv.Stat) -> None)
+            ((Any, uv.FSPoll, uv.StatusCode, uv.Stat,
+              uv.Stat) -> None)
         """
 
     def start(self, path=None, interval=None, on_change=None):
@@ -164,8 +170,10 @@ class FSPoll(handle.Handle):
         :type interval:
             int
         :type on_change:
-            ((uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None) |
-            ((Any, uv.FSPoll, uv.StatusCode, uv.fs.Stat, uv.fs.Stat) -> None)
+            ((uv.FSPoll, uv.StatusCode, uv.Stat,
+              uv.Stat) -> None) |
+            ((Any, uv.FSPoll, uv.StatusCode, uv.Stat,
+              uv.Stat) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -182,7 +190,7 @@ class FSPoll(handle.Handle):
 
     def stop(self):
         """
-        Stop the handle, the callback will no longer be called.
+        Stop the handle. The callback will no longer be called.
 
         :raises uv.UVError:
             error while stopping the handle

@@ -154,22 +154,34 @@ class UDPSendRequest(request.Request):
         :readonly:
             False
         :type:
-            ((uv.SendRequest, uv.StatusCode) -> None) |
-            ((Any, uv.SendRequest, uv.StatusCode) -> None)
+            ((uv.UDPSendRequest, uv.StatusCode) -> None) |
+            ((Any, uv.UDPSendRequest, uv.StatusCode) -> None)
         """
         uv_udp = self.udp.uv_udp
         c_buffers, uv_buffers = self.buffers
         c_storage = dns.c_create_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        init_arguments = (uv_buffers, len(self.buffers), c_sockaddr, uv_udp_send_cb)
-        super(UDPSendRequest, self).__init__(udp.loop, init_arguments, uv_udp)
+        arguments = (uv_buffers, len(self.buffers), c_sockaddr, uv_udp_send_cb)
+        super(UDPSendRequest, self).__init__(udp.loop, arguments, uv_udp)
 
 
 @base.handle_callback('uv_udp_recv_cb')
-def uv_udp_recv_cb(udp_handle, length, uv_buf, c_sockaddr, flags):
-    data = udp_handle.loop.allocator.finalize(udp_handle, length, uv_buf)
+def uv_udp_recv_cb(udp_handle, length, uv_buffer, c_sockaddr, flags):
+    """
+    :type udp_handle:
+        uv.UDP
+    :type length:
+        int
+    :type uv_buffer:
+        ffi.CData[uv_buf_t*]
+    :type c_sockaddr:
+        ffi.CData[struct sockaddr*]
+    :type flags:
+        int
+    """
+    data = udp_handle.loop.allocator.finalize(udp_handle, length, uv_buffer)
     if length < 0:  # pragma: no cover
-        status = 0
+        status = error.StatusCodes.get(length)
     else:
         status = error.StatusCodes.SUCCESS
     if c_sockaddr:
@@ -182,8 +194,7 @@ def uv_udp_recv_cb(udp_handle, length, uv_buf, c_sockaddr, flags):
 @handle.HandleTypes.UDP
 class UDP(handle.Handle):
     """
-    UDP handles encapsulate UDP communication for both clients and
-    servers.
+    Abstraction of UDP sockets for servers and clients.
     """
 
     __slots__ = ['uv_udp', 'on_receive']
@@ -207,8 +218,10 @@ class UDP(handle.Handle):
         :type loop:
             uv.Loop
         :type on_receive:
-            ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
-            ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
+            ((uv.UDP, uv.StatusCode, uv.Address,
+              bytes, int) -> None) |
+            ((Any, uv.UDP, uv.StatusCode, uv.Address,
+              bytes, int) -> None)
         """
         super(UDP, self).__init__(loop, (flags, ))
         self.uv_udp = self.base_handle.uv_object
@@ -216,22 +229,53 @@ class UDP(handle.Handle):
         """
         Callback called after package has been received.
 
-        .. function:: on_receive(UDP, Status, Address, Length, Data, Flags)
 
-        :readonly: False
-        :type: ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
-               ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
+        .. function:: on_receive(udp_handle, status, addr, data, flags)
+
+            :param udp_handle:
+                handle the call originates from
+            :param status:
+                status of the handle (indicate any errors)
+            :param addr:
+                address the data originates from
+            :param data:
+                data which has been received
+            :param flags:
+                udp status flags (e.g. partial read)
+
+            :type udp_handle:
+                uv.UDP
+            :type status:
+                uv.StatusCode
+            :type addr:
+                uv.Address4 | uv.Address6 | tuple
+            :type flags:
+                int
+
+
+        :readonly:
+            False
+        :type:
+            ((uv.UDP, uv.StatusCode, uv.Address, bytes,
+              int) -> None) |
+            ((Any, uv.UDP, uv.StatusCode, uv.Address, bytes,
+              int) -> None)
         """
 
     def open(self, fd):
         """
-        Open an existing file descriptor as a udp handle.
+        Open an existing file descriptor as an udp handle.
 
-        :raises uv.UVError: error while opening the handle
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while opening the handle
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param fd: file descriptor
-        :type fd: int
+        :param fd:
+            file descriptor
+
+        :type fd:
+            int
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -239,146 +283,24 @@ class UDP(handle.Handle):
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
-    def set_membership(self, multicast_address, membership, interface_address=None):
-        """
-        Set membership for a multicast address
-
-        raises uv.UVError: error while setting membership
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
-
-        :param multicast_address: multicast address to set membership for
-        :param interface_address: interface address
-        :param membership: membership operation
-
-        :type multicast_address: str
-        :type interface_address: str
-        :type membership: uv.UDPMembership
-        """
-        if self.closing:
-            raise error.ClosedHandleError()
-        c_m_addr = multicast_address.encode()
-        c_i_addr = interface_address.encode() if interface_address else ffi.NULL
-        code = lib.uv_udp_set_membership(self.uv_udp, c_m_addr, c_i_addr, membership)
-        if code != error.StatusCodes.SUCCESS:
-            raise error.UVError(code)
-
-    def set_multicast_loop(self, enable):
-        """
-        Set IP multicast loop flag. Makes multicast packets loop back to local sockets.
-
-        :raises uv.UVError: error enabling / disabling multicast loop
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
-
-        :param enable: enable / disable multicast loop
-        :type enable: bool
-        """
-        if self.closing:
-            raise error.ClosedHandleError()
-        code = lib.uv_udp_set_multicast_loop(self.uv_udp, int(enable))
-        if code != error.StatusCodes.SUCCESS:
-            raise error.UVError(code)
-
-    def set_multicast_ttl(self, ttl):
-        """
-        Set the multicast ttl.
-
-        :raises uv.UVError: error while setting ttl
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
-
-        :param ttl: multicast ttl (1 trough 255)
-        :type ttl: int
-        """
-        if self.closing:
-            raise error.ClosedHandleError()
-        code = lib.uv_udp_set_multicast_ttl(self.uv_udp, ttl)
-        if code != error.StatusCodes.SUCCESS:
-            raise error.UVError(code)
-
-    def set_multicast_interface(self, interface):
-        """
-        Set the multicast interface to send or receive data on.
-
-        :raises uv.UVError: error while setting multicast interface
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
-
-        :param interface: multicast interface address
-        :type interface: str
-        """
-        if self.closing:
-            raise error.ClosedHandleError()
-        code = lib.uv_udp_set_multicast_interface(self.uv_udp, interface.encode())
-        if code != error.StatusCodes.SUCCESS:
-            raise error.UVError(code)
-
-    def set_broadcast(self, enable):
-        """
-        Set broadcast on or off.
-
-        :raises uv.UVError: error enabling / disabling broadcast
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
-
-        :param enable: enable / disable broadcast
-        :type enable: bool
-        """
-        if self.closing:
-            raise error.ClosedHandleError()
-        code = lib.uv_udp_set_broadcast(self.uv_udp, int(enable))
-        if code != error.StatusCodes.SUCCESS:
-            raise error.UVError(code)
-
-    @property
-    def family(self):
-        """
-        Address family UDP handle, may be None.
-
-        :type: int | None
-        """
-        if self.closing:
-            return None
-        c_storage = ffi.new('struct sockaddr_storage*')
-        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
-        code = lib.uv_udp_getsockname(self.uv_udp, c_sockaddr, c_size)
-        if code != error.StatusCodes.SUCCESS:
-            return None
-        return c_sockaddr.sa_family
-
-    @property
-    def sockname(self):
-        """
-        The local IP and port of the UDP handle.
-
-        :raises uv.UVError: error while receiving sockname
-
-        :readonly: True
-        :rtype: uv.Address4 | uv.Address6
-        """
-        if self.closing:
-            return '0.0.0.0', 0
-        c_storage = ffi.new('struct sockaddr_storage*')
-        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
-        code = lib.uv_udp_getsockname(self.uv_udp, c_sockaddr, c_size)
-        if code != error.StatusCodes.SUCCESS:
-            raise error.UVError(code)
-        return dns.unpack_sockaddr(c_sockaddr)
-
     def bind(self, address, flags=0):
         """
-        Bind the handle to an address. When the port is already taken, you
-        can expect to see an :class:`uv.StatusCode.EADDRINUSE` error from
-        either `bind()`, `listen()` or `connect()`. That is, a successful
-        call to this function does not guarantee that the call to `listen()`
-        or `connect()` will succeed as well.
+        Bind the socket to the specified address.
 
-        :raises uv.UVError: error while binding to `address`
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while binding to `address`
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
-        :param flags: bind flags to be used (mask of :class:`uv.TCPBindFlags`)
+        :param address:
+            address to bind to `(ip, port, flowinfo=0, scope_id=0)`
+        :param flags
+            bind flags to be used (mask of :class:`uv.UDPFlags`)
 
-        :type address: tuple | uv.Address
-        :type flags: int
+        :type address:
+            uv.Address4 | uv.Address6 | tuple
+        :type flags:
+            int
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -390,43 +312,59 @@ class UDP(handle.Handle):
 
     def send(self, buffers, address, on_send=None):
         """
-        Send data over the UDP socket. If the socket has not previously been
-        bound with `bind()` it will be bound to 0.0.0.0 (the "all interfaces"
-        IPv4 address) and a random port number.
+        Send data over the UDP socket. If the socket has not previously
+        been bound with `bind()` it will be bound to 0.0.0.0 (the "all
+        interfaces" IPv4 address) and a random port number.
 
-        :raises uv.UVError: error while initializing the request
-        :raises uv.ClosedHandleError: udp handle has already been closed or is closing
+        :raises uv.UVError:
+            error while initializing the request
+        :raises uv.ClosedHandleError:
+            udp handle has already been closed or is closing
 
-        :param buffers: buffers or buffer to send
-        :param address: address of the remote peer `(ip, port, flowinfo=0, scope_id=0)`
-        :param on_send: callback called after all data has been sent
+        :param buffers:
+            data which should be send
+        :param address:
+            address tuple `(ip, port, flowinfo=0, scope_id=0)`
+        :param on_send:
+            callback called after all data has been sent
 
-        :type buffers: list[bytes] | bytes
-        :type address: tuple | uv.Address
-        :type on_send: ((uv.SendRequest, uv.StatusCode) -> None) |
-                       ((Any, uv.SendRequest, uv.StatusCode) -> None)
+        :type buffers:
+            tuple[bytes] | list[bytes] | bytes
+        :type address:
+            tuple | uv.Address4 | uv.Address6
+        :type on_send:
+            ((uv.UDPSendRequest, uv.StatusCode) -> None) |
+            ((Any, uv.UDPSendRequest, uv.StatusCode) -> None)
 
-        :returns: send request
-        :rtype: uv.UDPSendRequest
+        :rtype:
+            uv.UDPSendRequest
         """
         return UDPSendRequest(self, buffers, address, on_send)
 
     def try_send(self, buffers, address):
         """
-        Same as `send()`, but won’t queue a write request if it
-        cannot be completed immediately.
+        Same as `send()`, but won’t queue a write request if it cannot
+        be completed immediately.
 
-        :raises uv.UVError: error while sending data
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while sending data
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param buffers: buffers or buffer to send
-        :param address: address tuple `(ip, port, flowinfo=0, scope_id=0)`
+        :param buffers:
+            data which should be send
+        :param address:
+            address tuple `(ip, port, flowinfo=0, scope_id=0)`
 
-        :type buffers: list[bytes] | bytes
-        :type address: tuple | uv.Address
+        :type buffers:
+            tuple[bytes] | list[bytes] | bytes
+        :type address:
+            tuple | uv.Address4 | uv.Address6
 
-        :return: number of bytes sent
-        :rtype: int
+        :return:
+            number of bytes sent
+        :rtype:
+            int
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -441,17 +379,23 @@ class UDP(handle.Handle):
 
     def receive_start(self, on_receive=None):
         """
-        Prepare for receiving data. If the socket has not previously been bound
-        with `bind()` it is bound to 0.0.0.0 (the "all interfaces" IPv4 address)
-        and a random port number.
+        Prepare for receiving data. If the socket has not previously
+        been bound with `bind()` it is bound to 0.0.0.0 (the "all
+        interfaces" IPv4 address) and a random port number.
 
-        :raises uv.UVError: error while start receiving datagrams
-        :raises uv.ClosedHandleError: handle has already been closed or is closing
+        :raises uv.UVError:
+            error while start receiving datagrams
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
-        :param on_receive: callback called after package has been received
+        :param on_receive:
+            callback called after package has been received
+
         :type on_receive:
-            ((uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None) |
-            ((Any, uv.UDP, uv.StatusCode, uv.Address, int, bytes, int) -> None)
+            ((uv.UDP, uv.StatusCode, uv.Address, bytes,
+              int) -> None) |
+            ((Any, uv.UDP, uv.StatusCode, uv.Address, bytes,
+              int) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -474,3 +418,162 @@ class UDP(handle.Handle):
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         self.clear_pending()
+
+    def set_membership(self, multicast_address, membership, interface_address=None):
+        """
+        Set membership for a multicast address
+
+        raises uv.UVError:
+            error while setting membership
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
+
+        :param multicast_address:
+            multicast address to set membership for
+        :param membership:
+            membership operation
+        :param interface_address:
+            interface address
+
+        :type multicast_address:
+            unicode
+        :type membership:
+            uv.UDPMembership
+        :type interface_address:
+            unicode
+        """
+        if self.closing:
+            raise error.ClosedHandleError()
+        c_m_addr = multicast_address.encode()
+        c_i_addr = interface_address.encode() if interface_address else ffi.NULL
+        code = lib.uv_udp_set_membership(self.uv_udp, c_m_addr, c_i_addr, membership)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
+
+    def set_multicast_loop(self, enable):
+        """
+        Set IP multicast loop flag. Makes multicast packets loop bac
+        to local sockets.
+
+        :raises uv.UVError:
+            error enabling / disabling multicast loop
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
+
+        :param enable:
+            enable / disable multicast loop
+
+        :type enable:
+            bool
+        """
+        if self.closing:
+            raise error.ClosedHandleError()
+        code = lib.uv_udp_set_multicast_loop(self.uv_udp, int(enable))
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
+
+    def set_multicast_ttl(self, ttl):
+        """
+        Set the multicast ttl.
+
+        :raises uv.UVError:
+            error while setting ttl
+        :raises uv.ClosedHandleError
+            handle has already been closed or is closing
+
+        :param ttl:
+            multicast ttl (between 1 and 255)
+
+        :type ttl:
+            int
+        """
+        if self.closing:
+            raise error.ClosedHandleError()
+        code = lib.uv_udp_set_multicast_ttl(self.uv_udp, ttl)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
+
+    def set_multicast_interface(self, interface):
+        """
+        Set the multicast interface to send or receive data on.
+
+        :raises uv.UVError:
+            error while setting multicast interface
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
+
+        :param interface:
+            multicast interface address
+
+        :type interface:
+            unicode
+        """
+        if self.closing:
+            raise error.ClosedHandleError()
+        code = lib.uv_udp_set_multicast_interface(self.uv_udp, interface.encode())
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
+
+    def set_broadcast(self, enable):
+        """
+        Set broadcast on or off.
+
+        :raises uv.UVError:
+            error enabling / disabling broadcast
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
+
+        :param enable:
+            enable / disable broadcast
+
+        :type enable:
+            bool
+        """
+        if self.closing:
+            raise error.ClosedHandleError()
+        code = lib.uv_udp_set_broadcast(self.uv_udp, int(enable))
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
+
+    @property
+    def family(self):
+        """
+        Address family of UDP handle, may be None.
+
+        :readonly:
+            True
+        :rtype:
+            int | None
+        """
+        if self.closing:
+            return None
+        c_storage = ffi.new('struct sockaddr_storage*')
+        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
+        c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
+        code = lib.uv_udp_getsockname(self.uv_udp, c_sockaddr, c_size)
+        if code != error.StatusCodes.SUCCESS:
+            return None
+        return c_sockaddr.sa_family
+
+    @property
+    def sockname(self):
+        """
+        The local IP and port of the UDP handle.
+
+        :raises uv.UVError:
+            error while receiving sockname
+
+        :readonly:
+            True
+        :rtype:
+            uv.Address4 | uv.Address6
+        """
+        if self.closing:
+            return '0.0.0.0', 0
+        c_storage = ffi.new('struct sockaddr_storage*')
+        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
+        c_size = ffi.new('int*', ffi.sizeof('struct sockaddr_storage'))
+        code = lib.uv_udp_getsockname(self.uv_udp, c_sockaddr, c_size)
+        if code != error.StatusCodes.SUCCESS:
+            raise error.UVError(code)
+        return dns.unpack_sockaddr(c_sockaddr)

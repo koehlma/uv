@@ -37,14 +37,14 @@ def reraise(exc_type, exc_value, exc_traceback):
     raise exc_type, exc_value, exc_traceback
 '''
 
-if uv.is_py2:
+if uv.common.is_py2:
     exec(PY2_RERAISE)
 else:
     def reraise(_, exc_value, exc_traceback):
         raise exc_value.with_traceback(exc_traceback)
 
 
-if uv.is_win32:
+if uv.common.is_win32:
     TEST_PIPE1 = r'\\?\pipe\python-uv-test1'
     TEST_PIPE2 = r'\\?\pipe\python-uv-test2'
 else:

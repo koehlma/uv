@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU Lesser General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
-
 """
 This package aims to provide an object oriented CFFI based wrapper around
 the libuv asynchronous IO library. It supports all handles as well as
@@ -34,43 +32,55 @@ more expressive variable names without ugly line breaking stunts and
 overall makes the code more readable.
 """
 
-__version__ = '0.0.5.dev0'
-__project__ = 'Python libuv CFFI Bindings'
-__author__ = 'Maximilian Köhl'
-__email__ = 'mail@koehlma.de'
+from __future__ import print_function, unicode_literals, division, absolute_import
+
+from .metadata import __version__, __author__, __email__, __project__
 
 from .library import version as uv_version
-
-from .common import is_win32, is_linux, is_posix, is_nt, is_py3, is_py2
 
 from .error import UVError, ClosedHandleError, ClosedLoopError, StatusCodes
 from .handle import Handle
 from .loop import RunModes, Loop
 from .request import Request
 
+from . import common, error, loop, handle, request
+
 from .handles.async import Async
 from .handles.check import Check
 from .handles.idle import Idle
 from .handles.pipe import PipeConnectRequest, Pipe
-from .handles.poll import *
-from .handles.prepare import *
-from .handles.process import *
-from .handles.process import *
-from .handles.signal import *
-from .handles.stream import *
-from .handles.tcp import *
-from .handles.timer import *
-from .handles.tty import *
-from .handles.udp import *
+from .handles.poll import PollEvent, Poll
+from .handles.prepare import Prepare
+from .handles.process import CreatePipe, PIPE, ProcessFlags, Process
+from .handles.signal import Signals, Signal
+from .handles.stream import ShutdownRequest, WriteRequest, ConnectRequest, Stream
+from .handles.tcp import TCPFlags, TCPConnectRequest, TCP
+from .handles.timer import Timer
+from .handles.tty import reset_mode, ConsoleSize, TTYMode, TTY
+from .handles.udp import UDPFlags, UDPMembership, UDPSendRequest, UDP
 
-from .handles.fs_event import *
-from .handles.fs_poll import *
+from .handles.fs_event import FSEvents, FSEventFlags, FSEvent
+from .handles.fs_poll import FSPoll
+
+from .handles import async
+from .handles import check
+from .handles import idle
+from .handles import pipe
+from .handles import process
+from .handles import signal
+from .handles import stream
+from .handles import tcp
+from .handles import timer
+from .handles import tty
+from .handles import udp
+
+from .handles import fs_event
+from .handles import fs_poll
 
 from .dns import Address, Address4, Address6, AddrInfo
 from .fs import Stat
 
 from . import dns
-from . import error
 from . import fs
 from . import misc
 from . import secure

@@ -21,6 +21,10 @@ from ..library import lib
 
 @base.handle_callback('uv_prepare_cb')
 def uv_prepare_cb(prepare_handle):
+    """
+    :type prepare_handle:
+        uv.Prepare
+    """
     prepare_handle.on_prepare(prepare_handle)
 
 
@@ -99,7 +103,7 @@ class Prepare(handle.Handle):
 
     def stop(self):
         """
-        Stop the handle, the callback will no longer be called.
+        Stop the handle. The callback will no longer be called.
 
         :raises uv.UVError:
             error while stopping the handle

@@ -49,7 +49,7 @@ def poll_callback(poll_handle, status, events):
     :type events:
         int
     """
-    poll_handle.on_event(poll_handle, status, events)
+    poll_handle.on_event(poll_handle, error.StatusCodes.get(status), events)
 
 
 @handle.HandleTypes.POLL
@@ -121,7 +121,7 @@ class Poll(handle.Handle):
         """
         self.on_event = on_event or common.dummy_callback
         """
-        Callback called on IO events.
+        Callback which should be called on IO events.
 
 
         .. function:: on_event(poll_handle, status, events)
@@ -147,6 +147,15 @@ class Poll(handle.Handle):
             ((uv.Poll, uv.StatusCode, int) -> None) |
             ((Any, uv.Poll, uv.StatusCode, int) -> None)
         """
+
+    def fileno(self):
+        """
+        Number of the file descriptor polled on.
+
+        :rtype:
+            int
+        """
+        return self.fd
 
     def start(self, events=PollEvent.READABLE, on_event=None):
         """
@@ -190,7 +199,7 @@ class Poll(handle.Handle):
 
     def stop(self):
         """
-        Stop the handle, the callback will no longer be called.
+        Stop the handle. The callback will no longer be called.
 
         :raises uv.UVError
             error while stopping the handle

@@ -8,3 +8,7 @@
 .. autoclass:: uv.Pipe
     :members:
     :member-order: bysource
+
+.. autoclass:: uv.PipeConnectRequest
+    :members:
+    :member-order: bysource

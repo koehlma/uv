@@ -40,7 +40,7 @@ def disable_stdio_inheritance():
         that were inherited. In general it does a better job on Windows
         than it does on Unix.
     """
-    lib.uv_disable_stdio_inheritance()
+    lib.uv_disable_stdio_inheritance()  # pragma: no cover
 
 
 class StandardIOFlags(common.Enumeration):
@@ -71,7 +71,7 @@ class CreatePipe(object):
 
     __slots__ = ['ipc', 'flags']
 
-    def __init__(self, readable=False, writable=False, ipc=True):
+    def __init__(self, readable=False, writable=False, ipc=False):
         """
         :param readable:
             pipe should be readable
@@ -110,11 +110,11 @@ class _FD(int):
 def _get_fileno(fileobj):
     try:
         return _FD(fileobj.fileno())
-    except Exception:
+    except Exception:  # pragma: no cover
         return None
 
 
-PIPE = CreatePipe(readable=True, writable=True)
+PIPE = CreatePipe(readable=True, writable=True, ipc=True)
 """
 Create a readable and writable inter process communication pipe.
 """
@@ -134,7 +134,7 @@ Standard error file descriptor.
 
 class ProcessFlags(common.Enumeration):
     """
-    Process flags enumeration.
+    Process configuration flags enumeration.
     """
 
     # set implicitly by uid and gid parameters
@@ -174,6 +174,14 @@ class ProcessFlags(common.Enumeration):
 
 @base.handle_callback('uv_exit_cb')
 def uv_exit_cb(process_handle, returncode, signum):
+    """
+    :type process_handle:
+        uv.Process
+    :type returncode:
+        int
+    :type signum:
+        int
+    """
     process_handle.clear_pending()
     process_handle.on_exit(process_handle, returncode, signum)
 
@@ -280,24 +288,23 @@ class Process(handle.Handle):
             ((Any, uv.Process, int, int) -> None)
         """
 
-        self.uv_options = ffi.new('uv_process_options_t*')
+        uv_options = ffi.new('uv_process_options_t*')
 
-        self.c_file = ffi.new('char[]', arguments[0].encode())
-        self.uv_options.file = self.c_file
+        c_file = ffi.new('char[]', arguments[0].encode())
+        uv_options.file = c_file
 
-        self.c_args_list = [ffi.new('char[]', argument.encode())
-                            for argument in arguments]
-        self.c_args_list.append(ffi.NULL)
-        self.c_args = ffi.new('char*[]', self.c_args_list)
-        self.uv_options.args = self.c_args
+        c_args_list = [ffi.new('char[]', argument.encode()) for argument in arguments]
+        c_args_list.append(ffi.NULL)
+        c_args = ffi.new('char*[]', c_args_list)
+        uv_options.args = c_args
 
         stdio_count = 3
         if stdio is not None:
             stdio_count += len(stdio)
-        self.uv_options.stdio_count = stdio_count
+        uv_options.stdio_count = stdio_count
 
-        self.c_stdio_containers = ffi.new('uv_stdio_container_t[]', stdio_count)
-        self.stdin = populate_stdio_container(self.c_stdio_containers[0], stdin)
+        c_stdio_containers = ffi.new('uv_stdio_container_t[]', stdio_count)
+        self.stdin = populate_stdio_container(c_stdio_containers[0], stdin)
         """
         Standard input of the child process.
 
@@ -306,7 +313,7 @@ class Process(handle.Handle):
         :type:
             int | uv.Stream | file-like | None
         """
-        self.stdout = populate_stdio_container(self.c_stdio_containers[1], stdout)
+        self.stdout = populate_stdio_container(c_stdio_containers[1], stdout)
         """
         Standard output of the child process.
 
@@ -315,7 +322,7 @@ class Process(handle.Handle):
         :type:
             int | uv.Stream | file-like | None
         """
-        self.stderr = populate_stdio_container(self.c_stdio_containers[2], stderr)
+        self.stderr = populate_stdio_container(c_stdio_containers[2], stderr)
         """
         Standard error of the child process.
 
@@ -335,31 +342,31 @@ class Process(handle.Handle):
         """
         if stdio is not None:
             for number in range(len(stdio)):
-                c_stdio = self.c_stdio_containers[3 + number]
+                c_stdio = c_stdio_containers[3 + number]
                 fileobj = populate_stdio_container(c_stdio, stdio[number])
                 self.stdio.append(fileobj)
-        self.uv_options.stdio = self.c_stdio_containers
+        uv_options.stdio = c_stdio_containers
 
         if cwd is not None:
-            self.c_cwd = ffi.new('char[]', cwd.encode())
-            self.uv_options.cwd = self.c_cwd
+            c_cwd = ffi.new('char[]', cwd.encode())
+            uv_options.cwd = c_cwd
 
         if env is not None:
-            self.c_env_list = [ffi.new('char[]', ('%s=%s' % item).encode())
-                               for item in env.items()]
-            self.c_env_list.append(ffi.NULL)
-            self.c_env = ffi.new('char*[]', self.c_env_list)
-            self.uv_options.env = self.c_env
+            c_env_list = [ffi.new('char[]', ('%s=%s' % item).encode())
+                          for item in env.items()]
+            c_env_list.append(ffi.NULL)
+            c_env = ffi.new('char*[]', c_env_list)
+            uv_options.env = c_env
 
         if uid is not None:
             flags |= ProcessFlags.SETUID
         if gid is not None:
             flags |= ProcessFlags.SETGID
 
-        lib.cross_set_process_uid_gid(self.uv_options, uid or 0, gid or 0)
+        lib.cross_set_process_uid_gid(uv_options, uid or 0, gid or 0)
 
-        self.uv_options.flags = flags
-        self.uv_options.exit_cb = uv_exit_cb
+        uv_options.flags = flags
+        uv_options.exit_cb = uv_exit_cb
 
         self.on_exit = on_exit or common.dummy_callback
         """
@@ -390,7 +397,7 @@ class Process(handle.Handle):
             ((uv.Process, int, int) -> None) |
             ((Any, uv.Process, int, int) -> None)
         """
-        super(Process, self).__init__(loop, (self.uv_options, ))
+        super(Process, self).__init__(loop, (uv_options, ))
         self.uv_process = self.base_handle.uv_object
         self.set_pending()
 
@@ -399,16 +406,24 @@ class Process(handle.Handle):
         """
         PID of the spawned process.
 
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
+
         :readonly:
             True
         :rtype:
             int
         """
+        if self.closing:
+            raise error.ClosedHandleError()
         return self.uv_process.pid
 
     def kill(self, signum=signal.Signals.SIGINT):
         """
         Send the specified signal to the process.
+
+        :raises uv.ClosedHandleError:
+            handle has already been closed or is closing
 
         :param signum:
             signal number

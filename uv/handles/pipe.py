@@ -15,7 +15,9 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import error, handle
+import socket
+
+from .. import common, error, handle
 from ..library import ffi, lib
 
 from . import stream
@@ -53,8 +55,8 @@ class PipeConnectRequest(stream.ConnectRequest):
 @handle.HandleTypes.PIPE
 class Pipe(stream.Stream):
     """
-    Stream like interface to local domain sockets on Unix and named
-    pipes on Windows.
+    Stream interface to local domain sockets on Unix and named pipes on
+    Windows, which supports inter process communication.
     """
 
     __slots__ = ['uv_pipe']
@@ -62,22 +64,33 @@ class Pipe(stream.Stream):
     uv_handle_type = 'uv_pipe_t*'
     uv_handle_init = lib.uv_pipe_init
 
-    def __init__(self, loop=None, ipc=False):
+    def __init__(self, ipc=False, loop=None, on_read=None, on_connection=None):
         """
         :raises uv.UVError:
             error while initializing the handle
 
-        :param loop:
-            event loop the handle should run on
         :param ipc:
             pipe should have inter process communication support not
+        :param loop:
+            event loop the handle should run on
+        :param on_read:
+            callback which should be called when data has been read
+        :param on_connection:
+            callback which should run after a new connection has been
+            made or on error (if stream is in listen mode)
 
-        :type loop:
-            uv.Loop
         :type ipc:
             bool
+        :type loop:
+            uv.Loop
+        :type on_read:
+            ((uv.Pipe, uv.StatusCodes, bytes) -> None) |
+            ((Any, uv.Pipe, uv.StatusCodes, bytes) -> None)
+        :type on_connection:
+            ((uv.Pipe, uv.StatusCodes, bytes) -> None) |
+            ((Any, uv.Pipe, uv.StatusCodes, bytes) -> None)
         """
-        super(Pipe, self).__init__(loop, ipc, (int(ipc), ))
+        super(Pipe, self).__init__(loop, ipc, (int(ipc), ), on_read, on_connection)
         self.uv_pipe = self.base_handle.uv_object
 
     def open(self, fd):
@@ -140,6 +153,9 @@ class Pipe(stream.Stream):
         :type on_connect:
             ((uv.PipeConnectRequest, uv.StatusCode) -> None) |
             ((Any, uv.PipeConnectRequest, uv.StatusCode) -> None)
+
+        :rtype:
+            uv.PipeConnectRequest
         """
         return PipeConnectRequest(self, path, on_connect)
 
@@ -265,3 +281,7 @@ class Pipe(stream.Stream):
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         return ffi.string(c_buffer, c_size[0]).decode()
+
+    @property
+    def family(self):
+        return None if common.is_win32 else socket.AF_UNIX
