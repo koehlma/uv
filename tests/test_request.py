@@ -31,3 +31,9 @@ class TestRequest(common.TestCase):
         self.pipe = uv.Pipe()
         request = self.pipe.connect(common.BAD_PIPE)
         self.assert_is(request.type, uv.ConnectRequest)
+
+    def test_cancel(self):
+        self.tcp = uv.TCP()
+        self.assert_raises(uv.error.ArgumentError,
+                           self.tcp.connect(('127.0.0.1', 80)).cancel)
+
