@@ -23,60 +23,60 @@ from . import common
 class Handle(common.with_metaclass(abc.ABCMeta)):
     @abc.abstractproperty
     def closing(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractproperty
     def closed(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractproperty
     def active(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractproperty
     def referenced(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractmethod
     def reference(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractmethod
     def dereference(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractmethod
     def close(self, on_closed=None):
-        pass
+        raise NotImplemented()
 
 
 class Request(common.with_metaclass(abc.ABCMeta)):
     @abc.abstractmethod
     def cancel(self):
-        pass
+        raise NotImplemented()
 
 
 class Stream(Handle):
     @abc.abstractproperty
     def readable(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractproperty
     def writeable(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractmethod
     def read_start(self, on_read=None):
-        pass
+        raise NotImplemented()
 
     @abc.abstractmethod
     def read_stop(self):
-        pass
+        raise NotImplemented()
 
     @abc.abstractmethod
     def write(self, buffers, send_stream=None, on_write=None):
-        pass
+        raise NotImplemented()
 
     @abc.abstractmethod
     def shutdown(self, on_shutdown=None):
-        pass
+        raise NotImplemented()
