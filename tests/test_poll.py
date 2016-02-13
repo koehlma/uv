@@ -59,6 +59,16 @@ class TestPoll(common.TestCase):
         self.poll = uv.Poll(self.client.fileno(), on_event=on_event)
         self.poll.start()
 
+        self.assert_equal(self.poll.fileno(), self.client.fileno())
+
         self.loop.run()
 
         self.assert_equal(self.buffer, b'hello')
+
+    def test_closed(self):
+        self.client = socket.socket()
+        self.poll = uv.Poll(self.client.fileno())
+        self.poll.close()
+
+        self.assert_raises(uv.ClosedHandleError, self.poll.start)
+        self.assert_is(self.poll.stop(), None)

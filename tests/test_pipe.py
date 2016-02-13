@@ -77,6 +77,13 @@ class TestPipe(common.TestCase):
         self.assert_raises(uv.error.ClosedHandleError, self.pipe.bind, '')
         self.assert_raises(uv.error.ClosedHandleError, self.pipe.connect, '')
 
+    def test_family(self):
+        self.pipe = uv.Pipe()
+        if uv.common.is_win32:
+            self.assert_is(self.pipe.family, None)
+        else:
+            self.assert_is(self.pipe.family, socket.AF_UNIX)
+
     @common.skip_platform('win32')
     def test_pipe_open(self):
         unix_socket = socket.socket(family=socket.AF_UNIX)

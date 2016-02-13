@@ -68,3 +68,8 @@ class TestStream(common.TestCase):
         self.loop.run()
 
         self.assert_equal(self.buffer, b'hello'[:self.bytes_written])
+
+    def test_writable_readable(self):
+        self.pipe = uv.Pipe()
+        self.assert_false(self.pipe.readable)
+        self.assert_false(self.pipe.writable)
