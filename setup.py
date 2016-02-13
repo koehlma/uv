@@ -61,10 +61,10 @@ WIN32_PYTHON27_PATHS = [_path_1, _path_2]
 LICENSE = 'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)'
 
 
-with open(os.path.join(__dir__, 'uv', '__init__.py'), 'rb') as init_py:
-    init_source = init_py.read().decode('utf-8')
+with open(os.path.join(__dir__, 'uv', 'metadata.py'), 'rb') as metadata_py:
+    metadata_source = metadata_py.read().decode('utf-8')
 
-match = re.search(r'__version__ = \'(.+?)\'', init_source)
+match = re.search(r'__version__ = \'(.+?)\'', metadata_source)
 version = match.group(1)
 
 with open(os.path.join(__dir__, 'README.rst'), 'rb') as readme_file:
