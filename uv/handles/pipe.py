@@ -112,6 +112,7 @@ class Pipe(stream.Stream):
 
         :param path:
             path or name to bind to to bind to
+
         :type path:
             unicode
         """
