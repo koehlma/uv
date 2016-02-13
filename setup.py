@@ -45,7 +45,7 @@ DEPS_PATH = 'deps'
 LIBUV_PATH = os.path.join(DEPS_PATH, 'libuv')
 LIBUV_REPO = 'https://github.com/libuv/libuv.git'
 LIBUV_BRANCH = 'v1.x'
-LIBUV_TAG = 'v1.7.5'
+LIBUV_TAG = 'v1.8.0'
 
 GYP_PATH = os.path.join(LIBUV_PATH, 'build', 'gyp')
 GYP_REPO = 'https://chromium.googlesource.com/external/gyp.git'
