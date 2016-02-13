@@ -80,8 +80,9 @@ class Request(object):
             self.finished = True
             raise error.ClosedLoopError()
         self.base_request = base.BaseRequest(self, self.loop.base_loop,
-                                             self.uv_request_type,
-                                             request_init or self.uv_request_init,
+                                             self.__class__.uv_request_type,
+                                             request_init or
+                                             self.__class__.uv_request_init,
                                              arguments,
                                              uv_handle=uv_handle)
         self.set_pending()

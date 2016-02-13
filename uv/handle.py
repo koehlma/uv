@@ -120,8 +120,9 @@ class Handle(object):
         if self.loop.closed:
             raise error.ClosedLoopError()
 
-        self.base_handle = base.BaseHandle(self, self.loop.base_loop, self.uv_handle_type,
-                                           self.uv_handle_init, arguments)
+        self.base_handle = base.BaseHandle(self, self.loop.base_loop,
+                                           self.__class__.uv_handle_type,
+                                           self.__class__.uv_handle_init, arguments)
 
         self.uv_handle = self.base_handle.uv_handle
 
