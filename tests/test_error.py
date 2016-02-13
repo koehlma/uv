@@ -15,6 +15,8 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import errno
+
 import common
 
 import uv
@@ -44,3 +46,7 @@ class TestError(common.TestCase):
 
     def test_name(self):
         self.assert_equal(uv.UVError(int(uv.StatusCodes.EAGAIN)).name, 'EAGAIN')
+
+    def test_os_error_number(self):
+        status_code = uv.StatusCodes.from_error_number(errno.EAGAIN)
+        self.assert_is(status_code, uv.StatusCodes.EAGAIN)
