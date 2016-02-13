@@ -39,7 +39,7 @@ class TestUDP(common.TestCase):
     def test_udp(self):
         self.datagram = None
 
-        def on_receive(udp_handle, status, address, length, data, flags):
+        def on_receive(udp_handle, status, address, data, flags):
             self.datagram = data
             udp_handle.receive_stop()
 
@@ -63,7 +63,7 @@ class TestUDP(common.TestCase):
         self.clients = []
         self.results = []
 
-        def on_receive(client, status, address, length, data, flags):
+        def on_receive(client, status, address, data, flags):
             self.results.append(data)
             client.receive_stop()
 
@@ -85,7 +85,7 @@ class TestUDP(common.TestCase):
     def test_udp_multicast_loop(self):
         self.datagram = None
 
-        def on_receive(client, status, address, length, data, flags):
+        def on_receive(client, status, address, data, flags):
             self.datagram = data
             client.receive_stop()
 
@@ -104,7 +104,7 @@ class TestUDP(common.TestCase):
     def test_udp_broadcast(self):
         self.datagram = None
 
-        def on_receive(server, status, address, length, data, flags):
+        def on_receive(server, status, address, data, flags):
             self.datagram = data
             server.close()
 
@@ -125,7 +125,7 @@ class TestUDP(common.TestCase):
     def test_udp_try_send(self):
         self.datagram = None
 
-        def on_receive(udp_handle, status, address, length, data, flags):
+        def on_receive(udp_handle, status, address, data, flags):
             self.datagram = data
             udp_handle.receive_stop()
 

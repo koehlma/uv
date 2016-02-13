@@ -169,14 +169,14 @@ class UDPSendRequest(request.Request):
 def uv_udp_recv_cb(udp_handle, length, uv_buf, c_sockaddr, flags):
     data = udp_handle.loop.allocator.finalize(udp_handle, length, uv_buf)
     if length < 0:  # pragma: no cover
-        length, status = 0, length
+        status = 0
     else:
         status = error.StatusCodes.SUCCESS
     if c_sockaddr:
         address = dns.unpack_sockaddr(c_sockaddr)
     else:
         address = None
-    udp_handle.on_receive(udp_handle, status, address, length, data, flags)
+    udp_handle.on_receive(udp_handle, status, address, data, flags)
 
 
 @handle.HandleTypes.UDP
