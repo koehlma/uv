@@ -174,7 +174,7 @@ def uv_udp_recv_cb(udp_handle, length, uv_buf, c_sockaddr, flags):
         status = error.StatusCodes.SUCCESS
     if c_sockaddr:
         address = dns.unpack_sockaddr(c_sockaddr)
-    else:
+    else:  # pragma: no cover
         address = None
     udp_handle.on_receive(udp_handle, status, address, data, flags)
 
