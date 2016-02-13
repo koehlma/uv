@@ -172,7 +172,10 @@ def uv_udp_recv_cb(udp_handle, length, uv_buf, c_sockaddr, flags):
         length, status = 0, length
     else:
         status = error.StatusCodes.SUCCESS
-    address = dns.unpack_sockaddr(c_sockaddr)
+    if c_sockaddr:
+        address = dns.unpack_sockaddr(c_sockaddr)
+    else:
+        address = None
     udp_handle.on_receive(udp_handle, status, address, length, data, flags)
 
 
