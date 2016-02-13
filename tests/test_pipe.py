@@ -15,6 +15,8 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import socket
+
 import common
 
 import uv
@@ -75,5 +77,9 @@ class TestPipe(common.TestCase):
         self.assert_raises(uv.error.ClosedHandleError, self.pipe.bind, '')
         self.assert_raises(uv.error.ClosedHandleError, self.pipe.connect, '')
 
-
-
+    @common.skip_platform('win32')
+    def test_pipe_open(self):
+        unix_socket = socket.socket(family=socket.AF_UNIX)
+        self.pipe = uv.Pipe()
+        self.pipe.open(unix_socket.fileno())
+        self.assert_equal(self.pipe.fileno(), unix_socket.fileno())
