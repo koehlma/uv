@@ -234,7 +234,7 @@ class ConnectRequest(request.Request):
             stream to establish a connection on
         :param on_connect:
             callback which should run after a connection has been
-            established
+            established or on error
 
         :type stream:
             uv.Stream
@@ -484,8 +484,8 @@ class Stream(handle.Handle):
         :type backlog:
             int
         :type on_connection:
-            ((uv.Stream, uv.StatusCodes, uv.Stream) -> None) |
-            ((Any, uv.Stream, uv.StatusCodes, uv.Stream) -> None)
+            ((uv.Stream, uv.StatusCodes) -> None) |
+            ((Any, uv.Stream, uv.StatusCodes) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()

@@ -59,15 +59,11 @@ TEST_IPV6 = '::1'
 TEST_PORT1 = 12345
 TEST_PORT2 = 12346
 
-try:
-    os.remove(TEST_PIPE1)
-except Exception:
-    pass
-
-try:
-    os.remove(TEST_PIPE2)
-except Exception:
-    pass
+for pipe_name in (TEST_PIPE1, TEST_PIPE2):
+    try:
+        os.remove(pipe_name)
+    except Exception:
+        pass
 
 
 def skip_interpreter(*implementations):

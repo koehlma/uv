@@ -48,10 +48,10 @@ from .handle import Handle
 from .loop import RunModes, Loop
 from .request import Request
 
-from .handles.async import *
-from .handles.check import *
-from .handles.idle import *
-from .handles.pipe import *
+from .handles.async import Async
+from .handles.check import Check
+from .handles.idle import Idle
+from .handles.pipe import PipeConnectRequest, Pipe
 from .handles.poll import *
 from .handles.prepare import *
 from .handles.process import *

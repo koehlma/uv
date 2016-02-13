@@ -30,3 +30,50 @@ class TestPipe(common.TestCase):
         self.pipe.connect(common.BAD_PIPE, on_connect=on_connect)
 
         self.loop.run()
+
+    def test_sockname(self):
+        self.pipe = uv.Pipe()
+        self.pipe.bind(common.TEST_PIPE1)
+        self.assert_equal(self.pipe.sockname, common.TEST_PIPE1)
+
+    def test_peername(self):
+        def on_connect(request, status):
+            self.assert_equal(status, uv.StatusCodes.SUCCESS)
+            self.assert_equal(request.stream.peername, common.TEST_PIPE1)
+            request.stream.close()
+
+        def on_connection(handle, status):
+            self.assert_equal(status, uv.StatusCodes.SUCCESS)
+            handle.close()
+
+        self.pipe1 = uv.Pipe()
+        self.pipe1.bind(common.TEST_PIPE1)
+        self.pipe1.listen(on_connection=on_connection)
+
+        self.pipe2 = uv.Pipe()
+        self.pipe2.connect(common.TEST_PIPE1, on_connect=on_connect)
+
+        self.loop.run()
+
+    def test_no_pending_accept(self):
+        self.pipe = uv.Pipe()
+        self.assert_raises(uv.error.ArgumentError, self.pipe.pending_accept)
+
+    def test_closed(self):
+        self.pipe = uv.Pipe()
+        self.pipe.close()
+
+        self.assert_raises(uv.error.ClosedHandleError, self.pipe.open, 0)
+        self.assert_equal(self.pipe.pending_count, 0)
+        self.assert_equal(self.pipe.pending_type, None)
+        self.assert_raises(uv.error.ClosedHandleError, self.pipe.pending_accept)
+        self.assert_raises(uv.error.ClosedHandleError, self.pipe.pending_instances, 100)
+        with self.should_raise(uv.error.ClosedHandleError):
+            sockname = self.pipe.sockname
+        with self.should_raise(uv.error.ClosedHandleError):
+            peername = self.pipe.peername
+        self.assert_raises(uv.error.ClosedHandleError, self.pipe.bind, '')
+        self.assert_raises(uv.error.ClosedHandleError, self.pipe.connect, '')
+
+
+
