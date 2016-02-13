@@ -35,7 +35,7 @@ def interface_addresses():
         yield MULTICAST_ADDRESS
 
 
-@common.skip_pypy((2, 5, 0))
+@common.skip_pypy((4, 0, 0))
 class TestUDP(common.TestCase):
     def test_udp(self):
         self.datagram = None
