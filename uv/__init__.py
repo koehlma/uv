@@ -56,7 +56,7 @@ from .handles.signal import Signals, Signal
 from .handles.stream import ShutdownRequest, WriteRequest, ConnectRequest, Stream
 from .handles.tcp import TCPFlags, TCPConnectRequest, TCP
 from .handles.timer import Timer
-from .handles.tty import reset_mode, ConsoleSize, TTYMode, TTY
+from .handles.tty import ConsoleSize, TTYMode, TTY
 from .handles.udp import UDPFlags, UDPMembership, UDPSendRequest, UDP
 
 from .handles.fs_event import FSEvents, FSEventFlags, FSEvent
