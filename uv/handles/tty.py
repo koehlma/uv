@@ -25,10 +25,6 @@ class ConsoleSize(tuple):
     def __new__(cls, width, height):
         return tuple.__new__(cls, (width, height))
 
-    # to satisfy pycharm
-    def __init__(self, width, height):
-        super(ConsoleSize, self).__init__((width, height))
-
     @property
     def width(self):
         """
