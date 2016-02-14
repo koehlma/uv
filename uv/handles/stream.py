@@ -118,7 +118,7 @@ class WriteRequest(request.Request):
     are written in the given order.
     """
 
-    __slots__ = ['buffers', 'stream', 'send_stream', 'on_write']
+    __slots__ = ['uv_buffers', 'stream', 'send_stream', 'on_write']
 
     uv_request_type = 'uv_write_t*'
 
@@ -150,7 +150,7 @@ class WriteRequest(request.Request):
         """
         if stream.closing:
             raise error.ClosedHandleError()
-        self.buffers = library.Buffers(buffers)
+        self.uv_buffers = library.make_uv_buffers(buffers)
         self.stream = stream
         """
         Stream to write data to.
@@ -193,13 +193,12 @@ class WriteRequest(request.Request):
             ((uv.WriteRequest, uv.StatusCodes) -> None) |
             ((Any, uv.WriteRequest, uv.StatusCodes) -> None)
         """
-        uv_buffers = self.buffers.uv_buffers
-        amount = len(self.buffers)
+        amount = len(self.uv_buffers)
         if send_stream is None:
-            arguments = uv_buffers, amount, uv_write_cb
+            arguments = self.uv_buffers, amount, uv_write_cb
             init = lib.uv_write
         else:
-            arguments = uv_buffers, amount, self.send_stream.uv_stream, uv_write_cb
+            arguments = self.uv_buffers, amount, self.send_stream.uv_stream, uv_write_cb
             init = lib.uv_write2
         super(WriteRequest, self).__init__(stream.loop, arguments, stream.uv_stream, init)
 
@@ -604,8 +603,8 @@ class Stream(handle.Handle):
         """
         if self.closing:
             raise error.ClosedHandleError()
-        buffers = library.Buffers(buffers)
-        code = lib.uv_try_write(self.uv_stream, buffers.uv_buffers, len(buffers))
+        uv_buffers = library.make_uv_buffers(buffers)
+        code = lib.uv_try_write(self.uv_stream, uv_buffers, len(uv_buffers))
         if code < 0:  # pragma: no cover
             raise error.UVError(code)
         return code
