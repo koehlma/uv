@@ -587,18 +587,6 @@ class StatusCodes(common.Enumeration):
         return self._exception
 
     @property
-    def name(self):
-        """
-        Human readable error name.
-
-        :readonly:
-            True
-        :rtype:
-            unicode
-        """
-        return ffi.string(lib.uv_err_name(self)).decode()
-
-    @property
     def message(self):
         """
         Human readable error message.
