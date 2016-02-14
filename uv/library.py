@@ -17,6 +17,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os
 import sys
+import weakref
 
 from collections import namedtuple
 
@@ -145,3 +146,13 @@ class Buffers(tuple):
         :rtype: ffi.CData
         """
         return self[1]
+
+
+_c_dependencies = weakref.WeakKeyDictionary()
+
+
+def c_require(structure, *requirements):
+    try:
+        _c_dependencies[structure].append(requirements)
+    except KeyError:
+        _c_dependencies[structure] = [requirements]
