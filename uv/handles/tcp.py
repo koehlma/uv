@@ -61,9 +61,7 @@ class TCPConnectRequest(stream.ConnectRequest):
             ((uv.TCPConnectRequest, uv.StatusCode) -> None) |
             ((Any, uv.TCPConnectRequest, uv.StatusCode) -> None)
         """
-        c_storage = dns.make_c_sockaddr(*address)
-        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        arguments = (c_sockaddr, )
+        arguments = (dns.make_c_sockaddr(*address), )
         super(TCPConnectRequest, self).__init__(tcp, arguments, on_connect=on_connect)
 
 
@@ -153,9 +151,7 @@ class TCP(stream.Stream):
         """
         if self.closing:
             raise error.ClosedHandleError()
-        c_storage = dns.make_c_sockaddr(*address)
-        c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
-        code = lib.uv_tcp_bind(self.uv_tcp, c_sockaddr, flags)
+        code = lib.uv_tcp_bind(self.uv_tcp, dns.make_c_sockaddr(*address), flags)
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
 
