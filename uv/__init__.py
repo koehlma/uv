@@ -77,7 +77,9 @@ from .handles import udp
 from .handles import fs_event
 from .handles import fs_poll
 
-from .dns import Address, Address4, Address6, AddrInfo
+from .dns import (AddressFamilies, SocketTypes, SocketProtocols, Address, Address4,
+                  Address6, AddrInfo, NameInfo, getnameinfo, getaddrinfo)
+
 from .fs import Stat
 
 from . import dns
