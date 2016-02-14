@@ -9,9 +9,10 @@ operations, dns utility functions and miscellaneous utilities.
 
 State
 =====
+
 :handles: stable API, well tested, completely documented
+:dns: stable API, well tested, completely documented
 :fs: planning
-:dns: planning
 :misc: planning
 :ssl: planning
 
