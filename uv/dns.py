@@ -719,7 +719,7 @@ class GetNameInfo(request.Request):
 
         uv_callback = ffi.NULL if callback is None else uv_getnameinfo_cb
 
-        arguments = (uv_callback, c_create_sockaddr(ip, port), flags)
+        arguments = (uv_callback, make_c_sockaddr(ip, port), flags)
         super(GetNameInfo, self).__init__(loop, arguments)
 
         self.uv_getnameinfo = self.base_request.uv_object
@@ -783,7 +783,7 @@ def getnameinfo(ip, port, flags=0, callback=None, loop=None):
     return nameinfo
 
 
-def c_create_sockaddr(ip, port, flowinfo=0, scope_id=0):
+def make_c_sockaddr(ip, port, flowinfo=0, scope_id=0):
     """
     Create a C sockaddr struct form the given information.
 

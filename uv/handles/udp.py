@@ -158,7 +158,7 @@ class UDPSendRequest(request.Request):
             ((Any, uv.UDPSendRequest, uv.StatusCode) -> None)
         """
         uv_udp = self.udp.uv_udp
-        c_storage = dns.c_create_sockaddr(*address)
+        c_storage = dns.make_c_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         arguments = (self.uv_buffers, len(self.uv_buffers), c_sockaddr, uv_udp_send_cb)
         super(UDPSendRequest, self).__init__(udp.loop, arguments, uv_udp)
@@ -303,7 +303,7 @@ class UDP(handle.Handle):
         """
         if self.closing:
             raise error.ClosedHandleError()
-        c_storage = dns.c_create_sockaddr(*address)
+        c_storage = dns.make_c_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         code = lib.uv_udp_bind(self.uv_udp, c_sockaddr, flags)
         if code != error.StatusCodes.SUCCESS:
@@ -367,7 +367,7 @@ class UDP(handle.Handle):
         """
         if self.closing:
             raise error.ClosedHandleError()
-        c_storage = dns.c_create_sockaddr(*address)
+        c_storage = dns.make_c_sockaddr(*address)
         c_sockaddr = ffi.cast('struct sockaddr*', c_storage)
         uv_buffers = library.make_uv_buffers(buffers)
         code = lib.uv_udp_try_send(self.uv_udp, uv_buffers, len(uv_buffers), c_sockaddr)
