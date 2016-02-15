@@ -23,60 +23,60 @@ from . import common
 class Handle(common.with_metaclass(abc.ABCMeta)):
     @abc.abstractproperty
     def closing(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractproperty
     def closed(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractproperty
     def active(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractproperty
     def referenced(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def reference(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def dereference(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def close(self, on_closed=None):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class Request(common.with_metaclass(abc.ABCMeta)):
     @abc.abstractmethod
     def cancel(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class Stream(Handle):
     @abc.abstractproperty
     def readable(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractproperty
     def writeable(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def read_start(self, on_read=None):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def read_stop(self):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def write(self, buffers, send_stream=None, on_write=None):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def shutdown(self, on_shutdown=None):
-        raise NotImplemented()
+        raise NotImplementedError()

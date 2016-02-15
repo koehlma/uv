@@ -457,7 +457,7 @@ class Stream(handle.Handle):
 
         :rtype: int | None
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def shutdown(self, on_shutdown=None):
         """
