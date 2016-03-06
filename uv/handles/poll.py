@@ -81,6 +81,25 @@ class Poll(handle.Handle):
         On Windows only sockets can be polled with :class:`uv.Poll`
         handles. On Unix any file descriptor that would be accepted
         by :manpage:`poll(2)` can be used.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param fd:
+        file descriptor to be polled (is set to non-blocking mode)
+    :param loop:
+        event loop the handle should run on
+    :param on_event:
+        callback which should be called on IO events after the handle
+        has been started
+
+    :type fd:
+        int
+    :type loop:
+        uv.Loop
+    :type on_event:
+        ((uv.Poll, uv.StatusCode, int) -> None) |
+        ((Any, uv.Poll, uv.StatusCode, int) -> None)
     """
 
     __slots__ = ['uv_poll', 'fd', 'on_event']
@@ -89,25 +108,6 @@ class Poll(handle.Handle):
     uv_handle_init = lib.cross_uv_poll_init_socket
 
     def __init__(self, fd, loop=None, on_event=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param fd:
-            file descriptor to be polled (is set to non-blocking mode)
-        :param loop:
-            event loop the handle should run on
-        :param on_event:
-            callback which should be called on IO events
-
-        :type fd:
-            int
-        :type loop:
-            uv.Loop
-        :type on_event:
-            ((uv.Poll, uv.StatusCode, int) -> None) |
-            ((Any, uv.Poll, uv.StatusCode, int) -> None)
-        """
         super(Poll, self).__init__(loop, (fd, ))
         self.uv_poll = self.base_handle.uv_object
         self.fd = fd
@@ -121,7 +121,8 @@ class Poll(handle.Handle):
         """
         self.on_event = on_event or common.dummy_callback
         """
-        Callback which should be called on IO events.
+        Callback which should be called on IO events after the handle
+        has been started.
 
 
         .. function:: on_event(poll_handle, status, events)

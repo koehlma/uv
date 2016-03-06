@@ -88,6 +88,30 @@ def uv_udp_send_cb(send_request, status):
 class UDPSendRequest(request.Request):
     """
     Request to send a UDP datagram.
+
+    :raises uv.UVError:
+        error while initializing the request
+    :raises uv.ClosedHandleError:
+        udp handle has already been closed or is closing
+
+    :param udp:
+        udp handle the request should run on
+    :param buffers:
+        buffers or buffer to send
+    :param address:
+        address of the remote peer `(ip, port, flowinfo=0, scope_id=0)`
+    :param on_send:
+        callback called after all data has been sent
+
+    :type udp:
+        uv.UDP
+    :type buffers:
+        list[bytes] | bytes
+    :type address:
+        tuple | uv.Address
+    :type on_send:
+        ((uv.SendRequest, uv.StatusCode) -> None) |
+        ((Any, uv.SendRequest, uv.StatusCode) -> None)
     """
 
     __slots__ = ['uv_send', 'uv_buffers', 'udp', 'on_send']
@@ -96,31 +120,6 @@ class UDPSendRequest(request.Request):
     uv_request_init = lib.uv_udp_send
 
     def __init__(self, udp, buffers, address, on_send=None):
-        """
-        :raises uv.UVError:
-            error while initializing the request
-        :raises uv.ClosedHandleError:
-            udp handle has already been closed or is closing
-
-        :param udp:
-            udp handle the request should run on
-        :param buffers:
-            buffers or buffer to send
-        :param address:
-            address of the remote peer `(ip, port, flowinfo=0, scope_id=0)`
-        :param on_send:
-            callback called after all data has been sent
-
-        :type udp:
-            uv.UDP
-        :type buffers:
-            list[bytes] | bytes
-        :type address:
-            tuple | uv.Address
-        :type on_send:
-            ((uv.SendRequest, uv.StatusCode) -> None) |
-            ((Any, uv.SendRequest, uv.StatusCode) -> None)
-        """
         if udp.closing:
             raise error.ClosedHandleError()
         self.uv_buffers = library.make_uv_buffers(buffers)
@@ -193,6 +192,24 @@ def uv_udp_recv_cb(udp_handle, length, uv_buffer, c_sockaddr, flags):
 class UDP(handle.Handle):
     """
     Abstraction of UDP sockets for servers and clients.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param flags:
+        udp flags to be used
+    :param loop:
+        event loop the handle should run on
+    :param on_receive:
+        callback called after package has been received
+
+    :type flags:
+        int
+    :type loop:
+        uv.Loop
+    :type on_receive:
+        ((uv.UDP, uv.StatusCode, uv.Address, bytes, int) -> None) |
+        ((Any, uv.UDP, uv.StatusCode, uv.Address, bytes, int) -> None)
     """
 
     __slots__ = ['uv_udp', 'on_receive']
@@ -201,26 +218,6 @@ class UDP(handle.Handle):
     uv_handle_init = lib.uv_udp_init_ex
 
     def __init__(self, flags=0, loop=None, on_receive=None):
-        """
-        :raises uv.UVError: error while initializing the handle
-
-        :param flags:
-            udp flags to be used
-        :param loop:
-            event loop the handle should run on
-        :param on_receive:
-            callback called after package has been received
-
-        :type flags:
-            int
-        :type loop:
-            uv.Loop
-        :type on_receive:
-            ((uv.UDP, uv.StatusCode, uv.Address,
-              bytes, int) -> None) |
-            ((Any, uv.UDP, uv.StatusCode, uv.Address,
-              bytes, int) -> None)
-        """
         super(UDP, self).__init__(loop, (flags, ))
         self.uv_udp = self.base_handle.uv_object
         self.on_receive = on_receive or common.dummy_callback

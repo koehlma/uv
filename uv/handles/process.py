@@ -67,26 +67,25 @@ class CreatePipe(object):
     Passed to one of the standard IO arguments of :class:`Process`, it
     tells the library to create a new pipe to communicate with the
     child process.
+
+    :param readable:
+        pipe should be readable
+    :param writable:
+        pipe should be writable
+    :param ipc:
+        pipe should support inter process communication
+
+    :type readable:
+        bool
+    :type writable:
+        bool
+    :type ipc:
+        bool
     """
 
     __slots__ = ['ipc', 'flags']
 
     def __init__(self, readable=False, writable=False, ipc=False):
-        """
-        :param readable:
-            pipe should be readable
-        :param writable:
-            pipe should be writable
-        :param ipc:
-            pipe should support inter process communication
-
-        :type readable:
-            bool
-        :type writable:
-            bool
-        :type ipc:
-            bool
-        """
         self.ipc = ipc
         self.flags = StandardIOFlags.CREATE_PIPE
         if readable:
@@ -155,8 +154,9 @@ class ProcessFlags(common.Enumeration):
     WINDOWS_HIDE = lib.UV_PROCESS_WINDOWS_HIDE
     """
     Hide the subprocess console window that would normally be created.
-    This option is only meaningful on Windows systems. On Unix it is
-    ignored.
+    This option is only meaningful on Windows systems. By default it is
+    enabled, to disable this flag pass `0` to :class:`uv.Process`'s
+    flag parameter. On Unix it is ignored.
 
     :type: uv.ProcessFlags
     """
@@ -224,6 +224,60 @@ class Process(handle.Handle):
     Process handles will spawn a new process and allow the user to
     control it and establish communication channels with it using
     streams.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param arguments:
+        program path and command line arguments
+    :param uid:
+        spawn as user with user id `uid`
+    :param gid:
+        spawn as group with group id `gid`
+    :param cwd:
+        child process working directory
+    :param env:
+        child process environment variables
+    :param flags:
+        process spawn flags to be used
+    :param stdin:
+        standard input of the child process
+    :param stdout:
+        standard output of the child process
+    :param stderr:
+        standard error of the child process
+    :param stdio:
+        other standard file descriptors of the child process
+    :param loop:
+        event loop the handle should run on
+    :param on_exit:
+        callback which should be called after process exited
+
+    :type arguments:
+        list[unicode]
+    :type uid:
+        int
+    :type gid:
+        int
+    :type cwd:
+        unicode
+    :type env:
+        dict[unicode,unicode]
+    :type flags:
+        int
+    :type stdin:
+        int | uv.Stream | uv.CreatePipe | file-like | None
+    :type stdout:
+        int | uv.Stream | uv.CreatePipe | file-like | None
+    :type stderr:
+        int | uv.Stream | uv.CreatePipe | file-like | None
+    :type stdio:
+        list[int | uv.Stream | uv.CreatePipe | file-like]
+    :type loop:
+        uv.Loop
+    :type on_exit:
+        ((uv.Process, int, int) -> None) |
+        ((Any, uv.Process, int, int) -> None)
     """
 
     uv_handle_type = 'uv_process_t*'
@@ -232,62 +286,6 @@ class Process(handle.Handle):
     def __init__(self, arguments, uid=None, gid=None, cwd=None, env=None, stdin=None,
                  stdout=None, stderr=None, stdio=None, flags=ProcessFlags.WINDOWS_HIDE,
                  loop=None, on_exit=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param arguments:
-            program path and command line arguments
-        :param uid:
-            spawn as user with user id `uid`
-        :param gid:
-            spawn as group with group id `gid`
-        :param cwd:
-            child process working directory
-        :param env:
-            child process environment variables
-        :param flags:
-            process spawn flags to be used
-        :param stdin:
-            standard input of the child process
-        :param stdout:
-            standard output of the child process
-        :param stderr:
-            standard error of the child process
-        :param stdio:
-            other standard file descriptors of the child process
-        :param loop:
-            event loop the handle should run on
-        :param on_exit:
-            callback which should be called after process exited
-
-        :type arguments:
-            list[unicode]
-        :type uid:
-            int
-        :type gid:
-            int
-        :type cwd:
-            unicode
-        :type env:
-            dict[unicode,unicode]
-        :type flags:
-            int
-        :type stdin:
-            int | uv.Stream | uv.CreatePipe | file-like | None
-        :type stdout:
-            int | uv.Stream | uv.CreatePipe | file-like | None
-        :type stderr:
-            int | uv.Stream | uv.CreatePipe | file-like | None
-        :type stdio:
-            list[int | uv.Stream | uv.CreatePipe | file-like]
-        :type loop:
-            uv.Loop
-        :type on_exit:
-            ((uv.Process, int, int) -> None) |
-            ((Any, uv.Process, int, int) -> None)
-        """
-
         uv_options = ffi.new('uv_process_options_t*')
 
         c_file = ffi.new('char[]', arguments[0].encode())

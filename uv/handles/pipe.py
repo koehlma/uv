@@ -26,28 +26,27 @@ from . import stream
 class PipeConnectRequest(stream.ConnectRequest):
     """
     Pipe specific connect request.
+
+    :param pipe:
+        pipe to establish a connection on
+    :param path:
+        path to connect to
+    :param on_connect:
+        callback which should run after a connection has been
+        established or on error
+
+    :type pipe:
+        uv.Pipe
+    :type path:
+        unicode
+    :type on_connect:
+        ((uv.PipeConnectRequest, uv.StatusCode) -> None) |
+        ((Any, uv.PipeConnectRequest, uv.StatusCode) -> None)
     """
 
     uv_request_init = lib.uv_pipe_connect
 
     def __init__(self, pipe, path, on_connect=None):
-        """
-        :param pipe:
-            pipe to establish a connection on
-        :param path:
-            path to connect to
-        :param on_connect:
-            callback which should run after a connection has been
-            established or on error
-
-        :type pipe:
-            uv.Pipe
-        :type path:
-            unicode
-        :type on_connect:
-            ((uv.PipeConnectRequest, uv.StatusCode) -> None) |
-            ((Any, uv.PipeConnectRequest, uv.StatusCode) -> None)
-        """
         arguments = (path.encode(), )
         super(PipeConnectRequest, self).__init__(pipe, arguments, on_connect=on_connect)
 
@@ -57,6 +56,30 @@ class Pipe(stream.Stream):
     """
     Stream interface to local domain sockets on Unix and named pipes on
     Windows, which supports inter process communication.
+
+     :raises uv.UVError:
+        error while initializing the handle
+
+    :param ipc:
+        pipe should have inter process communication support not
+    :param loop:
+        event loop the handle should run on
+    :param on_read:
+        callback which should be called when data has been read
+    :param on_connection:
+        callback which should run after a new connection has been made
+        or on error (if stream is in listen mode)
+
+    :type ipc:
+        bool
+    :type loop:
+        uv.Loop
+    :type on_read:
+        ((uv.Pipe, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.Pipe, uv.StatusCodes, bytes) -> None)
+    :type on_connection:
+        ((uv.Pipe, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.Pipe, uv.StatusCodes, bytes) -> None)
     """
 
     __slots__ = ['uv_pipe']
@@ -65,37 +88,12 @@ class Pipe(stream.Stream):
     uv_handle_init = lib.uv_pipe_init
 
     def __init__(self, ipc=False, loop=None, on_read=None, on_connection=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param ipc:
-            pipe should have inter process communication support not
-        :param loop:
-            event loop the handle should run on
-        :param on_read:
-            callback which should be called when data has been read
-        :param on_connection:
-            callback which should run after a new connection has been
-            made or on error (if stream is in listen mode)
-
-        :type ipc:
-            bool
-        :type loop:
-            uv.Loop
-        :type on_read:
-            ((uv.Pipe, uv.StatusCodes, bytes) -> None) |
-            ((Any, uv.Pipe, uv.StatusCodes, bytes) -> None)
-        :type on_connection:
-            ((uv.Pipe, uv.StatusCodes, bytes) -> None) |
-            ((Any, uv.Pipe, uv.StatusCodes, bytes) -> None)
-        """
         super(Pipe, self).__init__(loop, ipc, (int(ipc), ), on_read, on_connection)
         self.uv_pipe = self.base_handle.uv_object
 
     def open(self, fd):
         """
-        Open an existing file descriptor as a pipe.
+        Open an existing file descriptor as a pipe handle.
 
         :raises uv.UVError:
             error while opening the file descriptor

@@ -113,6 +113,29 @@ class FSEvent(handle.Handle):
     including renaming und deletion after they have been started.
     This handle uses the best backend available for this job on
     each platform.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param path:
+        directory or filename to monitor
+    :param flags:
+        flags to be used for monitoring
+    :param loop:
+        event loop the handle should run on
+    :param on_event:
+        callback which should be called on filesystem events after
+        the handle has been started
+
+    :type path:
+        unicode
+    :type flags:
+        int
+    :type loop:
+        uv.Loop
+    :type on_event:
+        ((uv.FSEvent, uv.StatusCode, unicode, int) -> None) |
+        ((Any, uv.FSEvent, uv.StatusCode, unicode, int) -> None)
     """
 
     __slots__ = ['uv_fs_event', 'on_event', 'flags', 'path']
@@ -121,29 +144,6 @@ class FSEvent(handle.Handle):
     uv_handle_init = lib.uv_fs_event_init
 
     def __init__(self, path=None, flags=0, loop=None, on_event=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param path:
-            directory or filename to monitor
-        :param flags:
-            flags to be used for monitoring
-        :param loop:
-            event loop the handle should run on
-        :param on_event:
-            callback which should be called on filesystem events
-
-        :type path:
-            unicode
-        :type flags:
-            int
-        :type loop:
-            uv.Loop
-        :type on_event:
-            ((uv.FSEvent, uv.StatusCode, unicode, int) -> None) |
-            ((Any, uv.FSEvent, uv.StatusCode, unicode, int) -> None)
-        """
         super(FSEvent, self).__init__(loop)
         self.uv_fs_event = self.base_handle.uv_object
         self.path = path
@@ -174,7 +174,8 @@ class FSEvent(handle.Handle):
         """
         self.on_event = on_event or common.dummy_callback
         """
-        Callback which should be called on filesystem events.
+        Callback which should be called on filesystem events after tha
+        handle has been started.
 
 
         .. function:: on_event(fs_event, status, filename, events)

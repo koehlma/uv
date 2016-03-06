@@ -37,6 +37,20 @@ class Async(handle.Handle):
     :func:`uv.Async.send` method is thread-safe the constructor is not.
     To run a given callback in the event loop's thread without creating
     an :class:`uv.Async` handle use :func:`uv.Loop.call_later`.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param loop:
+        event loop the handle should run on
+    :param on_wakeup:
+        callback which should run in the event loop's thread after the
+        event loop has been woken up
+
+    :type loop:
+        uv.Loop
+    :type on_wakeup:
+        ((uv.Async) -> None) | ((Any, uv.Async) -> None)
     """
 
     __slots__ = ['uv_async', 'on_wakeup']
@@ -45,21 +59,6 @@ class Async(handle.Handle):
     uv_handle_init = lib.uv_async_init
 
     def __init__(self, loop=None, on_wakeup=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param loop:
-            event loop the handle should run on
-        :param on_wakeup:
-            callback which should run in the event loop's thread after
-            the event loop has been woken up
-
-        :type loop:
-            uv.Loop
-        :type on_wakeup:
-            ((uv.Async) -> None) | ((Any, uv.Async) -> None)
-        """
         super(Async, self).__init__(loop, (uv_async_cb, ))
         self.uv_async = self.base_handle.uv_object
         self.on_wakeup = on_wakeup or common.dummy_callback

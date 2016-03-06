@@ -47,6 +47,29 @@ class FSPoll(handle.Handle):
     .. note::
         For maximum portability, use multi-second intervals. Sub-second
         intervals will not detect all changes on many file systems.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param path:
+        directory or filename to monitor
+    :param interval:
+        interval to be used for monitoring (in milliseconds)
+    :param loop:
+        event loop the handle should run on
+    :param on_change:
+        callback which should be called on filesystem changes after the
+        handle has been started
+
+    :type path:
+        unicode
+    :type interval:
+        int
+    :type loop:
+        uv.Loop
+    :type on_change:
+        ((uv.FSPoll, uv.StatusCode, uv.Stat, uv.Stat) -> None) |
+        ((Any, uv.FSPoll, uv.StatusCode, uv.Stat, uv.Stat) -> None)
     """
 
     __slots__ = ['uv_fs_poll', 'on_change', 'path', 'interval']
@@ -55,31 +78,6 @@ class FSPoll(handle.Handle):
     uv_handle_init = lib.uv_fs_poll_init
 
     def __init__(self, path=None, interval=5000, loop=None, on_change=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param path:
-            directory or filename to monitor
-        :param interval:
-            interval to be used for monitoring (in milliseconds)
-        :param loop:
-            event loop the handle should run on
-        :param on_change:
-            callback which should be called on filesystem changes
-
-        :type path:
-            unicode
-        :type interval:
-            int
-        :type loop:
-            uv.Loop
-        :type on_change:
-            ((uv.FSPoll, uv.StatusCode, uv.Stat,
-              uv.Stat) -> None) |
-            ((Any, uv.FSPoll, uv.StatusCode, uv.Stat,
-              uv.Stat) -> None)
-        """
         super(FSPoll, self).__init__(loop)
         self.uv_fs_poll = self.base_handle.uv_object
         self.path = path
@@ -110,7 +108,8 @@ class FSPoll(handle.Handle):
         """
         self.on_change = on_change or common.dummy_callback
         """
-        Callback which should be called on filesystem changes.
+        Callback which should be called on filesystem changes after the
+        handle has been started.
 
 
         .. function:: on_change(fs_poll, status, previous_stat, current_stat)
@@ -170,10 +169,8 @@ class FSPoll(handle.Handle):
         :type interval:
             int
         :type on_change:
-            ((uv.FSPoll, uv.StatusCode, uv.Stat,
-              uv.Stat) -> None) |
-            ((Any, uv.FSPoll, uv.StatusCode, uv.Stat,
-              uv.Stat) -> None)
+            ((uv.FSPoll, uv.StatusCode, uv.Stat, uv.Stat) -> None) |
+            ((Any, uv.FSPoll, uv.StatusCode, uv.Stat, uv.Stat) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()

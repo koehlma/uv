@@ -35,6 +35,19 @@ class Timer(handle.Handle):
     """
     Timer handles are used to schedule callbacks to be called in the
     future after a given amount of time.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param loop: event
+        loop the handle should run on
+    :param on_timeout:
+        callback which should run on timeout
+
+    :type loop:
+        uv.Loop
+    :type on_timeout:
+        ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
     """
 
     __slots__ = ['uv_timer', 'on_timeout']
@@ -43,20 +56,6 @@ class Timer(handle.Handle):
     uv_handle_init = lib.uv_timer_init
 
     def __init__(self, loop=None, on_timeout=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param loop: event
-            loop the handle should run on
-        :param on_timeout:
-            callback which should run on timeout
-
-        :type loop:
-            uv.Loop
-        :type on_timeout:
-            ((uv.Timer) -> None) | ((Any, uv.Timer) -> None)
-        """
         super(Timer, self).__init__(loop)
         self.uv_timer = self.base_handle.uv_object
         self.on_timeout = on_timeout or common.dummy_callback

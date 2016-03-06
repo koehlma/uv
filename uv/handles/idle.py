@@ -41,6 +41,20 @@ class Idle(handle.Handle):
     .. warning:
         Despite the name, idle handles will get their callback called on
         every loop iteration, not when the loop is actually "idle".
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param loop:
+        event loop the handle should run on
+    :param on_idle:
+        callback which should run right before the prepare handles
+        after the handle has been started
+
+    :type loop:
+        uv.Loop
+    :type on_idle:
+        ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
     """
 
     __slots__ = ['uv_idle', 'on_idle']
@@ -49,25 +63,12 @@ class Idle(handle.Handle):
     uv_handle_init = lib.uv_idle_init
 
     def __init__(self, loop=None, on_idle=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param loop:
-            event loop the handle should run on
-        :param on_idle:
-            callback which should run right before the prepare handles
-
-        :type loop:
-            uv.Loop
-        :type on_idle:
-            ((uv.Idle) -> None) | ((Any, uv.Idle) -> None)
-        """
         super(Idle, self).__init__(loop)
         self.uv_idle = self.base_handle.uv_object
         self.on_idle = on_idle or common.dummy_callback
         """
-        Callback which should run right before the prepare handles.
+        Callback which should run right before the prepare handles
+        after the handle has been started.
 
 
         .. function:: on_idle(idle)

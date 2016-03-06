@@ -39,28 +39,28 @@ class TCPFlags(common.Enumeration):
 class TCPConnectRequest(stream.ConnectRequest):
     """
     TCP specific connect request.
+
+    :param tcp:
+        TCP socket to establish a connection on
+    :param address:
+        address to connect to
+    :param on_connect:
+        callback which should run after a connection has been
+        established or on error
+
+    :type tcp:
+        uv.TCP
+    :type address:
+        uv.Address4 | uv.Address6 | tuple
+    :type on_connect:
+        ((uv.TCPConnectRequest, uv.StatusCode) -> None) |
+        ((Any, uv.TCPConnectRequest, uv.StatusCode) -> None)
+
     """
 
     uv_request_init = lib.uv_tcp_connect
 
     def __init__(self, tcp, address, on_connect=None):
-        """
-        :param tcp:
-            TCP socket to establish a connection on
-        :param address:
-            address to connect to
-        :param on_connect:
-            callback which should run after a connection has been
-            established or on error
-
-        :type tcp:
-            uv.TCP
-        :type address:
-            uv.Address4 | uv.Address6 | tuple
-        :type on_connect:
-            ((uv.TCPConnectRequest, uv.StatusCode) -> None) |
-            ((Any, uv.TCPConnectRequest, uv.StatusCode) -> None)
-        """
         arguments = (dns.make_c_sockaddr(*address), )
         super(TCPConnectRequest, self).__init__(tcp, arguments, on_connect=on_connect)
 
@@ -69,6 +69,30 @@ class TCPConnectRequest(stream.ConnectRequest):
 class TCP(stream.Stream):
     """
     Stream interface to TCP sockets for clients and servers.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param flags:
+        tcp flags to be used
+    :param loop:
+        event loop the handle should run on
+    :param on_read:
+        callback which should be called when data has been read
+    :param on_connection:
+        callback which should run after a new connection has been made
+        or on error (if stream is in listen mode)
+
+    :type flags:
+        int
+    :type loop:
+        uv.Loop
+    :type on_read:
+        ((uv.TCP, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.TCP, uv.StatusCodes, bytes) -> None)
+    :type on_connection:
+        ((uv.TCP, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.TCP, uv.StatusCodes, bytes) -> None)
     """
 
     __slots__ = ['uv_tcp', '_family']
@@ -77,31 +101,6 @@ class TCP(stream.Stream):
     uv_handle_init = lib.uv_tcp_init_ex
 
     def __init__(self, flags=0, loop=None, on_read=None, on_connection=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param flags:
-            tcp flags to be used
-        :param loop:
-            event loop the handle should run on
-        :param on_read:
-            callback which should be called when data has been read
-        :param on_connection:
-            callback which should run after a new connection has been
-            made or on error (if stream is in listen mode)
-
-        :type flags:
-            int
-        :type loop:
-            uv.Loop
-        :type on_read:
-            ((uv.TCP, uv.StatusCodes, bytes) -> None) |
-            ((Any, uv.TCP, uv.StatusCodes, bytes) -> None)
-        :type on_connection:
-            ((uv.TCP, uv.StatusCodes, bytes) -> None) |
-            ((Any, uv.TCP, uv.StatusCodes, bytes) -> None)
-        """
         super(TCP, self).__init__(loop, False, (flags, ), on_read, on_connection)
         self.uv_tcp = self.base_handle.uv_object
 

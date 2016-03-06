@@ -25,6 +25,9 @@ class ConsoleSize(tuple):
     def __new__(cls, width, height):
         return tuple.__new__(cls, (width, height))
 
+    def __init__(self, width, height):
+        tuple.__init__(self, (width, height))
+
     @property
     def width(self):
         """
@@ -172,3 +175,7 @@ class TTY(stream.Stream):
         code = lib.uv_tty_set_mode(self.uv_tty, mode)
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
+
+    @property
+    def family(self):
+        return None

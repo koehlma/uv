@@ -89,6 +89,21 @@ class Signal(handle.Handle):
         for those signals will lead to unpredictable behavior and is
         strongly discouraged. Future versions of libuv may simply
         reject them.
+
+    :raises uv.UVError:
+        error while initializing the handle
+
+    :param loop:
+        event loop the handle should run on
+    :param on_signal:
+        callback which should be called on signal delivery after the
+        handle has been started
+
+    :type loop:
+        uv.Loop
+    :type on_signal:
+        ((uv.Signal, int) -> None) |
+        ((Any, uv.Signal, int) -> None)
     """
 
     __slots__ = ['uv_signal', 'on_signal']
@@ -97,26 +112,12 @@ class Signal(handle.Handle):
     uv_handle_init = lib.uv_signal_init
 
     def __init__(self, loop=None, on_signal=None):
-        """
-        :raises uv.UVError:
-            error while initializing the handle
-
-        :param loop:
-            event loop the handle should run on
-        :param on_signal:
-            callback which should be called on signal delivery
-
-        :type loop:
-            uv.Loop
-        :type on_signal:
-            ((uv.Signal, int) -> None) |
-            ((Any, uv.Signal, int) -> None)
-        """
         super(Signal, self).__init__(loop)
         self.uv_signal = self.base_handle.uv_object
         self.on_signal = on_signal or common.dummy_callback
         """
-        Callback which should be called on signal delivery.
+        Callback which should be called on signal delivery after the
+        handle has been started.
 
 
         .. function:: on_signal(signal_handle, signum):

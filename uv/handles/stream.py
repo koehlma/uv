@@ -35,6 +35,22 @@ class ShutdownRequest(request.Request):
     """
     Request to shutdown the outgoing side of a duplex stream. It waits
     for pending write requests to complete.
+
+    :raises uv.UVError:
+        error while initializing the request
+    :raises uv.ClosedHandleError:
+        stream has already been closed or is closing
+
+    :param stream:
+        stream to shutdown
+    :param on_shutdown:
+        callback which should run after shutdown has been completed
+
+    :type stream:
+        uv.Stream
+    :type on_shutdown:
+        ((uv.ShutdownRequest, uv.StatusCodes) -> None) |
+        ((Any, uv.ShutdownRequest, uv.StatusCodes) -> None)
     """
 
     __slots__ = ['uv_shutdown', 'stream', 'on_shutdown']
@@ -43,23 +59,6 @@ class ShutdownRequest(request.Request):
     uv_request_init = lib.uv_shutdown
 
     def __init__(self, stream, on_shutdown=None):
-        """
-        :raises uv.UVError:
-            error while initializing the request
-        :raises uv.ClosedHandleError:
-            stream has already been closed or is closing
-
-        :param stream:
-            stream to shutdown
-        :param on_shutdown:
-            callback which should run after shutdown has been completed
-
-        :type stream:
-            uv.Stream
-        :type on_shutdown:
-            ((uv.ShutdownRequest, uv.StatusCodes) -> None) |
-            ((Any, uv.ShutdownRequest, uv.StatusCodes) -> None)
-        """
         if stream.closing:
             raise error.ClosedHandleError()
         self.stream = stream
@@ -116,6 +115,30 @@ class WriteRequest(request.Request):
     Request to write data to a stream and, on streams with inter
     process communication support, to send stream handles. Buffers
     are written in the given order.
+
+    :raises uv.UVError:
+        error while initializing the request
+    :raises uv.ClosedHandleError:
+        stream has already been closed or is closing
+
+    :param stream:
+        stream to write data to
+    :param buffers:
+        data which should be written
+    :param send_stream:
+        stream handle which should be send
+    :param on_write:
+        callback which should run after all data has been written
+
+    :type stream:
+        uv.Stream
+    :type buffers:
+        tuple[bytes] | list[bytes] | bytes
+    :type send_stream:
+        uv.TCP | uv.Pipe | None
+    :type on_write:
+        ((uv.WriteRequest, uv.StatusCodes) -> None) |
+        ((Any, uv.WriteRequest, uv.StatusCodes) -> None)
     """
 
     __slots__ = ['uv_buffers', 'stream', 'send_stream', 'on_write']
@@ -123,31 +146,6 @@ class WriteRequest(request.Request):
     uv_request_type = 'uv_write_t*'
 
     def __init__(self, stream, buffers, send_stream=None, on_write=None):
-        """
-        :raises uv.UVError:
-            error while initializing the request
-        :raises uv.ClosedHandleError:
-            stream has already been closed or is closing
-
-        :param stream:
-            stream to write data to
-        :param buffers:
-            data which should be written
-        :param send_stream:
-            stream handle which should be send
-        :param on_write:
-            callback which should run after all data has been written
-
-        :type stream:
-            uv.Stream
-        :type buffers:
-            tuple[bytes] | list[bytes] | bytes
-        :type send_stream:
-            uv.TCP | uv.Pipe | None
-        :type on_write:
-            ((uv.WriteRequest, uv.StatusCodes) -> None) |
-            ((Any, uv.WriteRequest, uv.StatusCodes) -> None)
-        """
         if stream.closing:
             raise error.ClosedHandleError()
         self.uv_buffers = library.make_uv_buffers(buffers)
@@ -221,6 +219,18 @@ class ConnectRequest(request.Request):
 
     .. note::
         There is a specific connect request type for every stream type.
+
+    :param stream:
+        stream to establish a connection on
+    :param on_connect:
+        callback which should run after a connection has been
+        established or on error
+
+    :type stream:
+        uv.Stream
+    :type on_connect:
+        ((uv.ConnectRequest, uv.StatusCodes) -> None) |
+        ((Any, uv.ConnectRequest, uv.StatusCodes) -> None)
     """
 
     __slots__ = ['stream', 'on_connect']
@@ -228,19 +238,6 @@ class ConnectRequest(request.Request):
     uv_request_type = 'uv_connect_t*'
 
     def __init__(self, stream, arguments, on_connect=None):
-        """
-        :param stream:
-            stream to establish a connection on
-        :param on_connect:
-            callback which should run after a connection has been
-            established or on error
-
-        :type stream:
-            uv.Stream
-        :type on_connect:
-            ((uv.ConnectRequest, uv.StatusCodes) -> None) |
-            ((Any, uv.ConnectRequest, uv.StatusCodes) -> None)
-        """
         if stream.closing:
             raise error.ClosedHandleError()
         uv_handle = stream.base_handle.uv_object
@@ -321,37 +318,36 @@ class Stream(handle.Handle):
     .. note::
         This class must not be instantiated directly. Please use the
         sub-classes for specific communication channels.
+
+    :param loop:
+        event loop the handle should run on
+    :param ipc:
+        stream should support inter process communication or not
+    :param arguments:
+        arguments passed to the underling libuv initializer
+    :param on_read:
+        callback which should be called when data has been read
+    :param on_connection:
+        callback which should run after a new connection has been made
+        or on error (if stream is in listen mode)
+
+    :type loop:
+        uv.Loop
+    :type ipc:
+        bool
+    :type arguments:
+        tuple
+    :type on_read:
+        ((uv.Stream, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
+    :type on_connection:
+        ((uv.Stream, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
     """
 
     __slots__ = ['uv_stream', 'on_read', 'on_connection', 'ipc']
 
     def __init__(self, loop, ipc, arguments, on_read, on_connection):
-        """
-        :param loop:
-            event loop the handle should run on
-        :param ipc:
-            stream should support inter process communication or not
-        :param arguments:
-            arguments passed to the underling libuv initializer
-        :param on_read:
-            callback which should be called when data has been read
-        :param on_connection:
-            callback which should run after a new connection has been
-            made or on error (if stream is in listen mode)
-
-        :type loop:
-            uv.Loop
-        :type ipc:
-            bool
-        :type arguments:
-            tuple
-        :type on_read:
-            ((uv.Stream, uv.StatusCodes, bytes) -> None) |
-            ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
-        :type on_connection:
-            ((uv.Stream, uv.StatusCodes, bytes) -> None) |
-            ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
-        """
         super(Stream, self).__init__(loop, arguments)
         self.uv_stream = ffi.cast('uv_stream_t*', self.base_handle.uv_object)
         self.on_read = on_read or common.dummy_callback
