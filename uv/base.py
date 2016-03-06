@@ -461,7 +461,7 @@ class BaseRequest(object):
                  arguments, uv_handle=None):
         """
         :type user_request:
-            uv.Request
+            uv.UVRequest
         :type base_loop:
             Loop
         :type request_type:
@@ -507,7 +507,7 @@ class BaseRequest(object):
     def user_request(self):
         """
         :rtype:
-            uv.Request | None
+            uv.UVRequest | None
         """
         return self.weak_user_request()
 
@@ -562,7 +562,7 @@ def request_callback(callback_type):
 def finalize_request(user_request):
     """
     :type user_request:
-        uv.Request
+        uv.UVRequest
     """
     user_request.base_request.set_finished()
     user_request.clear_pending()

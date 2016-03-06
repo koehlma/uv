@@ -87,7 +87,7 @@ class UVRequest(object):
     @property
     def type(self):
         """
-        Type of the request. Returns a subclass of :class:`uv.Request`.
+        Type of the request. Returns a subclass of :class:`uv.UVRequest`.
 
         :type: type
         """
