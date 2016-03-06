@@ -29,7 +29,7 @@ def uv_check_cb(check_handle):
 
 
 @handle.HandleTypes.CHECK
-class Check(handle.Handle):
+class Check(handle.UVHandle):
     """
     Check handles will run the given callback once per loop iteration,
     right after polling for IO after they have been started.

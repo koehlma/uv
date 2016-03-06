@@ -17,7 +17,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import warnings
 
-from . import base, common, error, library
+from . import abstract, base, common, error, library
 from .library import ffi, lib
 from .loop import Loop
 
@@ -75,17 +75,9 @@ def uv_alloc_cb(uv_handle, suggested_size, uv_buf):
 
 @HandleTypes.UNKNOWN
 @HandleTypes.HANDLE
-class Handle(object):
+class UVHandle(object):
     """
-    Handles represent long-lived objects capable of performing certain
-    operations while active. This is the base class of all handles
-    except the file and SSL handle, which are pure Python.
-
-    .. note::
-        Handles underlie a special garbage collection strategy which
-        means they are not garbage collected as other objects. If a
-        handle is able to do anything in the program for example
-        calling a callback they are not garbage collected.
+    Base class of all internal libuv based handles.
 
     :raises uv.LoopClosedError:
         loop has already been closed
@@ -109,14 +101,6 @@ class Handle(object):
 
     def __init__(self, loop, arguments=()):
         self.loop = loop or Loop.get_current()
-        """
-        Loop the handle is running on.
-
-        :readonly:
-            True
-        :type:
-            uv.Loop
-        """
         if self.loop.closed:
             raise error.ClosedLoopError()
 
@@ -169,10 +153,6 @@ class Handle(object):
     @property
     def closing(self):
         """
-        Handle is already closed or is closing. This is `True` right
-        after close has been called. Operations on a closed or closing
-        handle will raise :class:`uv.ClosedHandleError`.
-
         :readonly:
             True
         :type:
@@ -183,10 +163,6 @@ class Handle(object):
     @property
     def closed(self):
         """
-        Handle has been closed. This is `True` right after the close
-        callback has been called. It means all internal resources are
-        freed and this handle is ready to be garbage collected.
-
         :readonly:
             True
         :type:
@@ -197,21 +173,6 @@ class Handle(object):
     @property
     def active(self):
         """
-        Handle is active or not. What "active" means depends on the
-        handle type:
-
-        :class:`uv.Async`:
-            is always active and cannot be deactivated
-
-        :class:`uv.Pipe`, :class:`uv.TCP`, :class:`uv.UDP`, …:
-            basically any handle dealing with IO is active when it is
-            doing something involves IO like reading, writing,
-            connecting or listening
-
-        :class:`uv.Check`, :class:`uv.Idle`, :class:`uv.Timer`, …:
-            handle is active when it has been started and not yet
-            stopped
-
         :readonly:
             True
         :type:
@@ -224,11 +185,6 @@ class Handle(object):
     @property
     def referenced(self):
         """
-        Handle is referenced or not. If the event loop runs in default
-        mode it will exit when there are no more active and referenced
-        handles left. This has nothing to do with CPython's reference
-        counting.
-
         :readonly:
             False
         :type:
@@ -395,12 +351,6 @@ class Handle(object):
 
     def reference(self):
         """
-        Reference the handle. If the event loop runs in default mode
-        it will exit when there are no more active and referenced
-        handles left. This has nothing to do with CPython's reference
-        counting. References are idempotent, that is, if a handle is
-        referenced calling this method again will have not effect.
-
         :raises uv.ClosedHandleError:
             handle has already been closed or is closing
         """
@@ -410,12 +360,6 @@ class Handle(object):
 
     def dereference(self):
         """
-        Dereference the handle. If the event loop runs in default mode
-        it will exit when there are no more active and referenced
-        handles left. This has nothing to do with CPython's reference
-        counting. References are idempotent, that is, if a handle is
-        not referenced calling this method again will have not effect.
-
         :raises uv.ClosedHandleError:
             handle has already been closed or is closing
         """
@@ -425,24 +369,6 @@ class Handle(object):
 
     def close(self, on_closed=None):
         """
-        Close the handle. Please make sure to call this method on any
-        handle you do not need anymore. This method is idempotent, that
-        is, if the handle is already closed or is closing calling it
-        will have no effect at all.
-
-        In-progress requests, like connect or write requests, are
-        cancelled and have their callbacks called asynchronously with
-        :class:`uv.StatusCodes.ECANCELED`.
-
-        After this method has been called on a handle no operations can
-        be performed on it (they raise :class:`uv.ClosedHandleError`).
-
-        .. note::
-            Handles are automatically closed when they are garbage
-            collected. However because the exact time this happens is
-            non-deterministic you should close all handles explicitly.
-            Especially if they handle external resources.
-
         :param on_closed:
             callback which should run after the handle has been closed
             (overrides the current callback if specified)
@@ -477,4 +403,6 @@ class Handle(object):
         self.loop.structure_clear_pending(self)
 
 
-HandleTypes.cls = Handle
+HandleTypes.cls = UVHandle
+
+abstract.Handle.register(UVHandle)

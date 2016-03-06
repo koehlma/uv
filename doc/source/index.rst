@@ -33,6 +33,8 @@ Contents:
     handles/fs_event
     handles/fs_poll
 
+    request
+
     dns
 
 

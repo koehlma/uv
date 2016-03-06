@@ -107,7 +107,7 @@ def uv_fs_event_cb(fs_event_handle, c_filename, events, status):
 
 
 @handle.HandleTypes.FS_EVENT
-class FSEvent(handle.Handle):
+class FSEvent(handle.UVHandle):
     """
     FS event handles monitor a given filesystem path for changes
     including renaming und deletion after they have been started.

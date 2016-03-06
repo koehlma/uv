@@ -15,11 +15,11 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from . import base, common, error, library
+from . import abstract, base, common, error, library
 from .library import ffi, lib
 from .loop import Loop
 
-__all__ = ['Request']
+__all__ = ['UVRequest']
 
 
 class RequestType(common.Enumeration):
@@ -39,12 +39,9 @@ class RequestType(common.Enumeration):
 
 
 @RequestType.UNKNOWN
-class Request(object):
+class UVRequest(object):
     """
-    Requests represent (typically) short-lived operations. These operations
-    can be performed over a handle: write requests are used to write data
-    on a handle; or standalone: getaddrinfo requests don’t need a handle
-    they run directly on the loop. This is the base class of all requests.
+    The base class of all libuv based requests.
 
     :raises uv.LoopClosedError: loop has already been closed
 
@@ -98,9 +95,6 @@ class Request(object):
 
     def cancel(self):
         """
-        Cancel a pending request. Fails if the request is executing
-        or has finished executing.
-
         :raises uv.UVError: error while canceling request
         """
         code = self.base_request.cancel()
@@ -128,4 +122,6 @@ class Request(object):
         self.loop.structure_clear_pending(self)
 
 
-RequestType.cls = Request
+RequestType.cls = UVRequest
+
+abstract.Request.register(UVRequest)

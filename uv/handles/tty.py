@@ -98,7 +98,7 @@ class TTYMode(common.Enumeration):
 
 
 @handle.HandleTypes.TTY
-class TTY(stream.Stream):
+class TTY(stream.UVStream):
     """
     Stream interface to the local user terminal console. It allows
     using ANSI escape codes across platforms.

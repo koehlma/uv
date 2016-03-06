@@ -30,7 +30,7 @@ def uv_async_cb(async_handle):
 
 
 @handle.HandleTypes.ASYNC
-class Async(handle.Handle):
+class Async(handle.UVHandle):
     """
     Async handles are able to wakeup the event loop of another thread
     and run the given callback in the event loop's thread. Although the

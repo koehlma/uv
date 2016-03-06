@@ -17,4 +17,4 @@
     :members:
     :member-order: bysource
 
-.. autofunction:: reset_mode
+.. autofunction:: uv.tty.reset_mode

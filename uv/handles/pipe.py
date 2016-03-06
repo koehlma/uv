@@ -52,7 +52,7 @@ class PipeConnectRequest(stream.ConnectRequest):
 
 
 @handle.HandleTypes.PIPE
-class Pipe(stream.Stream):
+class Pipe(stream.UVStream):
     """
     Stream interface to local domain sockets on Unix and named pipes on
     Windows, which supports inter process communication.
@@ -175,7 +175,7 @@ class Pipe(stream.Stream):
     def pending_type(self):
         """
         Type of first pending stream, if there is a pending stream.
-        Returns a subclass of :class:`uv.Stream`.
+        Returns a subclass of :class:`uv.UVStream`.
 
         :readonly:
             True
@@ -195,7 +195,7 @@ class Pipe(stream.Stream):
             handle has already been closed or is closing
 
         :rtype:
-            uv.Stream
+            uv.UVStream
         """
         if self.closing:
             raise error.ClosedHandleError()

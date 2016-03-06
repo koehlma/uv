@@ -39,11 +39,13 @@ from .metadata import __version__, __author__, __email__, __project__
 from .library import version as uv_version
 
 from .error import UVError, ClosedHandleError, ClosedLoopError, StatusCodes
-from .handle import Handle
+from .handle import UVHandle
 from .loop import RunModes, Loop
-from .request import Request
+from .request import UVRequest
 
 from . import common, error, loop, handle, request
+
+from .abstract import Handle, Request, Stream
 
 from .handles.async import Async
 from .handles.check import Check
@@ -53,7 +55,7 @@ from .handles.poll import PollEvent, Poll
 from .handles.prepare import Prepare
 from .handles.process import CreatePipe, PIPE, ProcessFlags, Process
 from .handles.signal import Signals, Signal
-from .handles.stream import ShutdownRequest, WriteRequest, ConnectRequest, Stream
+from .handles.stream import ShutdownRequest, WriteRequest, ConnectRequest, UVStream
 from .handles.tcp import TCPFlags, TCPConnectRequest, TCP
 from .handles.timer import Timer
 from .handles.tty import ConsoleSize, TTYMode, TTY

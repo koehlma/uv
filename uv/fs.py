@@ -95,7 +95,7 @@ class DirentType(common.Enumeration):
 
 
 @request.RequestType.FS
-class FSRequest(request.Request):
+class FSRequest(request.UVRequest):
     __slots__ = ['uv_fs', 'data', 'callback']
 
     def __init__(self, data=None, callback=None, loop=None):

@@ -9,6 +9,11 @@
     :members:
     :member-order: bysource
 
+.. autoclass:: uv.UVStream
+    :members:
+    :member-order: bysource
+
+
 .. autoclass:: uv.ConnectRequest
     :members:
     :member-order: bysource

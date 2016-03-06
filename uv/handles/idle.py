@@ -29,7 +29,7 @@ def uv_idle_cb(idle_handle):
 
 
 @handle.HandleTypes.IDLE
-class Idle(handle.Handle):
+class Idle(handle.UVHandle):
     """
     Idle handles will run the given callback once per loop iteration,
     right before the :class:`uv.Prepare` handles.

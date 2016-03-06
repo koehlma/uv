@@ -53,7 +53,7 @@ def poll_callback(poll_handle, status, events):
 
 
 @handle.HandleTypes.POLL
-class Poll(handle.Handle):
+class Poll(handle.UVHandle):
     """
     Poll handles are used to watch file descriptors for readability and
     writability. The purpose of poll handles is to enable integrating

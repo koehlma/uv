@@ -15,7 +15,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from .. import base, common, error, handle, library, request
+from .. import abstract, base, common, error, handle, library, request
 from ..library import ffi, lib
 
 
@@ -31,7 +31,7 @@ def uv_shutdown_cb(shutdown_request, status):
 
 
 @request.RequestType.SHUTDOWN
-class ShutdownRequest(request.Request):
+class ShutdownRequest(request.UVRequest):
     """
     Request to shutdown the outgoing side of a duplex stream. It waits
     for pending write requests to complete.
@@ -47,7 +47,7 @@ class ShutdownRequest(request.Request):
         callback which should run after shutdown has been completed
 
     :type stream:
-        uv.Stream
+        uv.UVStream
     :type on_shutdown:
         ((uv.ShutdownRequest, uv.StatusCodes) -> None) |
         ((Any, uv.ShutdownRequest, uv.StatusCodes) -> None)
@@ -68,7 +68,7 @@ class ShutdownRequest(request.Request):
         :readonly:
             True
         :type:
-            uv.Stream
+            uv.UVStream
         """
         self.on_shutdown = on_shutdown or common.dummy_callback
         """
@@ -110,7 +110,7 @@ def uv_write_cb(write_request, status):
 
 
 @request.RequestType.WRITE
-class WriteRequest(request.Request):
+class WriteRequest(request.UVRequest):
     """
     Request to write data to a stream and, on streams with inter
     process communication support, to send stream handles. Buffers
@@ -131,7 +131,7 @@ class WriteRequest(request.Request):
         callback which should run after all data has been written
 
     :type stream:
-        uv.Stream
+        uv.UVStream
     :type buffers:
         tuple[bytes] | list[bytes] | bytes
     :type send_stream:
@@ -156,7 +156,7 @@ class WriteRequest(request.Request):
         :readonly:
             True
         :type:
-            uv.Stream
+            uv.UVStream
         """
         self.send_stream = send_stream
         """
@@ -165,7 +165,7 @@ class WriteRequest(request.Request):
         :readonly:
             True
         :type:
-            uv.Stream | None
+            uv.UVStream | None
         """
         self.on_write = on_write or common.dummy_callback
         """
@@ -213,7 +213,7 @@ def uv_connect_cb(connect_request, status):
 
 
 @request.RequestType.CONNECT
-class ConnectRequest(request.Request):
+class ConnectRequest(request.UVRequest):
     """
     Request to connect to a specific address.
 
@@ -227,7 +227,7 @@ class ConnectRequest(request.Request):
         established or on error
 
     :type stream:
-        uv.Stream
+        uv.UVStream
     :type on_connect:
         ((uv.ConnectRequest, uv.StatusCodes) -> None) |
         ((Any, uv.ConnectRequest, uv.StatusCodes) -> None)
@@ -250,7 +250,7 @@ class ConnectRequest(request.Request):
         :readonly:
             True
         :type:
-            uv.Stream
+            uv.UVStream
         """
         self.on_connect = on_connect or common.dummy_callback
         """
@@ -283,7 +283,7 @@ class ConnectRequest(request.Request):
 def uv_connection_cb(stream_handle, status):
     """
     :type stream_handle:
-        uv.Stream
+        uv.UVStream
     :type status:
         int
     """
@@ -294,7 +294,7 @@ def uv_connection_cb(stream_handle, status):
 def uv_read_cb(stream_handle, length, uv_buffer):
     """
     :type stream_handle:
-        uv.Stream
+        uv.UVStream
     :type length:
         int
     :type uv_buffer:
@@ -310,10 +310,9 @@ def uv_read_cb(stream_handle, length, uv_buffer):
 
 
 @handle.HandleTypes.STREAM
-class Stream(handle.Handle):
+class UVStream(handle.UVHandle):
     """
-    Stream handles provide a reliable ordered duplex communication
-    channel. This is the base class of all stream handles.
+    The base class of all libuv based streams.
 
     .. note::
         This class must not be instantiated directly. Please use the
@@ -338,17 +337,17 @@ class Stream(handle.Handle):
     :type arguments:
         tuple
     :type on_read:
-        ((uv.Stream, uv.StatusCodes, bytes) -> None) |
-        ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
+        ((uv.UVStream, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.UVStream, uv.StatusCodes, bytes) -> None)
     :type on_connection:
-        ((uv.Stream, uv.StatusCodes, bytes) -> None) |
-        ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
+        ((uv.UVStream, uv.StatusCodes, bytes) -> None) |
+        ((Any, uv.UVStream, uv.StatusCodes, bytes) -> None)
     """
 
     __slots__ = ['uv_stream', 'on_read', 'on_connection', 'ipc']
 
     def __init__(self, loop, ipc, arguments, on_read, on_connection):
-        super(Stream, self).__init__(loop, arguments)
+        super(UVStream, self).__init__(loop, arguments)
         self.uv_stream = ffi.cast('uv_stream_t*', self.base_handle.uv_object)
         self.on_read = on_read or common.dummy_callback
         """
@@ -370,7 +369,7 @@ class Stream(handle.Handle):
                 data which has been read
 
             :type stream_handle:
-                uv.Stream
+                uv.UVStream
             :type status:
                 uv.StatusCodes
             :type data:
@@ -380,8 +379,8 @@ class Stream(handle.Handle):
         :readonly:
             False
         :type:
-            ((uv.Stream, uv.StatusCodes, bytes) -> None) |
-            ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
+            ((uv.UVStream, uv.StatusCodes, bytes) -> None) |
+            ((Any, uv.UVStream, uv.StatusCodes, bytes) -> None)
         """
         self.on_connection = on_connection or common.dummy_callback
         """
@@ -397,7 +396,7 @@ class Stream(handle.Handle):
                 status of the new connection
 
             :type stream_handle:
-                uv.Stream
+                uv.UVStream
             :type status:
                 uv.StatusCodes
 
@@ -405,8 +404,8 @@ class Stream(handle.Handle):
         :readonly:
             False
         :type:
-            ((uv.Stream, uv.StatusCodes, uv.Stream) -> None) |
-            ((Any, uv.Stream, uv.StatusCodes, uv.Stream) -> None)
+            ((uv.UVStream, uv.StatusCodes, uv.UVStream) -> None) |
+            ((Any, uv.UVStream, uv.StatusCodes, uv.UVStream) -> None)
         """
         self.ipc = ipc
         """
@@ -421,8 +420,6 @@ class Stream(handle.Handle):
     @property
     def readable(self):
         """
-        Stream is readable or not.
-
         :readonly:
             True
         :type:
@@ -435,8 +432,6 @@ class Stream(handle.Handle):
     @property
     def writable(self):
         """
-        Stream is writable or not.
-
         :readonly:
             True
         :type:
@@ -457,18 +452,10 @@ class Stream(handle.Handle):
 
     def shutdown(self, on_shutdown=None):
         """
-        Shutdown the outgoing (write) side of a duplex stream. It waits
-        for pending write requests to complete.
-
-        :param on_shutdown:
-            callback which should run after shutdown has been completed
-
         :type on_shutdown:
             ((uv.ShutdownRequest, uv.StatusCodes) -> None) |
             ((Any, uv.ShutdownRequest, uv.StatusCodes) -> None)
 
-        :returns:
-            issued stream shutdown request
         :rtype:
             uv.ShutdownRequest
         """
@@ -492,8 +479,8 @@ class Stream(handle.Handle):
         :type backlog:
             int
         :type on_connection:
-            ((uv.Stream, uv.StatusCodes) -> None) |
-            ((Any, uv.Stream, uv.StatusCodes) -> None)
+            ((uv.UVStream, uv.StatusCodes) -> None) |
+            ((Any, uv.UVStream, uv.StatusCodes) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -504,21 +491,14 @@ class Stream(handle.Handle):
 
     def read_start(self, on_read=None):
         """
-        Start reading data from the stream. The read callback will be
-        called from now on when data has been read.
-
         :raises uv.UVError:
             error while start reading data from the stream
         :raises uv.ClosedHandleError:
             handle has already been closed or is closing
 
-        :param on_read:
-            callback which should be called when data has been read
-            (overrides the current callback if specified)
-
         :type on_read:
-            ((uv.Stream, uv.StatusCodes, bytes) -> None) |
-            ((Any, uv.Stream, uv.StatusCodes, bytes) -> None)
+            ((uv.UVStream, uv.StatusCodes, bytes) -> None) |
+            ((Any, uv.UVStream, uv.StatusCodes, bytes) -> None)
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -530,9 +510,6 @@ class Stream(handle.Handle):
 
     def read_stop(self):
         """
-        Stop reading data from the stream. The read callback will no
-        longer be called from now on.
-
         :raises uv.UVError:
             error while stop reading data from the stream
         """
@@ -545,19 +522,6 @@ class Stream(handle.Handle):
 
     def write(self, buffers, send_stream=None, on_write=None):
         """
-        Write data to stream. Buffers are written in the given order.
-
-        If `send_stream` is not `None` and the stream supports inter
-        process communication this method sends `send_stream` to the
-        other end of the connection.
-
-        :param buffers:
-            data which should be written
-        :param send_stream:
-            stream handle which should be send
-        :param on_write:
-            callback which should run after all data has been written
-
         :type buffers:
             tuple[bytes] | list[bytes] | bytes
         :type send_stream:
@@ -636,7 +600,7 @@ class Stream(handle.Handle):
         :return:
             new stream connection of type `cls`
         :rtype:
-            uv.Stream
+            uv.UVStream
         """
         if self.closing:
             raise error.ClosedHandleError()
@@ -645,3 +609,6 @@ class Stream(handle.Handle):
         if code != error.StatusCodes.SUCCESS:
             raise error.UVError(code)
         return connection
+
+
+abstract.Stream.register(UVStream)

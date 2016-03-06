@@ -17,6 +17,6 @@
     :members:
     :member-order: bysource
 
-.. autoclass:: uv.SendRequest
+.. autoclass:: uv.UDPSendRequest
     :members:
     :member-order: bysource

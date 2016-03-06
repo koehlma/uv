@@ -401,7 +401,7 @@ def uv_getaddrinfo_cb(addrinfo_request, status, _):
 
 
 @request.RequestType.GETADDRINFO
-class GetAddrInfo(request.Request):
+class GetAddrInfo(request.UVRequest):
     """
     Request to get address information for specified host and port
     (service). If no callback is provided the request is executed
@@ -616,7 +616,7 @@ def uv_getnameinfo_cb(nameinfo_request, status, c_hostname, c_service):
 
 
 @request.RequestType.GETNAMEINFO
-class GetNameInfo(request.Request):
+class GetNameInfo(request.UVRequest):
     """
     Request to get name information for specified ip and port. If no
     callback is provided the request is executed synchronously.

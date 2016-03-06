@@ -37,7 +37,7 @@ def uv_fs_poll_cb(fs_poll_handle, status, uv_previous_stat, uv_current_stat):
 
 
 @handle.HandleTypes.FS_POLL
-class FSPoll(handle.Handle):
+class FSPoll(handle.UVHandle):
     """
     FS poll handles monitor a given filesystem path for changes. Unlike
     fs event handles, fs poll handles use `stat()` to detect when a

@@ -29,7 +29,7 @@ def uv_prepare_cb(prepare_handle):
 
 
 @handle.HandleTypes.PREPARE
-class Prepare(handle.Handle):
+class Prepare(handle.UVHandle):
     """
     Prepare handles will run the given callback once per loop
     iteration, right before polling for IO.

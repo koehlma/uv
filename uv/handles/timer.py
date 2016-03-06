@@ -31,7 +31,7 @@ def uv_timer_cb(timer_handle):
 
 
 @handle.HandleTypes.TIMER
-class Timer(handle.Handle):
+class Timer(handle.UVHandle):
     """
     Timer handles are used to schedule callbacks to be called in the
     future after a given amount of time.

@@ -66,7 +66,7 @@ class TCPConnectRequest(stream.ConnectRequest):
 
 
 @handle.HandleTypes.TCP
-class TCP(stream.Stream):
+class TCP(stream.UVStream):
     """
     Stream interface to TCP sockets for clients and servers.
 

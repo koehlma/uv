@@ -194,10 +194,10 @@ def populate_stdio_container(uv_stdio, file_base=None):
     :type uv_stdio:
         ffi.CData[uv_stdio_t]
     :type file_base:
-        uv.Stream | uv.CreatePipe | int | file-like
+        uv.UVStream | uv.CreatePipe | int | file-like
     """
     fileobj = file_base
-    if isinstance(file_base, stream.Stream):
+    if isinstance(file_base, stream.UVStream):
         uv_stdio.data.stream = file_base.uv_stream
         uv_stdio.flags = StandardIOFlags.INHERIT_STREAM
     elif isinstance(file_base, CreatePipe):
@@ -219,7 +219,7 @@ def populate_stdio_container(uv_stdio, file_base=None):
 
 
 @handle.HandleTypes.PROCESS
-class Process(handle.Handle):
+class Process(handle.UVHandle):
     """
     Process handles will spawn a new process and allow the user to
     control it and establish communication channels with it using
@@ -266,13 +266,13 @@ class Process(handle.Handle):
     :type flags:
         int
     :type stdin:
-        int | uv.Stream | uv.CreatePipe | file-like | None
+        int | uv.UVStream | uv.CreatePipe | file-like | None
     :type stdout:
-        int | uv.Stream | uv.CreatePipe | file-like | None
+        int | uv.UVStream | uv.CreatePipe | file-like | None
     :type stderr:
-        int | uv.Stream | uv.CreatePipe | file-like | None
+        int | uv.UVStream | uv.CreatePipe | file-like | None
     :type stdio:
-        list[int | uv.Stream | uv.CreatePipe | file-like]
+        list[int | uv.UVStream | uv.CreatePipe | file-like]
     :type loop:
         uv.Loop
     :type on_exit:
@@ -309,7 +309,7 @@ class Process(handle.Handle):
         :readonly:
             True
         :type:
-            int | uv.Stream | file-like | None
+            int | uv.UVStream | file-like | None
         """
         self.stdout = populate_stdio_container(c_stdio_containers[1], stdout)
         """
@@ -318,7 +318,7 @@ class Process(handle.Handle):
         :readonly:
             True
         :type:
-            int | uv.Stream | file-like | None
+            int | uv.UVStream | file-like | None
         """
         self.stderr = populate_stdio_container(c_stdio_containers[2], stderr)
         """
@@ -327,7 +327,7 @@ class Process(handle.Handle):
         :readonly:
             True
         :type:
-            int | uv.Stream | file-like | None
+            int | uv.UVStream | file-like | None
         """
         self.stdio = []
         """
@@ -336,7 +336,7 @@ class Process(handle.Handle):
         :readonly:
             True
         :type:
-            list[int | uv.Stream | file-like]
+            list[int | uv.UVStream | file-like]
         """
         if stdio is not None:
             for number in range(len(stdio)):

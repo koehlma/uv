@@ -85,7 +85,7 @@ def uv_udp_send_cb(send_request, status):
 
 
 @request.RequestType.UDP_SEND
-class UDPSendRequest(request.Request):
+class UDPSendRequest(request.UVRequest):
     """
     Request to send a UDP datagram.
 
@@ -189,7 +189,7 @@ def uv_udp_recv_cb(udp_handle, length, uv_buffer, c_sockaddr, flags):
 
 
 @handle.HandleTypes.UDP
-class UDP(handle.Handle):
+class UDP(handle.UVHandle):
     """
     Abstraction of UDP sockets for servers and clients.
 

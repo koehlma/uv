@@ -76,7 +76,7 @@ def uv_signal_cb(signal_handle, signum):
 
 
 @handle.HandleTypes.SIGNAL
-class Signal(handle.Handle):
+class Signal(handle.UVHandle):
     """
     Signal handles implement Unix style signal handling on a per-event
     loop basis. Reception of the generic :class:`uv.Signals` is
