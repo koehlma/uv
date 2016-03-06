@@ -574,6 +574,9 @@ class Loop(object):
             self.base_loop.wakeup()
 
     def reset_exception(self):
+        """
+        Reset the last exception caught by the excepthook.
+        """
         self.exc_type = None
         self.exc_value = None
         self.exc_traceback = None
