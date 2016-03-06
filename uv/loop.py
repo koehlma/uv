@@ -20,7 +20,6 @@ import collections
 import sys
 import threading
 import traceback
-import warnings
 
 from . import base, common, error, library
 from .library import ffi, lib
@@ -200,6 +199,25 @@ class Loop(object):
     The event loop is the central part of this library. It takes care
     of polling for IO and scheduling callbacks to be run based on
     different sources of events.
+
+    :raises RuntimeError:
+        error while initializing global default loop
+    :raises UVError:
+        error initializing the new event loop
+
+    :param allocator:
+        read buffer allocator
+    :param buffer_size:
+        size of the default allocators read buffer
+    :param default:
+        instantiate the default loop
+
+    :type allocator:
+        uv.loop.Allocator
+    :type buffer_size:
+        int
+    :type default:
+        bool
     """
 
     _global_lock = threading.RLock()
@@ -255,26 +273,6 @@ class Loop(object):
         return loop
 
     def __init__(self, allocator=None, buffer_size=2**16, default=False):
-        """
-        :raises RuntimeError:
-            error while initializing global default loop
-        :raises UVError:
-            error initializing the new event loop
-
-        :param allocator:
-            read buffer allocator
-        :param buffer_size:
-            size of the default allocators read buffer
-        :param default:
-            instantiate the default loop
-
-        :type allocator:
-            uv.loop.Allocator
-        :type buffer_size:
-            int
-        :type default:
-            bool
-        """
         if default:
             with Loop._global_lock:
                 if Loop._default:
@@ -551,7 +549,9 @@ class Loop(object):
 
     def call_later(self, callback, *arguments, **keywords):
         """
-        Schedule a callback to run at some later point in time.
+        Schedule a callback to run at some later point in time. The
+        callback does not keep the loop alive if there a no other
+        active handles running on the loop.
 
         This method is thread safe.
 
@@ -572,7 +572,6 @@ class Loop(object):
         with self.pending_callbacks_lock:
             self.pending_callbacks.append((callback, arguments, keywords))
             self.base_loop.wakeup()
-            self.base_loop.reference_internal_async()
 
     def reset_exception(self):
         self.exc_type = None
@@ -597,9 +596,6 @@ class Loop(object):
                     self.handle_exception()
         except IndexError:
             pass
-        with self.pending_callbacks_lock:
-            if not self.pending_callbacks:
-                self.base_loop.dereference_internal_async()
 
     def handle_exception(self):
         """
