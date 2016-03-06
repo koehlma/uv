@@ -48,8 +48,8 @@ Features
 .. |windows_build| image:: https://img.shields.io/appveyor/ci/koehlma/uv.svg?style=flat-square&label=windows%20build
     :target: https://ci.appveyor.com/project/koehlma/uv
 
-.. |docs| image:: https://readthedocs.org/projects/uv/badge/?version=latest&style=flat-square
-    :target: https://uv.readthedocs.org/en/latest/
+.. |docs| image:: https://readthedocs.org/projects/uv/badge/?version=master&style=flat-square
+    :target: https://uv.readthedocs.org/en/master/
 
 .. |coverage| image:: https://img.shields.io/coveralls/koehlma/uv/master.svg?style=flat-square
     :target: https://coveralls.io/github/koehlma/uv?branch=master
