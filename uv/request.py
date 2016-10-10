@@ -15,8 +15,8 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from . import abstract, base, common, error, library
-from .library import ffi, lib
+from . import abstract, base, common, error
+from .library import lib
 from .loop import Loop
 
 __all__ = ['UVRequest']
@@ -43,17 +43,29 @@ class UVRequest(object):
     """
     The base class of all libuv based requests.
 
-    :raises uv.LoopClosedError: loop has already been closed
+    :raises uv.LoopClosedError:
+        loop has already been closed
 
-    :param uv_request: allocated c struct for this request
-    :param loop: loop where the request should run on
+    :param loop:
+        loop where the request should run on
+    :param arguments:
+        arguments passed to the libuv request initializer
+    :param uv_handle:
+        libuv handle the requests belongs to
+    :param request_init:
+        libuv function for request initialization
 
-    :type uv_request: ffi.CData
-    :type loop: Loop
+    :type loop:
+        Loop
+    :type arguments:
+        tuple
+    :type uv_handle:
+        ffi.CData
+    :type request_init:
+        callable
     """
 
-    __slots__ = ['__weakref__', 'uv_request', '_c_reference', 'finished', 'loop',
-                 'base_request']
+    __slots__ = ['__weakref__', 'loop', 'finished', 'base_request']
 
     uv_request_type = None
     uv_request_init = None
@@ -105,10 +117,7 @@ class UVRequest(object):
         """
         .. warning::
             This method is only for internal purposes and is not part
-            of the official API. It deactivates the garbage collection
-            for the request which means the request and the associated
-            loop are excluded form garbage collection. You should never
-            call it directly!
+            of the official API.
         """
         self.loop.structure_set_pending(self)
 
@@ -116,8 +125,7 @@ class UVRequest(object):
         """
         .. warning::
             This method is only for internal purposes and is not part
-            of the official API. It reactivates the garbage collection
-            for the request. You should never call it directly!
+            of the official API.
         """
         self.loop.structure_clear_pending(self)
 

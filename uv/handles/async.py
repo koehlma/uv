@@ -35,8 +35,9 @@ class Async(handle.UVHandle):
     Async handles are able to wakeup the event loop of another thread
     and run the given callback in the event loop's thread. Although the
     :func:`uv.Async.send` method is thread-safe the constructor is not.
-    To run a given callback in the event loop's thread without creating
-    an :class:`uv.Async` handle use :func:`uv.Loop.call_later`.
+
+    To run a callback in the event loop's thread without creating an
+    :class:`uv.Async` handle use :func:`uv.Loop.call_later`.
 
     :raises uv.UVError:
         error while initializing the handle
