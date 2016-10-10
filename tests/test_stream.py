@@ -34,6 +34,7 @@ class TestStream(common.TestCase):
         self.assert_raises(uv.ClosedHandleError, self.pipe.try_write, b'')
         self.assert_raises(uv.ClosedHandleError, self.pipe.accept)
 
+    @common.skip_platform('win32')
     def test_try_write(self):
         self.buffer = b''
         self.bytes_written = 0
