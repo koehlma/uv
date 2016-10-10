@@ -48,7 +48,7 @@ class AddressFamilies(common.Enumeration):
     :type: uv.AddressFamilies
     """
 
-    UNIX = socket.AF_UNIX
+    UNIX = getattr(socket, 'AF_UNIX', -1)
     """
     Unix domain sockets family.
 
